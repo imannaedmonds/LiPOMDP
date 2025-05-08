@@ -11,3 +11,13 @@ s0 = State(
 )
 
 ###TODO: test initiation action and observation
+
+a0=Action(
+    site=0,
+    type=1
+)
+
+o0=Observation(
+    deposits=[10, 5, 60, 7],
+    price=$10
+)

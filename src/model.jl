@@ -1,7 +1,7 @@
 
 @with_kw mutable struct State
     deposits::Vector{Float64} # [v₁, v₂, v₃, v₄]
-    t::Float64 = 1  # current time
+    t::Float64 = 1  # current time, year
     V::Float64 = 0  # current amt of Li mined domestically up to time t
     P::Float64 = 0
     have_mined::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
