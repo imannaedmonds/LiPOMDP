@@ -5,8 +5,9 @@ using Parameters
 using POMDPs
 
 
-export State, Action, Observatio, LiPOMDP
+export State, Action, Observation, LiPOMDP
 include("model.jl")
 
 
+include("pomdp.jl")
 end
