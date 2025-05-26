@@ -9,7 +9,7 @@ function update_price(s, price_model_type="linear")
         return new_price
     end
 
-    # if model_type == "exponenital"
+    if model_type == "exponenital"
     #     new_price = s.p 
 end
 
