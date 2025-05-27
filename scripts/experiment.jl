@@ -1,13 +1,13 @@
 using LitPOMDP
 using POMDPs
-using POMDPs: Deterministic 
-using Distributions
+using Random
+
 
 pomdp = LiPOMDP(
     demand=[1.0, 2.0],
     mine_output=1.2
 )
-
+rng = MersenneTwister(1234)
 
 s0 = State(
     deposits=[1.0],
@@ -27,7 +27,5 @@ o0=Observation(
     price=10
 )
 
-s1=transition(pomdp, s0, a0)
-
-
-
+prob_s1=transition(pomdp, s0, a0)
+s1 = rand(rng, prob_s1)
