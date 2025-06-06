@@ -4,6 +4,7 @@ module LitPOMDP
 using Parameters
 using POMDPs
 using POMDPTools
+using Distributions
 
 
 export State, Action, Observation, LiPOMDP

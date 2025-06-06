@@ -1,9 +1,9 @@
 
 @with_kw mutable struct State
     deposits::Vector{Float64} # [v₁, v₂, v₃, v₄]
-    t::Float64 = 1  # current time, year
-    v::Float64 = 0  # current amt of Li mined up to time t
-    p::Float64 = 10  # Price per thousand
+    t::Float64 = 1.0  # current time, year
+    v::Float64 = 0.0  # current amt of Li mined up to time t
+    p::Float64 = 10.0  # Price per thousand
     have_mined::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
     mine_ready::Vector{Bool}  # true if site is developed and ready to operate
 end
@@ -19,16 +19,41 @@ end
     price::Float64 
 end
 
+@with_kw mutable struct LiBelief{T<:UnivariateDistribution} 
+    deposits_distribution::Vector{T} # [v₁, v₂, v₃, v₄]
+    t::Float64 = 1.0  # current time, year
+    v::Float64 = 0.0  # current amt of Li mined up to time t
+    p_distribution::T  # Price per thousand
+    have_mined::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
+    mine_ready::Vector{Bool}  # true if site is developed and ready to operate
+end
+    
+@with_kw mutable struct LiBeliefUpdater <: Updater #TODO understand this
+    P::LiPOMDP
+end
+
+
 @with_kw mutable struct LiPOMDP <: POMDP{State,Action,Observation}
     σ_obs::Float64 = 1.0 # Standard deviation of the observation noise
     γ::Float64 = 0.97 #discounted reward
     time_horizon::Int64 = 30 #time horizon
     demand::Vector{Float64} 
     # [2.0, 4.0, 3.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0],
-    # n_deposits=4,# per thousand of minerals in 30 years
-    n_deposits::Int64 = 4 
+    n_deposits::Int64 = 4 # per thousand of minerals in 30 years
     mine_output::Float64 #annual output per open mine
-    price_model_type::String = "linear" #different pricing models
+    price_model_type::Int64 = 1  #different pricing models 1) static 2) linear, 3) exponential, 4) stochastic pricing (GBM), 5) Dynamic Price  
+    CO2_cost::Int64 = 120
+    CO2_emissions::Int64 = 10
+    capex_per_mine::Int64 = -25
+    opex_per_mine::Int64 = -10
+    p₀::Float64 = 10.0 # Price per thousand               # initial price
+    σ_price::Float64 = 10.0   # standard deviation for price noise
+    α_slope::Float64 = 10.0   # linear slope (for linear pricing), increasing 10,000 dollars every year 
+    λ_exp::Float64 = 0.05      # exponential growth rate
+    μ_drift::Float64 = 0.0     # drift for stochastic, TODO mention in the paper that you can set it to something 
+    β_action::Float64 = 0.01   # market-maker action sensitivity
+    γ_state::Float64 = 0.01    # state-dependence sensitivity
+    alpha::Float64 = 1.0
     # bin_edges::Vector{Float64}  # Used to discretize observations
     # cdf_threshold::Float64  # threshold allowing us to mine or not
     # min_n_units::Int64  # minimum number of units required to mine. So long as cdf_threshold portion of the probability
@@ -38,7 +63,6 @@ end
     # V_deposit_min::Float64 #min and max amount per singular deposit
     # V_deposit_max::Float64
     # obj_weights::Vector{Float64}  # how we want to weight each component of the reward
-    # CO2_emissions::Vector{Float64}  #[C₁, C₂, C₃, C₄] amount of CO2 each site emits
     # null_state::State
     # init_state::State
     # site_to_dist::Dict

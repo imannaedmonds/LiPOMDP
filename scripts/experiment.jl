@@ -5,7 +5,8 @@ using Random
 
 pomdp = LiPOMDP(
     demand=[1.0, 2.0],
-    mine_output=1.2
+    mine_output=1.2,
+    price_model_type = 3,
 )
 rng = MersenneTwister(1234)
 
@@ -29,3 +30,5 @@ o0=Observation(
 
 prob_s1=transition(pomdp, s0, a0)
 s1 = rand(rng, prob_s1)
+
+r = reward(pomdp, s0, a0)
