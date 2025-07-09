@@ -28,13 +28,10 @@ end
     mine_ready::Vector{Bool}  # true if site is developed and ready to operate
 end
     
-@with_kw mutable struct LiBeliefUpdater <: Updater #TODO understand this
-    P::LiPOMDP
-end
-
 
 @with_kw mutable struct LiPOMDP <: POMDP{State,Action,Observation}
-    σ_obs::Float64 = 1.0 # Standard deviation of the observation noise
+    σ_obs_d::Float64 = 1.0 # Standard deviation of the observation noise
+    σ_obs_p::Float64 = 1.0 # Standard deviation of the observation noise for price
     γ::Float64 = 0.97 #discounted reward
     time_horizon::Int64 = 30 #time horizon
     demand::Vector{Float64} 
@@ -48,12 +45,14 @@ end
     opex_per_mine::Int64 = -10
     p₀::Float64 = 10.0 # Price per thousand               # initial price
     σ_price::Float64 = 10.0   # standard deviation for price noise
-    α_slope::Float64 = 10.0   # linear slope (for linear pricing), increasing 10,000 dollars every year 
-    λ_exp::Float64 = 0.05      # exponential growth rate
-    μ_drift::Float64 = 0.0     # drift for stochastic, TODO mention in the paper that you can set it to something 
+    α_slope::Float64 = 10.0   #TODO: linear slope (for linear pricing), increasing 10,000 dollars every year 
+    λ_exp::Float64 = 0.05      #TODO: exponential growth rate
+    μ_drift::Float64 = 0.0     # drift for stochastic, mention in the paper that you can set it to something 
     β_action::Float64 = 0.01   # market-maker action sensitivity
     γ_state::Float64 = 0.01    # state-dependence sensitivity
     alpha::Float64 = 1.0
+    hist_data_file::String = "data/price_history.csv" #TODO: file with historical data for price
+    hist_data::Vector{Float64} = [] #TODO: historical data for price
     # bin_edges::Vector{Float64}  # Used to discretize observations
     # cdf_threshold::Float64  # threshold allowing us to mine or not
     # min_n_units::Int64  # minimum number of units required to mine. So long as cdf_threshold portion of the probability
@@ -70,6 +69,11 @@ end
     # alpha::Float64 # Parameter to control tradeoff between emissions and volume
     # compute_tradeoff::Bool
 end
+
+@with_kw mutable struct LiBeliefUpdater <: Updater #TODO understand this
+    P::LiPOMDP
+end
+
 
 
 #transition function, observation function, reward function

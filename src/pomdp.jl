@@ -102,11 +102,11 @@ end
 
 #give signal of where you end up 
 function POMDPs.observation(P::LiPOMDP, s::State,  a::Action, sp::State)
-    # Add Gaussian noise to each deposit and the price
-    noisy_deposits = [rand(Normal(d, P.σ_obs)) for d in sp.deposits]
-    noisy_price = rand(Normal(sp.p, P.σ_obs))
-
-    return Observation(deposits = noisy_deposits, price = noisy_price)
+    deposit_estimate_dist = [Normal(d, P.σ_obs_d) for d in sp.deposits]
+    price_estimate_dist = Normal(sp.p, P.σ_obs_p)
+    prod_dist = product_distribution(deposit_estimate_dist..., price_estimate_dist)
+    return prod_dist
+    # Observation(deposits = noisy_deposits, price = noisy_price)
     # OR return Deterministic(sp)?
 end
 
@@ -225,3 +225,17 @@ end
 #last line has to be deterministic 
 #each action type will affect the state being updated 
 #produce at capacity -- rate capacity
+
+function POMDPs.gen(P::LiPOMDP, s::State, a::Action, rng::AbstractRNG)
+    # Generate a new state based on the current state and action
+    sp = rand(transition(P, s, a))
+
+    # Generate an observation based on the new state
+    o_array = rand(observation(P, s, a, sp))
+    o = Observation(deposits=o_array[1:end-1], price=o_array[end])
+
+    # Return the reward
+    r = reward(P, s, a)
+
+    return (sp=sp, o=o, r=r)
+end
