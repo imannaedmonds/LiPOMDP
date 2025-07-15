@@ -27,11 +27,6 @@ end
     have_mined::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
     mine_ready::Vector{Bool}  # true if site is developed and ready to operate
 end
-    
-@with_kw mutable struct LiBeliefUpdater <: Updater #TODO understand this
-    P::LiPOMDP
-end
-
 
 @with_kw mutable struct LiPOMDP <: POMDP{State,Action,Observation}
     σ_obs::Float64 = 1.0 # Standard deviation of the observation noise
@@ -39,7 +34,7 @@ end
     time_horizon::Int64 = 30 #time horizon
     demand::Vector{Float64} 
     # [2.0, 4.0, 3.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0],
-    n_deposits::Int64 = 4 # per thousand of minerals in 30 years
+    #n_deposits::Int64 = 4 # per thousand of minerals in 30 years
     mine_output::Float64 #annual output per open mine
     price_model_type::Int64 = 1  #different pricing models 1) static 2) linear, 3) exponential, 4) stochastic pricing (GBM), 5) Dynamic Price  
     CO2_cost::Int64 = 120
@@ -48,8 +43,8 @@ end
     opex_per_mine::Int64 = -10
     p₀::Float64 = 10.0 # Price per thousand               # initial price
     σ_price::Float64 = 10.0   # standard deviation for price noise
-    α_slope::Float64 = 10.0   # linear slope (for linear pricing), increasing 10,000 dollars every year 
-    λ_exp::Float64 = 0.05      # exponential growth rate
+    α_slope::Float64 = 878.39   # linear slope (for linear pricing), increasing 10,000 dollars every year 
+    λ_exp::Float64 = 0.1261     # exponential growth rate
     μ_drift::Float64 = 0.0     # drift for stochastic, TODO mention in the paper that you can set it to something 
     β_action::Float64 = 0.01   # market-maker action sensitivity
     γ_state::Float64 = 0.01    # state-dependence sensitivity
@@ -69,6 +64,10 @@ end
     # stochastic_price::Bool
     # alpha::Float64 # Parameter to control tradeoff between emissions and volume
     # compute_tradeoff::Bool
+end
+
+@with_kw mutable struct LiBeliefUpdater <: Updater #TODO understand this
+    P::LiPOMDP
 end
 
 

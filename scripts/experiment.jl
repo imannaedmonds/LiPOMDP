@@ -32,3 +32,7 @@ prob_s1=transition(pomdp, s0, a0)
 s1 = rand(rng, prob_s1)
 
 r = reward(pomdp, s0, a0)
+
+
+
+

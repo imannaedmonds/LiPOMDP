@@ -54,18 +54,21 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
 
     # 1. Static Pricing
     if P.price_model_type == 1
+        p₀ = 10355.33
         new_price = p₀ + noise
         return new_priceg
     end
 
     # 2. Linear Pricing
     if P.price_model_type == 2
+        p₀ = -2381.38         
         new_price = p₀ + P.α_slope * t + noise
         return new_price
     end
 
     # 3. Exponential Pricing
     if P.price_model_type == 3
+        p₀ = 917.36          
         new_price = p₀ * exp(P.λ_exp * t + noise)
         return new_price
     end
@@ -106,8 +109,10 @@ function POMDPs.observation(P::LiPOMDP, s::State,  a::Action, sp::State)
     noisy_deposits = [rand(Normal(d, P.σ_obs)) for d in sp.deposits]
     noisy_price = rand(Normal(sp.p, P.σ_obs))
 
+    # a vector of normal distribution
+    
     return Observation(deposits = noisy_deposits, price = noisy_price)
-    # OR return Deterministic(sp)?
+    #return Deterministic(sp)?
 end
 
 #have a POMDP that updates, takes the POMDP as the input and the updater
@@ -146,7 +151,6 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
     updated_price = Normal(μp_post, sqrt(σp_post2))
 
     # Construct and return the updated belief 
-
     return LiBelief(
         deposits_distribution = updated_deposits,  # new beliefs over each site's deposit
         t = b.t + 1,                               # increment time
