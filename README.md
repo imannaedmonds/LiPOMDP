@@ -9,9 +9,9 @@
 - [x] Module installation and dependencies
 - [x] Fix the `observation` function
     - [x] We also add `gen` function
-- [ ] Fix the belief update
-- [ ] Go over `initialstate` function 
-- [ ] Add `hist_data` to `LiPOMDP` to be able to use historical data
+- [ ] Fix the belief update (Mansur)
+- [ ] Go over `initialstate` function (Mansur)
+- [ ] Add `hist_data` to `LiPOMDP` to be able to use historical data (Anna)
 - [ ] Add slope + intercept and exponential parameters for pricing models
 - [ ] Set up the `LiPOMDP` to be able to 
     - [ ] use different pricing models 

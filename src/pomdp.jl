@@ -1,17 +1,18 @@
+#MAIN functions
 
-
+#Rewards for mining
 function compute_emissions(P::LiPOMDP, s::State, a::Action)
-    # Only apply emissions cost if mining occurs
     emissions = 0.0
     if a.type == 3  # Operate mine
         site = a.site
-        if s.mine_ready[site]
-            amt = min(P.mine_output, s.deposits[site])
-            emissions = amt * P.CO2_emissions  # e.g., tCO2 per ton of Li mined
+        if s.ready_to_operate[site]
+            amt = min(P.output, s.deposits[site])
+            # Use appropriate emission factor based on deposit type
+            emission_factor = P.deposit_types[site] ? P.dle_CO2_emissions : P.mining_CO2_emissions
+            cost_factor = P.deposit_types[site] ? P.dle_CO2_cost : P.mining_CO2_cost
+            emissions = amt * emission_factor * cost_factor
         end
     end
-    # You may want to multiply by a CO2 cost ($/ton), e.g.:
-    emissions *= P.CO2_cost
     return -emissions  # negative = penalty
 end
 
@@ -19,19 +20,20 @@ function compute_npv(P::LiPOMDP, s::State, a::Action)
     npv = 0.0
     if a.type == 3  # Operate mine
         site = a.site
-        if s.mine_ready[site]
-            amt = min(P.mine_output, s.deposits[site])
-            # Revenue = amount mined * price (per ton, e.g.)
-            revenue = amt * s.p
-            # Cost = opex (could add capex if opening mine this step)
-            opex = P.opex_per_mine * amt
-            npv = revenue - opex
+        if s.ready_to_operate[site]
+            amt = min(P.output, s.deposits[site])
+            revenue = amt * s.price
+            # Use appropriate opex based on deposit type
+            opex = P.deposit_types[site] ? P.dle_opex : P.mining_opex
+            npv = revenue + (opex * amt)  # opex is negative
         end
+    elseif a.type == 2  # Open mine
+        site = a.site
+        # Use appropriate capex based on deposit type
+        capex = P.deposit_types[site] ? P.dle_capex : P.mining_capex
+        npv = capex
     end
-    # Capex if opening new mine
-    if a.type == 2  # Open mine
-        npv -= P.capex_per_mine
-    end
+
     return npv
 end
 
@@ -47,7 +49,7 @@ end
 
 
 function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
-    t = s.t
+    t = s.time
     Δt = 1.0  # step size -- is 1 year for simplicity
     noise = rand(Normal(0, P.σ_price))
     p₀ = P.p₀
@@ -56,7 +58,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
     if P.price_model_type == 1
         p₀ = 10355.33
         new_price = p₀ + noise
-        return new_priceg
+        return new_price
     end
 
     # 2. Linear Pricing
@@ -75,7 +77,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
 
     # 4. Stochastic Pricing (log-normal random walk)
     if P.price_model_type == 4
-        new_price = p_t * exp(P.μ_drift * Δt + noise)
+        new_price = p₀  * exp(P.μ_drift * Δt + noise)
         return new_price
     end
 
@@ -88,18 +90,16 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         else
             a_val = a.type
         end
-        return p_t * exp(P.μ_drift * Δt + β * a_val + noise)
+        return p₀ * exp(P.μ_drift * Δt + β * a_val + noise)
     end
 
     # 6. Dynamic Pricing (Market Maker) -- State-Dependent
     if P.price_model_type == 6
         γ = P.γ_state
         scarcity = sum(s.deposits)   # Example: total remaining deposits
-        new_price = p_t * exp(P.μ_drift * Δt + γ * scarcity + noise)
+        new_price = p₀ * exp(P.μ_drift * Δt + γ * scarcity + noise)
         return new_price
     end
-
-
 end
 
 
@@ -111,8 +111,6 @@ function POMDPs.observation(P::LiPOMDP, s::State,  a::Action, sp::State)
     price_estimate_dist = Normal(sp.p, P.σ_obs_p)
     prod_dist = product_distribution(deposit_estimate_dist..., price_estimate_dist)
     return prod_dist
-    # Observation(deposits = noisy_deposits, price = noisy_price)
-    # OR return Deterministic(sp)?
 end
 
 #have a POMDP that updates, takes the POMDP as the input and the updater
@@ -144,7 +142,7 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
 
     prior_p = b.p_distribution                   # prior belief over price
     μp, σp = mean(prior_p), std(prior_p)
-    zp = o.price                                 # observed noisy price
+    zp = o.observed_price                                 # observed noisy price
 
     σp_post2 = 1 / (1/σp^2 + 1/P.σ_obs^2)         # updated variance for price
     μp_post = σp_post2 * (μp/σp^2 + zp/P.σ_obs^2) # updated mean for price
@@ -153,11 +151,12 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
     # Construct and return the updated belief 
     return LiBelief(
         deposits_distribution = updated_deposits,  # new beliefs over each site's deposit
-        t = b.t + 1,                               # increment time
-        v = b.v,                                   # total lithium mined so far (unchanged here)
+        time = b.time + 1,                               # increment time
+        volume = b.volume,                                   # total lithium mined so far (unchanged here)
+        demand = b.demand #demand
         p_distribution = updated_price,            # updated price belief
-        have_mined = copy(b.have_mined),           # retain mining history
-        mine_ready = copy(b.mine_ready)            # retain mine readiness
+        have_operated= copy(b.have_operated),           # retain mining history
+        ready_to_operate = copy(b.ready_to_operate)            # retain mine readiness
     )
 end
 
@@ -166,16 +165,17 @@ end
 # Completing Initial State
 function POMDPs.initialstate(P::LiPOMDP)
     init_deposits = fill(10000.0, P.n_deposits)  # example initial values
-    mine_ready = fill(false, P.n_deposits)
-    have_mined = fill(false, P.n_deposits)
+    ready_to_operate = fill(false, P.n_deposits)
+    have_operated = fill(false, P.n_deposits)
 
     sp = State(
-        deposits = init_deposits,
-        t = 1.0,
-        v = 0.0,
-        p = P.p₀,
-        have_mined = have_mined,
-        mine_ready = mine_ready
+        deposit = init_deposits,
+        time = 1.0,
+        volume = 0.0,
+        price = P.p₀,
+        demand = demand
+        have_operated = have_operated,
+        ready_to_operate = ready_to_operate
     )
 
     return Deterministic(sp)
@@ -189,7 +189,7 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     #how to handle each action type 
     #update all of the properties of sp
     sp = deepcopy(s) #make a copy of the state
-    sp.t += 1  # Time always advances
+    sp.time += 1  # Time always advances
     sp.p = update_price(P, s, a)
     #changing price here based on type of pricing model
 
@@ -201,21 +201,21 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     # Action: Open Mine (type 2)
     if a.type == 2
         site = a.site
-        sp.mine_ready[site] = true
+        sp.ready_to_operate[site] = true
         return Deterministic(sp)
     end
 
     #Action: Operate (type 3)
     if a.type == 3
         site = a.site
-        if sp.mine_ready[site]
-            max_amt = min(P.mine_output, sp.deposits[site])
+        if sp.ready_to_operate[site]
+            max_amt = min(P.output, sp.deposits[site])
             # Add randomness (10% std deviation)
             amt_dist = Truncated(Normal(max_amt, 0.1 * max_amt), 0.0, max_amt)
             amt = rand(amt_dist)
 
             sp.deposits[site] -= amt
-            sp.v += amt
+            sp.volume += amt
         end
         return Deterministic(sp)
     end
@@ -236,10 +236,11 @@ function POMDPs.gen(P::LiPOMDP, s::State, a::Action, rng::AbstractRNG)
 
     # Generate an observation based on the new state
     o_array = rand(observation(P, s, a, sp))
-    o = Observation(deposits=o_array[1:end-1], price=o_array[end])
+    o = Observation(deposits=o_array[1:end-1], observed_price=o_array[end])
 
     # Return the reward
     r = reward(P, s, a)
 
     return (sp=sp, o=o, r=r)
 end
+
