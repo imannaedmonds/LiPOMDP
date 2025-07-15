@@ -5,9 +5,10 @@
 # measured in thousand of tonnes
 # Define the year and production values manually extracted from the image and user's message
 
-# Data with 
+# Data for demand https://www.usgs.gov/centers/national-minerals-information-center
 
-# Define the years, demand (in thousand metric tons), and price (in USD per metric ton)
+
+# Define the years, demand (in metric tons), and price (in USD per metric ton)
 years = [1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
          2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014,
          2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
@@ -19,6 +20,13 @@ production = [9485.481, 14783.803, 15591.14, 14192.644, 12875.787,
           29543.085, 38217.278, 50850.212, 95134.285, 86881.62,
           83695.14, 107879.66, 157809.71, 198012.6, 201012.6,]
 
+demand =  [7320.0, 9486.0, 11652.0, 13818.0, 15984.0,
+          18150.0, 23526.0, 28902.0, 34278.0, 39654.0,
+          45030.0, 58376.0, 71722.0, 85068.0, 98414.0,
+          111760.0, 104688.0, 97616.0, 90544.0, 83472.0,
+          76400.0, 86170.0, 97190.0, 109620.0, 123640.0,
+          139460.0, 157290.0, 177410.0, 200100.0, 225700.0]
+
 price = [3200.0, 3400.0, 3800.0, 4000.0, 4200.0,
          4400.0, 4600.0, 4800.0, 5000.0, 5200.0,
          5400.0, 5600.0, 6000.0, 6400.0, 5800.0,
@@ -26,29 +34,11 @@ price = [3200.0, 3400.0, 3800.0, 4000.0, 4200.0,
          6500.0, 8650.0, 15000.0, 16000.0, 12100.0,
          10100.0, 14200.0, 71100.0, 41300.0, 14000.0]  # Assumes price data starts from 1995
 
-# Create the dictionary
-lithium_data = Dict(years[i] => (demand[i], price[i]) for i in 1:length(years))
-
-
-
-# Normalize time (t=0 at year 1995)
-t = years - 1995
-
-# --- Linear model fitting ---
-def linear_model(t, p0, alpha_slope):
-    return p0 + alpha_slope * t
-
-popt_linear, _ = curve_fit(linear_model, t, price)
-p0_linear, alpha_slope = popt_linear
-
-# --- Exponential model fitting ---
-def exponential_model(t, p0, lambda_exp):
-    return p0 * np.exp(lambda_exp * t)
-
-popt_exp, _ = curve_fit(exponential_model, t, price, p0=[price[0], 0.1])
-p0_exp, lambda_exp = popt_exp
-
-(p0_linear, alpha_slope), (p0_exp, lambda_exp)
-Result
-((-3008.4134227824147, 945.5763321773571),
- (58.40860272188521, 0.24080763725507343))
+# Update the dictionary to include production data
+lithium_data = Dict(
+    years[i] => (
+        demand[i],      # demand
+        price[i],       # price
+        production[i]   # production
+    ) for i in 1:length(years)
+)

@@ -22,30 +22,41 @@ function compute_npv(P::LiPOMDP, s::State, a::Action)
         site = a.site
         if s.ready_to_operate[site]
             amt = min(P.output, s.deposits[site])
-            revenue = amt * s.price
-            # Use appropriate opex based on deposit type
+            # Don't calculate revenue here - let reward function handle market dynamics
             opex = P.deposit_types[site] ? P.dle_opex : P.mining_opex
-            npv = revenue + (opex * amt)  # opex is negative
+            npv = opex * amt  # Only operating costs, no revenue
         end
     elseif a.type == 2  # Open mine
         site = a.site
-        # Use appropriate capex based on deposit type
         capex = P.deposit_types[site] ? P.dle_capex : P.mining_capex
         npv = capex
     end
-
     return npv
 end
 
 function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
-    #keep the reward function simple
-    npv = compute_npv(P, s, a)
+    current_production = if a.type == 3 && s.ready_to_operate[a.site]
+        min(P.output, s.deposits[a.site])
+    else
+        0.0
+    end
+    
+    # Market-based revenue (only get paid for what you can sell)
+    sellable_amount = min(current_production, s.company_demand)
+    revenue = sellable_amount * s.price
+    
+    # Penalty for overproduction (storage costs, market flooding, etc.)
+    excess_production = max(0, current_production - s.company_demand)
+    overproduction_penalty = excess_production * s.price * 0.2  # 20% penalty
+    
+    # Operating costs and emissions
+    npv = compute_npv(P, s, a)  # Now only contains costs
     emissions = compute_emissions(P, s, a)
-    # α weights economics, (1-α) weights emissions penalty
-
-    return P.alpha * npv + (1 - P.alpha) * emissions
+    
+    # Total reward
+    total_reward = revenue + npv - overproduction_penalty + (1 - P.alpha) * emissions
+    return total_reward
 end
-
 
 
 function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
@@ -102,14 +113,29 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
     end
 end
 
+function update_demand(P::LiPOMDP, s::State)
+    t = s.time
+    current_year = P.start_year + Int(floor(t)) - 1
+    
+    #historical demand
+    base_demand = get_historical_demand(P, current_year)
+    
+    # Add growth and uncertainty
+    growth = base_demand * P.demand_growth_rate
+    noise = rand(Normal(0, P.demand_volatility * base_demand))
+    
+    return max(0.0, base_demand + growth + noise)
+end
 
 #give signal of where you end up 
 function POMDPs.observation(P::LiPOMDP, s::State,  a::Action, sp::State)
-    # Add Gaussian noise to each deposit and the price
-    # a vector of normal distribution
+    # Add Gaussian noise to deposits, price, and demand
     deposit_estimate_dist = [Normal(d, P.σ_obs_d) for d in sp.deposits]
-    price_estimate_dist = Normal(sp.p, P.σ_obs_p)
-    prod_dist = product_distribution(deposit_estimate_dist..., price_estimate_dist)
+    price_estimate_dist = Normal(sp.price, P.σ_obs_p)
+    demand_estimate_dist = Normal(sp.demand, P.σ_obs_demand)
+    
+    # Combine all distributions
+    prod_dist = product_distribution(deposit_estimate_dist..., price_estimate_dist, demand_estimate_dist)
     return prod_dist
 end
 
@@ -139,7 +165,6 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
     end
 
     #Update the price belief
-
     prior_p = b.p_distribution                   # prior belief over price
     μp, σp = mean(prior_p), std(prior_p)
     zp = o.observed_price                                 # observed noisy price
@@ -148,13 +173,22 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
     μp_post = σp_post2 * (μp/σp^2 + zp/P.σ_obs^2) # updated mean for price
     updated_price = Normal(μp_post, sqrt(σp_post2))
 
+    # Update the demand belief
+    prior_d = b.d_distribution                   # prior belief over demand
+    μd, σd = mean(prior_d), std(prior_d)
+    zd = o.observed_demand                       # observed noisy demand
+
+    σd_post2 = 1 / (1/σd^2 + 1/P.σ_obs_demand^2)  # updated variance for demand
+    μd_post = σd_post2 * (μd/σd^2 + zd/P.σ_obs_demand^2) # updated mean for demand
+    updated_demand = Normal(μd_post, sqrt(σd_post2))
+
     # Construct and return the updated belief 
     return LiBelief(
         deposits_distribution = updated_deposits,  # new beliefs over each site's deposit
         time = b.time + 1,                               # increment time
         volume = b.volume,                                   # total lithium mined so far (unchanged here)
-        demand = b.demand #demand
         p_distribution = updated_price,            # updated price belief
+        d_distribution = updated_demand,           # Add updated demand distribution
         have_operated= copy(b.have_operated),           # retain mining history
         ready_to_operate = copy(b.ready_to_operate)            # retain mine readiness
     )
@@ -164,33 +198,44 @@ end
 #TODO: what does the initial state distribution look like
 # Completing Initial State
 function POMDPs.initialstate(P::LiPOMDP)
-    init_deposits = fill(10000.0, P.n_deposits)  # example initial values
+    init_deposits = fill(P.init_deposit_size, P.n_deposits)
     ready_to_operate = fill(false, P.n_deposits)
     have_operated = fill(false, P.n_deposits)
-
-    sp = State(
+    
+    # Calculate initial demands
+    global_production = get_historical_production(P, P.start_year)
+    global_demand, company_demand = calculate_company_demand(P, global_production)
+    
+    return Deterministic(State(
         deposit = init_deposits,
         time = 1.0,
         volume = 0.0,
         price = P.p₀,
-        demand = demand
+        global_demand = global_demand,
+        company_demand = company_demand,
         have_operated = have_operated,
         ready_to_operate = ready_to_operate
-    )
-
-    return Deterministic(sp)
+    ))
 end
-
 
 #given a state s and action a it outputs the distribution of the next state sp
 function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
-
+    sp = deepcopy(s)
+    sp.time += 1
+    
+    # Update price and demand
+    current_year = P.start_year + Int(floor(sp.time)) - 1
+    sp.price = update_price(P, s, a)
+    
+    # Get production data
+    global_production = get_historical_production(P, current_year)
+    
+    # Update demands with uncertainty
+    sp.global_demand, sp.company_demand = calculate_company_demand(P, global_production)
+    
     #create scenarios for each action item depending on state
     #how to handle each action type 
     #update all of the properties of sp
-    sp = deepcopy(s) #make a copy of the state
-    sp.time += 1  # Time always advances
-    sp.p = update_price(P, s, a)
     #changing price here based on type of pricing model
 
     # Action: Do Nothing and Explore (type 0 and 1)
@@ -230,15 +275,17 @@ end
 #each action type will affect the state being updated 
 #produce at capacity -- rate capacity
 
+# Update the gen function to handle demand observations
 function POMDPs.gen(P::LiPOMDP, s::State, a::Action, rng::AbstractRNG)
-    # Generate a new state based on the current state and action
     sp = rand(transition(P, s, a))
 
-    # Generate an observation based on the new state
     o_array = rand(observation(P, s, a, sp))
-    o = Observation(deposits=o_array[1:end-1], observed_price=o_array[end])
+    o = Observation(
+        deposits=o_array[1:end-2],  # All but last two elements are deposits
+        observed_price=o_array[end-1],  # Second to last is price
+        observed_demand=o_array[end]    # Last element is demand
+    )
 
-    # Return the reward
     r = reward(P, s, a)
 
     return (sp=sp, o=o, r=r)
