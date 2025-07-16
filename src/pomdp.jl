@@ -42,12 +42,8 @@ function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
     end
     
     # Market-based revenue (only get paid for what you can sell)
-    sellable_amount = min(current_production, s.company_demand)
+    sellable_amount = min(current_production, s.company_demand) #overproduction penalty
     revenue = sellable_amount * s.price
-    
-    # Penalty for overproduction (storage costs, market flooding, etc.)
-    excess_production = max(0, current_production - s.company_demand)
-    overproduction_penalty = excess_production * s.price * 0.2  # 20% penalty
     
     # Operating costs and emissions
     npv = compute_npv(P, s, a)  # Now only contains costs
@@ -65,6 +61,9 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
     noise = rand(Normal(0, P.σ_price))
     p₀ = P.p₀
 
+    # 0. Historical Data
+    #TODO check the year and then return the price of that year
+
     # 1. Static Pricing
     if P.price_model_type == 1
         p₀ = 10355.33
@@ -74,7 +73,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
 
     # 2. Linear Pricing
     if P.price_model_type == 2
-        p₀ = -2381.38         
+        p₀ = -2381.38   #TODO change it from a non negative       
         new_price = p₀ + P.α_slope * t + noise
         return new_price
     end
@@ -82,18 +81,12 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
     # 3. Exponential Pricing
     if P.price_model_type == 3
         p₀ = 917.36          
-        new_price = p₀ * exp(P.λ_exp * t + noise)
-        return new_price
-    end
-
-    # 4. Stochastic Pricing (log-normal random walk)
-    if P.price_model_type == 4
-        new_price = p₀  * exp(P.μ_drift * Δt + noise)
+        new_price = p₀ * exp(P.λ_exp * t) + noise
         return new_price
     end
 
     #TODO check these
-    # 5. Dynamic (Market Maker, action-dependent)
+    # 4. Dynamic (Market Maker, action-dependent)
     if P.price_model_type == 5
         β = P.β_action
         if a === nothing
@@ -104,7 +97,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         return p₀ * exp(P.μ_drift * Δt + β * a_val + noise)
     end
 
-    # 6. Dynamic Pricing (Market Maker) -- State-Dependent
+    # 5. Dynamic Pricing (Market Maker) -- State-Dependent
     if P.price_model_type == 6
         γ = P.γ_state
         scarcity = sum(s.deposits)   # Example: total remaining deposits
@@ -113,6 +106,9 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
     end
 end
 
+#TODO compine update demand 
+
+#HISTORICAL DEMAND calculated from % of global company demand 
 function update_demand(P::LiPOMDP, s::State)
     t = s.time
     current_year = P.start_year + Int(floor(t)) - 1
@@ -126,6 +122,21 @@ function update_demand(P::LiPOMDP, s::State)
     
     return max(0.0, base_demand + growth + noise)
 end
+
+# Add function to calculate company's demand
+function calculate_company_demand(P::LiPOMDP, global_production::Float64)
+    # Add uncertainty to global demand forecast
+    demand_noise = global_production * P.demand_uncertainty
+    uncertain_global_demand = max(0.0, global_production + rand(Normal(0, demand_noise)))
+    
+    # Calculate company's target demand based on market share
+    company_demand = uncertain_global_demand * P.market_share_target
+    
+    return (uncertain_global_demand, company_demand)
+end
+
+#transition function, observation function, reward function
+
 
 #give signal of where you end up 
 function POMDPs.observation(P::LiPOMDP, s::State,  a::Action, sp::State)
@@ -187,8 +198,8 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
         deposits_distribution = updated_deposits,  # new beliefs over each site's deposit
         time = b.time + 1,                               # increment time
         volume = b.volume,                                   # total lithium mined so far (unchanged here)
-        p_distribution = updated_price,            # updated price belief
-        d_distribution = updated_demand,           # Add updated demand distribution
+        price_distribution = updated_price,            # updated price belief
+        demand_distribution = updated_demand,           # Add updated demand distribution
         have_operated= copy(b.have_operated),           # retain mining history
         ready_to_operate = copy(b.ready_to_operate)            # retain mine readiness
     )

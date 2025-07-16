@@ -18,18 +18,18 @@ end
 @with_kw mutable struct Observation
     deposits::Vector{Float64} # [v₁, v₂, v₃, v₄]
     observed_price::Float64 
-    observed_demand::Float64  # Add observed demand
+    observed_demand::Float64 
 end
 
+#only the unobservable has to be a distribution
 @with_kw mutable struct LiBelief{T<:UnivariateDistribution} 
     deposits_distribution::Vector{T} # [v₁, v₂, v₃, v₄]
     time::Float64 = 1.0  # current time, year
     volume::Float64 = 0.0  # current amt of Li mined up to time t
-    p_distribution::T  # Price per thousand
-    demand::Float64 = 0.0 
+    price_distribution::T  # Price per thousand
+    demand_distribution::T  # Demand distribution
     have_operated::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
     ready_to_operate::Vector{Bool}  # true if site is developed and ready to operate
-    d_distribution::T  # Demand distribution
 end
     
 
@@ -89,66 +89,3 @@ end
 @with_kw mutable struct LiBeliefUpdater <: Updater #TODO understand this
     P::LiPOMDP
 end
-
-#TODO-Mansur where should I put the hisotrical data
-# Historical data access functions
-function get_historical_price(pomdp::LiPOMDP, year::Int64)
-    if haskey(pomdp.hist_data, year)
-        return pomdp.hist_data[year][2]  # price
-    else
-        @warn "No historical price data for year $year"
-        return pomdp.p₀
-    end
-end
-
-function get_historical_demand(pomdp::LiPOMDP, year::Int64)
-    if haskey(pomdp.hist_data, year)
-        return pomdp.hist_data[year][1]  # demand
-    else
-        @warn "No historical demand data for year $year"
-        return 0.0
-    end
-end
-
-function get_historical_production(pomdp::LiPOMDP, year::Int64)
-    if haskey(pomdp.hist_data, year)
-        return pomdp.hist_data[year][3]  # production
-    else
-        @warn "No historical production data for year $year"
-        return 0.0
-    end
-end
-
-# Helper function to get all historical data for a year
-function get_historical_data(pomdp::LiPOMDP, year::Int64)
-    if haskey(pomdp.hist_data, year)
-        demand, price, production = pomdp.hist_data[year]
-        return (
-            demand=demand,
-            price=price,
-            production=production
-        )
-    else
-        @warn "No historical data for year $year"
-        return (
-            demand=0.0,
-            price=pomdp.p₀,
-            production=0.0
-        )
-    end
-end
-
-# Add function to calculate company's demand
-function calculate_company_demand(P::LiPOMDP, global_production::Float64)
-    # Add uncertainty to global demand forecast
-    demand_noise = global_production * P.demand_uncertainty
-    uncertain_global_demand = max(0.0, global_production + rand(Normal(0, demand_noise)))
-    
-    # Calculate company's target demand based on market share
-    company_demand = uncertain_global_demand * P.market_share_target
-    
-    return (uncertain_global_demand, company_demand)
-end
-
-#transition function, observation function, reward function
-
