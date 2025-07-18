@@ -6,7 +6,6 @@
     demand::Float64 = 0.0 
     have_operated::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
     ready_to_operate::Vector{Bool}  # true if site is developed and ready to operate
-    global_demand::Float64 = 0.0  # Global market demand
     company_demand::Float64 = 0.0  # Company's target demand (market share * global)
 end
 

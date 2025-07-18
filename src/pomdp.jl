@@ -108,23 +108,8 @@ end
 
 #TODO compine update demand 
 
-#HISTORICAL DEMAND calculated from % of global company demand 
-function update_demand(P::LiPOMDP, s::State)
-    t = s.time
-    current_year = P.start_year + Int(floor(t)) - 1
-    
-    #historical demand
-    base_demand = get_historical_demand(P, current_year)
-    
-    # Add growth and uncertainty
-    growth = base_demand * P.demand_growth_rate
-    noise = rand(Normal(0, P.demand_volatility * base_demand))
-    
-    return max(0.0, base_demand + growth + noise)
-end
-
 # Add function to calculate company's demand
-function calculate_company_demand(P::LiPOMDP, global_production::Float64)
+function update_demand(P::LiPOMDP, global_production::Float64)
     # Add uncertainty to global demand forecast
     demand_noise = global_production * P.demand_uncertainty
     uncertain_global_demand = max(0.0, global_production + rand(Normal(0, demand_noise)))
@@ -132,7 +117,7 @@ function calculate_company_demand(P::LiPOMDP, global_production::Float64)
     # Calculate company's target demand based on market share
     company_demand = uncertain_global_demand * P.market_share_target
     
-    return (uncertain_global_demand, company_demand)
+    return (company_demand)
 end
 
 #transition function, observation function, reward function
@@ -215,14 +200,13 @@ function POMDPs.initialstate(P::LiPOMDP)
     
     # Calculate initial demands
     global_production = get_historical_production(P, P.start_year)
-    global_demand, company_demand = calculate_company_demand(P, global_production)
+    company_demand = update_demand(P, global_production)
     
     return Deterministic(State(
         deposit = init_deposits,
         time = 1.0,
         volume = 0.0,
         price = P.p₀,
-        global_demand = global_demand,
         company_demand = company_demand,
         have_operated = have_operated,
         ready_to_operate = ready_to_operate
@@ -242,7 +226,7 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     global_production = get_historical_production(P, current_year)
     
     # Update demands with uncertainty
-    sp.global_demand, sp.company_demand = calculate_company_demand(P, global_production)
+    sp.company_demand = update_demand(P, global_production)
     
     #create scenarios for each action item depending on state
     #how to handle each action type 
