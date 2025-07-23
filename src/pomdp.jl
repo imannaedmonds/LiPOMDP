@@ -6,7 +6,7 @@ function compute_emissions(P::LiPOMDP, s::State, a::Action)
     if a.type == 3  # Operate mine
         site = a.site
         if s.ready_to_operate[site]
-            amt = min(P.output, s.deposits[site])
+            amt = min(P.output, s.deposit[site])
             # Use appropriate emission factor based on deposit type
             emission_factor = P.deposit_types[site] ? P.dle_CO2_emissions : P.mining_CO2_emissions
             cost_factor = P.deposit_types[site] ? P.dle_CO2_cost : P.mining_CO2_cost
@@ -21,7 +21,7 @@ function compute_npv(P::LiPOMDP, s::State, a::Action)
     if a.type == 3  # Operate mine
         site = a.site
         if s.ready_to_operate[site]
-            amt = min(P.output, s.deposits[site])
+            amt = min(P.output, s.deposit[site])
             # Don't calculate revenue here - let reward function handle market dynamics
             opex = P.deposit_types[site] ? P.dle_opex : P.mining_opex
             npv = opex * amt  # Only operating costs, no revenue
@@ -36,7 +36,7 @@ end
 
 function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
     current_production = if a.type == 3 && s.ready_to_operate[a.site]
-        min(P.output, s.deposits[a.site])
+        min(P.output, s.deposit[a.site])
     else
         0.0
     end
@@ -50,7 +50,7 @@ function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
     emissions = compute_emissions(P, s, a)
     
     # Total reward
-    total_reward = revenue + npv - overproduction_penalty + (1 - P.alpha) * emissions
+    total_reward = revenue - npv + (1 - P.alpha) * emissions
     return total_reward
 end
 
@@ -100,7 +100,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
     # 5. Dynamic Pricing (Market Maker) -- State-Dependent
     if P.price_model_type == 6
         γ = P.γ_state
-        scarcity = sum(s.deposits)   # Example: total remaining deposits
+        scarcity = sum(s.deposit)   # Example: total remaining deposits
         new_price = p₀ * exp(P.μ_drift * Δt + γ * scarcity + noise)
         return new_price
     end
@@ -141,7 +141,7 @@ end
 #give signal of where you end up 
 function POMDPs.observation(P::LiPOMDP, s::State,  a::Action, sp::State)
     # Add Gaussian noise to deposits, price, and demand
-    deposit_estimate_dist = [Normal(d, P.σ_obs_d) for d in sp.deposits]
+    deposit_estimate_dist = [Normal(d, P.σ_obs_d) for d in sp.deposit]
     price_estimate_dist = Normal(sp.price, P.σ_obs_p)
     demand_estimate_dist = Normal(sp.demand, P.σ_obs_demand)
     
@@ -166,7 +166,7 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
 
         # Kalman filter update for Gaussian prior + Gaussian likelihood:
         # posterior variance: 1 / (1/σ_prior² + 1/σ_obs²)
-        σ_obs2 = P.σ_obs^2
+        σ_obs2 = P.σ_obs_d^2
         σ_prior2 = σ_prior^2
         σ_post2 = 1 / (1/σ_prior2 + 1/σ_obs2)     # updated variance
         μ_post = σ_post2 * (μ_prior/σ_prior2 + z/σ_obs2)  # updated mean (weighted avg)
@@ -176,16 +176,16 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
     end
 
     #Update the price belief
-    prior_p = b.p_distribution                   # prior belief over price
+    prior_p = b.price_distribution                   # prior belief over price
     μp, σp = mean(prior_p), std(prior_p)
     zp = o.observed_price                                 # observed noisy price
 
-    σp_post2 = 1 / (1/σp^2 + 1/P.σ_obs^2)         # updated variance for price
-    μp_post = σp_post2 * (μp/σp^2 + zp/P.σ_obs^2) # updated mean for price
+    σp_post2 = 1 / (1/σp^2 + 1/P.σ_obs_p^2)         # updated variance for price
+    μp_post = σp_post2 * (μp/σp^2 + zp/P.σ_obs_p^2) # updated mean for price
     updated_price = Normal(μp_post, sqrt(σp_post2))
 
     # Update the demand belief
-    prior_d = b.d_distribution                   # prior belief over demand
+    prior_d = b.demand_distribution                   # prior belief over demand
     μd, σd = mean(prior_d), std(prior_d)
     zd = o.observed_demand                       # observed noisy demand
 
@@ -222,6 +222,7 @@ function POMDPs.initialstate(P::LiPOMDP)
         time = 1.0,
         volume = 0.0,
         price = P.p₀,
+        demand = company_demand,  # Using company demand as the demand field
         global_demand = global_demand,
         company_demand = company_demand,
         have_operated = have_operated,
@@ -265,12 +266,12 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     if a.type == 3
         site = a.site
         if sp.ready_to_operate[site]
-            max_amt = min(P.output, sp.deposits[site])
+            max_amt = min(P.output, sp.deposit[site])
             # Add randomness (10% std deviation)
             amt_dist = Truncated(Normal(max_amt, 0.1 * max_amt), 0.0, max_amt)
             amt = rand(amt_dist)
 
-            sp.deposits[site] -= amt
+            sp.deposit[site] -= amt
             sp.volume += amt
         end
         return Deterministic(sp)
@@ -300,5 +301,66 @@ function POMDPs.gen(P::LiPOMDP, s::State, a::Action, rng::AbstractRNG)
     r = reward(P, s, a)
 
     return (sp=sp, o=o, r=r)
+end
+
+# Additional POMDP interface methods
+function POMDPs.isterminal(P::LiPOMDP, s::State)
+    # Terminal when time exceeds horizon or all deposits are exhausted
+    all_exhausted = all(d <= 0.0 for d in s.deposit)
+    time_exceeded = s.time > P.time_horizon
+    return all_exhausted || time_exceeded
+end
+
+function POMDPs.discount(P::LiPOMDP)
+    return P.γ
+end
+
+# Define action space
+function POMDPs.actions(P::LiPOMDP)
+    acts = Action[]
+    # Do nothing
+    push!(acts, Action(site=0, type=0))
+    
+    # For each site
+    for site in 1:P.n_deposits
+        # Explore
+        push!(acts, Action(site=site, type=1))
+        # Open mine
+        push!(acts, Action(site=site, type=2))
+        # Operate
+        push!(acts, Action(site=site, type=3))
+    end
+    return acts
+end
+
+function POMDPs.actionindex(P::LiPOMDP, a::Action)
+    if a.site == 0 && a.type == 0
+        return 1
+    else
+        # Calculate index based on site and type
+        # 3 actions per site (explore, open, operate)
+        return 1 + (a.site - 1) * 3 + a.type
+    end
+end
+
+# Initial observation distribution
+function POMDPs.initialobs(P::LiPOMDP, s::State)
+    # Use the same observation model as regular observations
+    # Create a dummy action for initial observation
+    dummy_action = Action(site=0, type=0)
+    return observation(P, s, dummy_action, s)
+end
+
+# Observation weight for POMCPOW
+function POMDPTools.obs_weight(P::LiPOMDP, s::State, a::Action, sp::State, o::Observation)
+    # Calculate the probability density of observation o given state sp
+    # Get the observation distribution
+    o_dist = observation(P, s, a, sp)
+    
+    # Create observation vector from Observation struct
+    o_vec = vcat(o.deposits, o.observed_price, o.observed_demand)
+    
+    # Calculate pdf
+    return pdf(o_dist, o_vec)
 end
 

@@ -6,8 +6,11 @@ using POMDPs
 using POMDPTools
 using Distributions
 using Random
+using Base: rand
 
-export State, Action, Observation, LiPOMDP
+include("historical_data.jl")
+
+export State, Action, Observation, LiPOMDP, LiBelief, LiBeliefUpdater
 include("model.jl")
 
 export get_historical_price, #TODO add all functions from utils
@@ -16,5 +19,7 @@ export get_historical_price, #TODO add all functions from utils
          get_historical_data
 include("utils.jl")
 
+export reward, transition, observation, update, gen, initialstate, isterminal, discount, actions, actionindex, initialobs
+export obs_weight
 include("pomdp.jl")
 end
