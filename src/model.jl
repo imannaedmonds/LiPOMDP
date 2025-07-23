@@ -39,10 +39,9 @@ end
 
     γ::Float64 = 0.97 #discounted reward
     time_horizon::Int64 = 29 #time horizon
-    # [2.0, 4.0, 3.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0, 3.0, 5.0, 4.0, 2.0, 1.0],
-    #n_deposits::Int64 = 4 # per thousand of minerals in 30 years
+    n_deposits::Int64 = 4 # number of deposits
     alpha::Float64 = 1.0 # Parameter to control tradeoff between emissions and volume
-    stochastic_price::Bool
+    stochastic_price::Bool = false
 
     # Add market parameters
     market_share_target::Float64 = 0.005  # Target 0.5% of global market
@@ -69,7 +68,7 @@ end
 
     #pricing model parameters
     price_model_type::Int64 = 1  #different pricing models 1) static 2) linear, 3) exponential, 4) stochastic pricing (GBM), 5) Dynamic Price  
-    hist_data::Dict{Int64, Tuple{Float64, Float64}} = lithium_data  # Historical data as (demand, price) pairs by year
+    hist_data::Dict{Int64, Tuple{Float64, Float64, Float64}} = lithium_data  # Historical data as (demand, price, production) tuples by year
     start_year::Int64 = 1995  #TODO-MANSUR check this Starting year for historical data
     p₀::Float64 = 10.0 # TODO-MANSUR should this change for each price model? 
     σ_price::Float64 = 3000.0   # standard deviation for price noise
@@ -87,4 +86,27 @@ end
 
 @with_kw mutable struct LiBeliefUpdater <: Updater #TODO understand this
     P::LiPOMDP
+end
+
+# Allow sampling states from beliefs for POMCPOW
+function Base.rand(rng::AbstractRNG, b::LiBelief)
+    # Sample deposit volumes
+    sampled_deposits = [rand(rng, d) for d in b.deposits_distribution]
+    
+    # Sample price and demand
+    sampled_price = rand(rng, b.price_distribution)
+    sampled_demand = rand(rng, b.demand_distribution)
+    
+    # Create state with sampled values and deterministic values from belief
+    return State(
+        deposit = sampled_deposits,
+        time = b.time,
+        volume = b.volume,
+        price = sampled_price,
+        demand = sampled_demand,
+        global_demand = sampled_demand * 200,  # Approximate based on market share
+        company_demand = sampled_demand,
+        have_operated = copy(b.have_operated),
+        ready_to_operate = copy(b.ready_to_operate)
+    )
 end
