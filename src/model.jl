@@ -2,7 +2,7 @@
     deposit::Vector{Float64} # [v₁, v₂, v₃, v₄]
     time::Float64 = 1.0  # current time, year
     volume::Float64 = 0.0  # current amt of Li mined up to time t
-    price::Float64 = 10.0  # Price per thousand
+    price::Float64 = 10_000.0  # Price per thousand
     demand::Float64 = 0.0 
     have_operated::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
     ready_to_operate::Vector{Bool}  # true if site is developed and ready to operate
@@ -48,8 +48,9 @@ end
     demand_uncertainty::Float64 = 0.15    # 15% std dev in demand forecasts
     
     # Production parameters
-    output::Float64 = 10000.0  # Annual output per mine
-    init_deposit_size::Float64 = 50000000.0  # Initial deposit size 
+    output::Float64 = 10_000.0  # Annual output per mine
+    init_deposit_size_dle::Float64 = 7_000_000.0  # Initial deposit size 
+    init_deposit_size_mining::Float64 = 5000_000.0  # Initial deposit size 
 
     # Mining method for each deposit (true = DLE, false = traditional)
     deposit_types::Vector{Bool} = [true, true, false, false]  # First two are DLE, last two traditional
@@ -104,7 +105,6 @@ function Base.rand(rng::AbstractRNG, b::LiBelief)
         volume = b.volume,
         price = sampled_price,
         demand = sampled_demand,
-        global_demand = sampled_demand * 200,  # Approximate based on market share
         company_demand = sampled_demand,
         have_operated = copy(b.have_operated),
         ready_to_operate = copy(b.ready_to_operate)

@@ -6,7 +6,7 @@ using Random
 using Distributions
 
 println("Setting up POMDP and policies...")
-rng = MersenneTwister(1234)
+rng = MersenneTwister(1234) # Set random seed for reproducibility
 pomdp = LiPOMDP(price_model_type=3)
 base_policy = RandomPolicy(pomdp)
 
@@ -14,9 +14,9 @@ base_policy = RandomPolicy(pomdp)
 solver = POMCPOWSolver(
     tree_queries=100,  # Reduced for testing
     max_depth=5,
-    criterion=MaxUCB(20.0),
-    final_criterion=MaxTries(),
-    enable_action_pw=false,
+    criterion=MaxUCB(20.0), #TODO what is this?
+    final_criterion=MaxTries(), #TODO what is this?
+    enable_action_pw=false,  #TODO what is this?
     k_observation=5.0,
     alpha_observation=1/20,
     estimate_value=FORollout(base_policy),
@@ -54,7 +54,7 @@ println("\n" * "="^60)
 println("POMCPOW Policy Simulation")
 println("="^60)
 
-hr_pomcpow = HistoryRecorder(max_steps=10, rng=MersenneTwister(1234))
+hr_pomcpow = HistoryRecorder(max_steps=20, rng=MersenneTwister(1234))
 hist_pomcpow = simulate(hr_pomcpow, pomdp, planner, LiBeliefUpdater(P=pomdp), b0, s0)
 
 println("\nStep-by-step POMCPOW simulation:")

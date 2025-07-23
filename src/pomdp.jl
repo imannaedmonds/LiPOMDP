@@ -66,14 +66,14 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
 
     # 1. Static Pricing
     if P.price_model_type == 1
-        p₀ = 10355.33
+        p₀ = 10_355.33
         new_price = p₀ + noise
         return new_price
     end
 
     # 2. Linear Pricing
     if P.price_model_type == 2
-        p₀ = -2381.38   #TODO change it from a non negative       
+        p₀ = -2_381.38   #TODO change it from a non negative       
         new_price = p₀ + P.α_slope * t + noise
         return new_price
     end
@@ -194,7 +194,14 @@ end
 #TODO: what does the initial state distribution look like
 # Completing Initial State
 function POMDPs.initialstate(P::LiPOMDP)
-    init_deposits = fill(P.init_deposit_size, P.n_deposits)
+    init_deposits = []
+    for i in 1:P.n_deposits
+        if P.deposit_types[i]  # DLE deposit
+            push!(init_deposits, P.init_deposit_size_dle)
+        else  # Traditional mining deposit
+            push!(init_deposits, P.init_deposit_size_mining)
+        end
+    end
     ready_to_operate = fill(false, P.n_deposits)
     have_operated = fill(false, P.n_deposits)
     
