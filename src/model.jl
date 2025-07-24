@@ -2,7 +2,7 @@
     deposit::Vector{Float64} # [v₁, v₂, v₃, v₄]
     time::Float64 = 1.0  # current time, year
     volume::Float64 = 0.0  # current amt of Li mined up to time t
-    price::Float64 = 10_000.0  # Price per thousand
+    price::Float64 = 1_000.0  # Price per thousand
     demand::Float64 = 0.0 
     have_operated::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
     ready_to_operate::Vector{Bool}  # true if site is developed and ready to operate
@@ -10,7 +10,7 @@
 end
 
 @with_kw mutable struct Action
-    site::Int64    # site: 0=DoNothing, 1-2=DLE, 3-4=Traditional
+    site::Int64    # site: 1-2=DLE, 3-4=Traditional
     type::Int64    # type: 0=DoNothing, 1=explore, 2=open, 3=operate
 end
 
@@ -34,8 +34,8 @@ end
 
 @with_kw mutable struct LiPOMDP <: POMDP{State,Action,Observation}
     #Observation parameters
-    σ_obs_d::Float64 = 1.0 # Standard deviation of the observation noise
-    σ_obs_p::Float64 = 1.0 # Standard deviation of the observation noise for price
+    σ_obs_d::Float64 = 100.0 # Standard deviation of the observation noise
+    σ_obs_p::Float64 = 500.0 # Standard deviation of the observation noise for price
 
     γ::Float64 = 0.97 #discounted reward
     time_horizon::Int64 = 29 #time horizon
@@ -44,11 +44,11 @@ end
     stochastic_price::Bool = false
 
     # Add market parameters
-    market_share_target::Float64 = 0.005  # Target 0.5% of global market
+    market_share_target::Float64 = 0.05  # Target 0.5% of global market
     demand_uncertainty::Float64 = 0.15    # 15% std dev in demand forecasts
     
     # Production parameters
-    output::Float64 = 10_000.0  # Annual output per mine
+    output::Float64 = 500.0  # Annual output per mine
     init_deposit_size_dle::Float64 = 7_000_000.0  # Initial deposit size 
     init_deposit_size_mining::Float64 = 5000_000.0  # Initial deposit size 
 
@@ -59,20 +59,20 @@ end
     mining_CO2_cost::Int64 = 120
     mining_CO2_emissions::Int64 = 15
     mining_capex::Int64 = 3000    # $3000 per ton of capacity
-    mining_opex::Int64 = 4500     # $4500 per ton operating cost
+    mining_opex::Int64 = 500     # $500 per ton operating cost
 
     # DLE parameters
     dle_CO2_cost::Int64 = 80      # Lower environmental cost
     dle_CO2_emissions::Int64 = 5   # Lower emissions
     dle_capex::Int64 = 5000       # Higher initial investment ($5000 per ton)
-    dle_opex::Int64 = 3500        # Lower operating costs ($3500 per ton)
+    dle_opex::Int64 = 300        # Lower operating costs ($3500 per ton)
 
     #pricing model parameters
     price_model_type::Int64 = 1  #different pricing models 1) static 2) linear, 3) exponential, 4) stochastic pricing (GBM), 5) Dynamic Price  
     hist_data::Dict{Int64, Tuple{Float64, Float64, Float64}} = lithium_data  # Historical data as (demand, price, production) tuples by year
     start_year::Int64 = 1995  #TODO-MANSUR check this Starting year for historical data
     p₀::Float64 = 10.0 # TODO-MANSUR should this change for each price model? 
-    σ_price::Float64 = 3000.0   # standard deviation for price noise
+    σ_price::Float64 = 1_000.0   # standard deviation for price noise
     α_slope::Float64 = 878.39   # linear slope (for linear pricing), increasing 10,000 dollars every year 
     λ_exp::Float64 = 0.1261     # exponential growth rate
     μ_drift::Float64 = 0.0     # drift for stochastic, TODO mention in the paper that you can set it to something 
@@ -81,8 +81,7 @@ end
 
     # Add demand uncertainty parameters
     σ_obs_demand::Float64 = 2.0  # Standard deviation for demand observation noise
-    demand_growth_rate::Float64 = 0.05  # Annual demand growth rate
-    demand_volatility::Float64 = 0.1  # Volatility in demand changes
+    dem
 end
 
 @with_kw mutable struct LiBeliefUpdater <: Updater #TODO understand this

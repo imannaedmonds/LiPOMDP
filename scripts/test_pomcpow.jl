@@ -12,12 +12,14 @@ base_policy = RandomPolicy(pomdp)
 
 # POMCPOW solver
 solver = POMCPOWSolver(
-    tree_queries=100,  # Reduced for testing
-    max_depth=5,
-    criterion=MaxUCB(20.0), #TODO what is this?
+    tree_queries=500,  # Reduced for testing
+    max_depth=10,
+    criterion=MaxUCB(50.0), #TODO what is this?
     final_criterion=MaxTries(), #TODO what is this?
-    enable_action_pw=false,  #TODO what is this?
+    enable_action_pw=true,  #uses progressive widening TODO what is this?
     k_observation=5.0,
+    #k_action=5.0, #TODO what is this?
+    #alpha_action=1/20, #TODO what is this?
     alpha_observation=1/20,
     estimate_value=FORollout(base_policy),
     tree_in_info=false,
@@ -29,11 +31,11 @@ planner = solve(solver, pomdp)
 # Initial state and belief
 s0 = rand(rng, initialstate(pomdp))
 b0 = LiBelief(
-    deposits_distribution=[Normal(d, 1.0) for d in s0.deposit],
+    deposits_distribution=[Normal(d, 1_000.0) for d in s0.deposit], #changed the distribution uncertainty
     time=s0.time,
     volume=s0.volume,
-    price_distribution=Normal(s0.price, 1.0),
-    demand_distribution=Normal(s0.demand, 1.0),
+    price_distribution=Normal(s0.price, 500.0),
+    demand_distribution=Normal(s0.company_demand, 10.0),
     have_operated=copy(s0.have_operated),
     ready_to_operate=copy(s0.ready_to_operate)
 )
@@ -54,7 +56,7 @@ println("\n" * "="^60)
 println("POMCPOW Policy Simulation")
 println("="^60)
 
-hr_pomcpow = HistoryRecorder(max_steps=20, rng=MersenneTwister(1234))
+hr_pomcpow = HistoryRecorder(max_steps=5, rng=MersenneTwister(1234))
 hist_pomcpow = simulate(hr_pomcpow, pomdp, planner, LiBeliefUpdater(P=pomdp), b0, s0)
 
 println("\nStep-by-step POMCPOW simulation:")
@@ -76,7 +78,7 @@ println("Random Policy Simulation")
 println("="^60)
 
 # For random policy, we still need to use belief and updater for POMDP simulation
-hr_random = HistoryRecorder(max_steps=10, rng=MersenneTwister(1234))
+hr_random = HistoryRecorder(max_steps=5, rng=MersenneTwister(1234))
 hist_random = simulate(hr_random, pomdp, base_policy, LiBeliefUpdater(P=pomdp), b0, s0)
 
 println("\nStep-by-step Random policy simulation:")
