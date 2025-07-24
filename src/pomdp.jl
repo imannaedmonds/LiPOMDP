@@ -3,7 +3,7 @@
 #Rewards for mining
 function compute_emissions(P::LiPOMDP, s::State, a::Action)
     emissions = 0.0
-    if a.type == 3 #operate a mine
+    if a.type == 3  # Operate mine
         site = a.site
         if s.ready_to_operate[site]
             amt = min(P.output, s.deposit[site])
@@ -18,7 +18,7 @@ end
 
 function compute_npv(P::LiPOMDP, s::State, a::Action)
     npv = 0.0
-    if a.type == 3 #operate mine
+    if a.type == 3  # Operate mine
         site = a.site
         if s.ready_to_operate[site]
             amt = min(P.output, s.deposit[site])
@@ -26,26 +26,22 @@ function compute_npv(P::LiPOMDP, s::State, a::Action)
             opex = P.deposit_types[site] ? P.dle_opex : P.mining_opex
             npv = opex * amt  # Only operating costs, no revenue
         end
-    elseif a.type == 2  #open mine
+    elseif a.type == 2  # Open mine
         site = a.site
-        capex = P.deposit_types[site] ? P.dle_capex : P.mining_capex
-        npv = capex
-    end
+        if !s.ready_to_operate[site]
+            capex = P.deposit_types[site] ? P.dle_capex : P.mining_capex
+            npv = capex
+        else
+            npv = 0.0  # No cost if already opened
+        end
     return npv
 end
 
 function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
-
-    # Do nothing action
-    if a.type == 0
-        return 0.0  # Simple!
-    end
-    
-    # All other actions have valid sites (1 to P.n_deposits)
     current_production = if a.type == 3 && s.ready_to_operate[a.site]
         min(P.output, s.deposit[a.site])
     else
-        0.0 # ← This gives 0 production if mine isn't open!
+        0.0
     end
     
     # Market-based revenue (only get paid for what you can sell)
@@ -55,20 +51,9 @@ function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
     # Operating costs and emissions
     npv = compute_npv(P, s, a)  # Now only contains costs
     emissions = compute_emissions(P, s, a)
-
+    
     # Total reward
     total_reward = revenue - npv + (1 - P.alpha) * emissions
-
-
-    # Print only if reward is 0
-    if total_reward == 0.0
-        println("="^40)
-        println("ZERO REWARD DEBUG - Time: $(s.time)")
-        println("Action Type: $(a.type), Action Site: $(a.site)")
-        println("Revenue: $(revenue), NPV: $(npv), Emissions: $(emissions)")
-        println("="^40)
-        flush(stdout)
-    end
     return total_reward
 end
 
@@ -84,14 +69,14 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
 
     # 1. Static Pricing
     if P.price_model_type == 1
-        p₀ = 10_355.33
+        p₀ = 10355.33
         new_price = p₀ + noise
         return new_price
     end
 
     # 2. Linear Pricing
     if P.price_model_type == 2
-        p₀ = -2_381.38   #TODO change it from a non negative       
+        p₀ = -2381.38   #TODO change it from a non negative       
         new_price = p₀ + P.α_slope * t + noise
         return new_price
     end
@@ -127,15 +112,18 @@ end
 #TODO compine update demand 
 
 # Add function to calculate company's demand
-function update_demand(P::LiPOMDP, global_demand::Float64)
+function update_demand(P::LiPOMDP, global_production::Float64)
     # Add uncertainty to global demand forecast
-    #ncertain_global_demand = max(0.0, global_demand + rand(Normal(0, demand_noise)))
+    demand_noise = global_production * P.demand_uncertainty
+    uncertain_global_demand = max(0.0, global_production + rand(Normal(0, demand_noise)))
     
     # Calculate company's target demand based on market share
     company_demand = uncertain_global_demand * P.market_share_target
     
     return (company_demand)
 end
+
+#transition function, observation function, reward function
 
 
 #give signal of where you end up 
@@ -222,14 +210,13 @@ function POMDPs.initialstate(P::LiPOMDP)
     
     # Calculate initial demands
     global_production = get_historical_production(P, P.start_year)
-    global_demand = get_historical_demand(P, P.start_year)
-    company_demand = update_demand(P, global_demand)
+    company_demand = update_demand(P, global_production)
     
     return Deterministic(State(
         deposit = init_deposits,
         time = 1.0,
         volume = 0.0,
-        price = P.p₀,
+        price = P.p₀, 
         company_demand = company_demand,
         have_operated = have_operated,
         ready_to_operate = ready_to_operate
@@ -247,10 +234,9 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     
     # Get production data
     global_production = get_historical_production(P, current_year)
-    global_demand = get_historical_demand(P, current_year)
     
     # Update demands with uncertainty
-    sp.company_demand = update_demand(P, global_demand)
+    sp.company_demand = update_demand(P, global_production)
     
     #create scenarios for each action item depending on state
     #how to handle each action type 
@@ -265,7 +251,9 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     # Action: Open Mine (type 2)
     if a.type == 2
         site = a.site
-        sp.ready_to_operate[site] = true
+        if !sp.ready_to_operate[site] # can only open it once
+            sp.ready_to_operate[site] = true
+        end
         return Deterministic(sp)
     end
 
@@ -325,11 +313,10 @@ end
 # Define action space
 function POMDPs.actions(P::LiPOMDP)
     acts = Action[]
+    # Do nothing
+    push!(acts, Action(site=0, type=0))
     
-    # Do nothing - pick any site but it won't matter since type=0
-    push!(acts, Action(site=1, type=0))  # Site doesn't matter for "do nothing"
-    
-    # For each actual site
+    # For each site
     for site in 1:P.n_deposits
         # Explore
         push!(acts, Action(site=site, type=1))
@@ -342,10 +329,11 @@ function POMDPs.actions(P::LiPOMDP)
 end
 
 function POMDPs.actionindex(P::LiPOMDP, a::Action)
-    if a.type == 0  # Do nothing
+    if a.site == 0 && a.type == 0
         return 1
     else
-        # Calculate index: 1 (do nothing) + site_offset + type_offset
+        # Calculate index based on site and type
+        # 3 actions per site (explore, open, operate)
         return 1 + (a.site - 1) * 3 + a.type
     end
 end
