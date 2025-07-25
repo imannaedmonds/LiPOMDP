@@ -2,7 +2,7 @@
     deposit::Vector{Float64} # [v₁, v₂, v₃, v₄]
     time::Float64 = 1.0  # current time, year
     volume::Float64 = 0.0  # current amt of Li mined up to time t
-    price::Float64 = 10.0  # Price per thousand
+    price::Float64 = 1_000.0  # Price per thousand
     demand::Float64 = 0.0 
     have_operated::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
     ready_to_operate::Vector{Bool}  # true if site is developed and ready to operate
@@ -71,8 +71,7 @@ end
     price_model_type::Int64 = 1  #different pricing models 1) static 2) linear, 3) exponential, 4) stochastic pricing (GBM), 5) Dynamic Price  
     hist_data::Dict{Int64, Tuple{Float64, Float64, Float64}} = lithium_data  # Historical data as (demand, price, production) tuples by year
     start_year::Int64 = 1995  #TODO-MANSUR check this Starting year for historical data
-    p₀::Float64 = 10.0 # TODO-MANSUR should this change for each price model? 
-    σ_price::Float64 = 3000.0   # standard deviation for price noise
+    p₀::Float64 = 1_000.0 # TODO-MANSUR should this change for each price model? 
     α_slope::Float64 = 878.39   # linear slope (for linear pricing), increasing 10,000 dollars every year 
     λ_exp::Float64 = 0.1261     # exponential growth rate
     μ_drift::Float64 = 0.0     # drift for stochastic, TODO mention in the paper that you can set it to something 

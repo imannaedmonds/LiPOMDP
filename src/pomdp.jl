@@ -1,11 +1,10 @@
 #MAIN functions
 
-#Rewards for mining
 function compute_emissions(P::LiPOMDP, s::State, a::Action)
     emissions = 0.0
-    if a.type == 3  # Operate mine
+    if a.type == 3 && a.site > 0  # Operate mine at a valid site
         site = a.site
-        if s.ready_to_operate[site]
+        if site <= length(s.ready_to_operate) && s.ready_to_operate[site]
             amt = min(P.output, s.deposit[site])
             # Use appropriate emission factor based on deposit type
             emission_factor = P.deposit_types[site] ? P.dle_CO2_emissions : P.mining_CO2_emissions
@@ -18,22 +17,21 @@ end
 
 function compute_npv(P::LiPOMDP, s::State, a::Action)
     npv = 0.0
-    if a.type == 3  # Operate mine
+    if a.type == 3 && a.site > 0  # Operate mine at a valid site
         site = a.site
-        if s.ready_to_operate[site]
+        if site <= length(s.ready_to_operate) && s.ready_to_operate[site]
             amt = min(P.output, s.deposit[site])
             # Don't calculate revenue here - let reward function handle market dynamics
             opex = P.deposit_types[site] ? P.dle_opex : P.mining_opex
             npv = opex * amt  # Only operating costs, no revenue
         end
-    elseif a.type == 2  # Open mine
+    elseif a.type == 2 && a.site > 0  # Open mine at a valid site
         site = a.site
-        if !s.ready_to_operate[site]
+        if site <= length(P.deposit_types)
             capex = P.deposit_types[site] ? P.dle_capex : P.mining_capex
             npv = capex
-        else
-            npv = 0.0  # No cost if already opened
         end
+    end
     return npv
 end
 
@@ -57,11 +55,9 @@ function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
     return total_reward
 end
 
-
 function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
     t = s.time
     Δt = 1.0  # step size -- is 1 year for simplicity
-    noise = rand(Normal(0, P.σ_price))
     p₀ = P.p₀
 
     # 0. Historical Data
@@ -70,25 +66,35 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
     # 1. Static Pricing
     if P.price_model_type == 1
         p₀ = 10355.33
+        # Use proportional noise for static pricing
+        noise = rand(Normal(0, p₀ * 0.05))  # 5% noise relative to base price
         new_price = p₀ + noise
-        return new_price
+        return max(new_price, 100.0)  # Ensure minimum price
     end
 
     # 2. Linear Pricing
     if P.price_model_type == 2
-        p₀ = -2381.38   #TODO change it from a non negative       
-        new_price = p₀ + P.α_slope * t + noise
-        return new_price
+        p₀ = 2381.38  # Made positive to avoid negative base
+        base_price = p₀ + P.α_slope * t
+        # Use proportional noise relative to current price level
+        noise = rand(Normal(0, abs(base_price) * 0.1))  # 10% noise
+        new_price = base_price + noise
+        return max(new_price, 100.0)  # Ensure minimum price
     end
 
     # 3. Exponential Pricing
     if P.price_model_type == 3
         p₀ = 917.36          
-        new_price = p₀ * exp(P.λ_exp * t) + noise
-        return new_price
+        base_price = p₀ * exp(P.λ_exp * t)
+        
+        # Make noise proportional to the base price (e.g., 10% standard deviation)
+        noise_std = base_price * 0.1  # 10% of base price
+        noise = rand(Normal(0, noise_std))
+        
+        new_price = base_price + noise
+        return max(new_price, 100.0)  # Ensure minimum price
     end
 
-    #TODO check these
     # 4. Dynamic (Market Maker, action-dependent)
     if P.price_model_type == 5
         β = P.β_action
@@ -97,19 +103,25 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         else
             a_val = a.type
         end
-        return p₀ * exp(P.μ_drift * Δt + β * a_val + noise)
+        # For exponential models, noise should be in the exponent for log-normal behavior
+        noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
+        new_price = p₀ * exp(P.μ_drift * Δt + β * a_val + noise)
+        return max(new_price, 100.0)  # Ensure minimum price
     end
 
     # 5. Dynamic Pricing (Market Maker) -- State-Dependent
     if P.price_model_type == 6
         γ = P.γ_state
         scarcity = sum(s.deposit)   # Example: total remaining deposits
+        # For exponential models, noise should be in the exponent
+        noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
         new_price = p₀ * exp(P.μ_drift * Δt + γ * scarcity + noise)
-        return new_price
+        return max(new_price, 100.0)  # Ensure minimum price
     end
+    
+    # Fallback case
+    return max(p₀, 100.0)
 end
-
-#TODO compine update demand 
 
 # Add function to calculate company's demand
 function update_demand(P::LiPOMDP, global_production::Float64)
