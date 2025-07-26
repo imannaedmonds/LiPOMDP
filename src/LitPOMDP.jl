@@ -19,7 +19,7 @@ export get_historical_price, #TODO add all functions from utils
          get_historical_data
 include("utils.jl")
 
-export reward, transition, observation, update, gen, initialstate, isterminal, discount, actions, actionindex, initialobs
-export obs_weight
+export reward, transition, observation, update, gen, initialstate, isterminal, discount, actions, actionindex, 
+initialobs, obs_weight, create_initial_belief
 include("pomdp.jl")
 end

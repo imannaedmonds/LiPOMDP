@@ -1,12 +1,11 @@
 @with_kw mutable struct State
     deposit::Vector{Float64} # [v₁, v₂, v₃, v₄]
-    time::Float64 = 1.0  # current time, year
-    volume::Float64 = 0.0  # current amt of Li mined up to time t
-    price::Float64 = 1_000.0  # Price per thousand
-    demand::Float64 = 0.0 
+    time::Float64  # current time, year
+    volume::Float64  # current amt of Li mined up to time t
+    price::Float64   # Price per thousand
+    company_demand::Float64  # Company's target demand (market share * global)
     have_operated::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
     ready_to_operate::Vector{Bool}  # true if site is developed and ready to operate
-    company_demand::Float64 = 0.0  # Company's target demand (market share * global)
 end
 
 @with_kw mutable struct Action
@@ -22,7 +21,7 @@ end
 
 #only the unobservable has to be a distribution
 @with_kw mutable struct LiBelief{T<:UnivariateDistribution} 
-    deposits_distribution::Vector{T} # [v₁, v₂, v₃, v₄]
+    deposits_distribution::Vector{UnivariateDistribution} # [v₁, v₂, v₃, v₄] # allow mixed LogNormal, etc
     time::Float64 = 1.0  # current time, year
     volume::Float64 = 0.0  # current amt of Li mined up to time t
     price_distribution::T  # Price per thousand
@@ -49,23 +48,26 @@ end
     
     # Production parameters
     output::Float64 = 1_000.0  # Annual output per mine
-    init_deposit_size_dle::Float64 = 7_000_000.0  # Initial deposit size 
-    init_deposit_size_mining::Float64 = 500_000.0  # Initial deposit size 
+    init_deposit_size_dle::Float64 = 30_000.0  # Initial deposit size 
+    init_deposit_size_mining::Float64 = 20_000.0  # Initial deposit size 
+    dle_uncertainty_factor::Float64 = 0.25
+    mining_uncertainty_factor::Float64 = 0.40 
 
     # Mining method for each deposit (true = DLE, false = traditional)
     deposit_types::Vector{Bool} = [true, true, false, false]  # First two are DLE, last two traditional
+    recovery::Vector{Float64} = [0.75, 0.75, 0.55, 0.55]    # Fraction of in‑situ Li recovered as saleable product
 
     # Traditional mining parameters
     mining_CO2_cost::Int64 = 120
     mining_CO2_emissions::Int64 = 15
-    mining_capex::Int64 = 3000    # $3000 per ton of capacity
-    mining_opex::Int64 = 400     # $4500 per ton operating cost
+    mining_capex::Int64 = 30_000    # $3000 per ton of capacity
+    mining_opex::Int64 = 2_000     # $4500 per ton operating cost
 
     # DLE parameters
     dle_CO2_cost::Int64 = 80      # Lower environmental cost
     dle_CO2_emissions::Int64 = 5   # Lower emissions
-    dle_capex::Int64 = 5000       # Higher initial investment ($5000 per ton)
-    dle_opex::Int64 = 300        # Lower operating costs ($3500 per ton)
+    dle_capex::Int64 = 5_000       # Higher initial investment ($5000 per ton)
+    dle_opex::Int64 = 1_000        # Lower operating costs ($3500 per ton)
 
     #pricing model parameters
     price_model_type::Int64 = 1  #different pricing models 1) static 2) linear, 3) exponential, 4) stochastic pricing (GBM), 5) Dynamic Price  
@@ -94,8 +96,8 @@ function Base.rand(rng::AbstractRNG, b::LiBelief)
     sampled_deposits = [rand(rng, d) for d in b.deposits_distribution]
     
     # Sample price and demand
-    sampled_price = rand(rng, b.price_distribution)
-    sampled_demand = rand(rng, b.demand_distribution)
+    sampled_price = max(100.0, rand(rng, b.price_distribution))  # Ensure minimum price
+    sampled_demand = max(0.0, rand(rng, b.demand_distribution))  # Ensure non-negative demand
     
     # Create state with sampled values and deterministic values from belief
     return State(
@@ -103,7 +105,6 @@ function Base.rand(rng::AbstractRNG, b::LiBelief)
         time = b.time,
         volume = b.volume,
         price = sampled_price,
-        demand = sampled_demand,
         company_demand = sampled_demand,
         have_operated = copy(b.have_operated),
         ready_to_operate = copy(b.ready_to_operate)

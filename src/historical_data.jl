@@ -2,7 +2,7 @@
 # https://ourworldindata.org/grapher/lithium-production?tab=chart&country=~OWID_WRL 
 # https://www.energyinst.org/__data/assets/pdf_file/0006/1542714/684_EI_Stat_Review_V16_DIGITAL.pdf 
 # “Data Page: Lithium production”, part of the following publication: Hannah Ritchie, Pablo Rosado, and Max Roser (2023) - “Energy”. Data adapted from Energy Institute. Retrieved from https://archive.ourworldindata.org/20250624-125417/grapher/lithium-production.html [online resource] (archived on June 24, 2025).
-# measured in thousand of tonnes
+# metric tons (t of Li content)
 # Define the year and production values manually extracted from the image and user's message
 
 # Data for demand https://www.usgs.gov/centers/national-minerals-information-center
@@ -18,7 +18,7 @@ production = [9485.481, 14783.803, 15591.14, 14192.644, 12875.787,
           20947.239, 24263.863, 26374.807, 26328.201, 19532.03,
           26476.818, 33033.84, 34745.956, 30391.504, 30951.284,
           29543.085, 38217.278, 50850.212, 95134.285, 86881.62,
-          83695.14, 107879.66, 157809.71, 198012.6, 201012.6,]
+          83695.14, 107879.66, 157809.71, 198012.6, 240012.6,]
 
 demand =  [7320.0, 9486.0, 11652.0, 13818.0, 15984.0,
           18150.0, 23526.0, 28902.0, 34278.0, 39654.0,

@@ -9,7 +9,6 @@ using Distributions
 
 # Create POMDP instance
 pomdp = LiPOMDP(
-    demand=[1.0, 2.0],
     mine_output=1.2,
     price_model_type=3,  # Exponential pricing
 )
@@ -148,7 +147,7 @@ b = LiBelief(
     time=s.time,
     volume=s.volume,
     price_distribution=Normal(s.price, 1.0),
-    demand_distribution=Normal(s.demand, 1.0),
+    demand_distribution=Normal(s.company_demand, 1.0),
     have_operated=copy(s.have_operated),
     ready_to_operate=copy(s.ready_to_operate)
 )
