@@ -1,7 +1,7 @@
 @with_kw mutable struct State
     deposit::Vector{Float64} # [v₁, v₂, v₃, v₄]
     time::Float64  # current time, year
-    volume::Float64  # current amt of Li mined up to time t
+    volume::Float64  #TODO remove? current amt of Li mined up to time t
     price::Float64   # Price per thousand
     company_demand::Float64  # Company's target demand (market share * global)
     have_operated::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action

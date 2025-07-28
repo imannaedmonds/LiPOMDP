@@ -1,5 +1,4 @@
 #MAIN functions
-
 function compute_emissions(P::LiPOMDP, s::State, a::Action)
     emissions = 0.0
     if a.type == 3 && a.site > 0  # Operate mine at a valid site
@@ -18,7 +17,7 @@ end
 function compute_costs(P::LiPOMDP, s::State, a::Action)
     costs = 0.0
     if a.type == 3 && a.site > 0  # Operate mine at a valid site
-        site = a.site
+        site = a.site #TODO look into deleting this out
         if site <= length(s.ready_to_operate) && s.ready_to_operate[site]
             amt = min(P.output, s.deposit[site])
             # Don't calculate revenue here - let reward function handle market dynamics
@@ -94,7 +93,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         new_price = base_price + noise
         return max(new_price, 100.0)  # Ensure minimum price
     end
-
+#TODO -- change the dynamic pricing
     # 4. Dynamic (Market Maker, action-dependent)
     if P.price_model_type == 5
         β = P.β_action
@@ -278,7 +277,7 @@ function lognormal_from_mean_cv(mean::Float64, cv::Float64)
     return LogNormal(μlog, sqrt(σ2))
 end
 
-# Create your own function (don't extend POMDPs)
+#initial belief function
 function create_initial_belief(P::LiPOMDP)
     s0 = rand(initialstate(P))  # Get the true initial state
     price_uncertainty = 500.0

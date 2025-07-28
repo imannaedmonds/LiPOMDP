@@ -7,12 +7,13 @@ using Distributions
 
 include("operate_first_policy.jl")
 
-println("Setting up POMDP and policies this is the Operate First Policy as base policy...")
+println("Setting up POMDP and policies this is the Random Policy as base policy...")
 rng = MersenneTwister(1234) # Set random seed for reproducibility
 pomdp = LiPOMDP(price_model_type=3)
-#base_policy = RandomPolicy(pomdp) #change to operatefirst policy?
+base_policy = RandomPolicy(pomdp) #change to operatefirst policy?
 
-base_policy = OperateFirstPolicy(pomdp, false)
+
+#base_policy = OperateFirstPolicy(pomdp, false)
 
 # POMCPOW solver
 solver = POMCPOWSolver(
