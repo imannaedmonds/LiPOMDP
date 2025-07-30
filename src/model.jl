@@ -1,15 +1,16 @@
 @with_kw mutable struct State
     deposit::Vector{Float64} # [v₁, v₂, v₃, v₄]
-    time::Float64  # current time, year
-    price::Float64   # Price per thousand
-    company_demand::Float64  # Company's target demand (market share * global)
-    have_operated::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
-    ready_to_operate::Vector{Bool}  # true if site is developed and ready to operate
+    time::Float64 = 1.0  # current time, year
+    volume::Float64 = 0.0  # current amt of Li mined up to time t
+    price::Float64 = 10_000.0  # Price per thousand
+    demand::Float64 = 0.0 
+    have_opened::Vector{Bool}  # Boolean value to represent whether or not we have opened a mine
+    company_demand::Float64 = 0.0  # Company's target demand (market share * global)
 end
 
 @with_kw mutable struct Action
-    site::Int64    # site: 0=DoNothing, 1-2=DLE, 3-4=Traditional
-    type::Int64    # type: 0=DoNothing, 1=explore, 2=open, 3=operate
+    site::Vector{Int64} = [0, 0, 0, 0]   # site: 0=DoNothing, 1-2=DLE, 3-4=Traditional
+    type::Vector{Int64} = [0, 0, 0, 0]    # type: 0=DoNothing, 1=explore, 2=open (no operate - mines produce automatically after opening)
 end
 
 @with_kw mutable struct Observation
@@ -22,10 +23,10 @@ end
 @with_kw mutable struct LiBelief{T<:UnivariateDistribution} 
     deposits_distribution::Vector{UnivariateDistribution} # [v₁, v₂, v₃, v₄] # allow mixed LogNormal, etc
     time::Float64 = 1.0  # current time, year
+    volume::Float64 = 0.0  # current amt of Li mined up to time t
     price_distribution::T  # Price per thousand
     demand_distribution::T  # Demand distribution
-    have_operated::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
-    ready_to_operate::Vector{Bool}  # true if site is developed and ready to operate
+    have_opened::Vector{Bool}  # Boolean value to represent whether or not we have opened a mine
 end
     
 
@@ -104,9 +105,10 @@ function Base.rand(rng::AbstractRNG, b::LiBelief)
     return State(
         deposit = sampled_deposits,
         time = b.time,
+        volume = b.volume,
         price = sampled_price,
-        company_demand = sampled_demand,
-        have_operated = copy(b.have_operated),
-        ready_to_operate = copy(b.ready_to_operate)
+        demand = sampled_demand,
+        have_opened = copy(b.have_opened),
+        company_demand = sampled_demand
     )
 end
