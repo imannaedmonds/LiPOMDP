@@ -22,7 +22,6 @@ end
 @with_kw mutable struct LiBelief{T<:UnivariateDistribution} 
     deposits_distribution::Vector{UnivariateDistribution} # [v₁, v₂, v₃, v₄] # allow mixed LogNormal, etc
     time::Float64 = 1.0  # current time, year
-    volume::Float64 = 0.0  # current amt of Li mined up to time t
     price_distribution::T  # Price per thousand
     demand_distribution::T  # Demand distribution
     have_operated::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
@@ -33,7 +32,7 @@ end
 @with_kw mutable struct LiPOMDP <: POMDP{State,Action,Observation}
     #Observation parameters
     σ_obs_d::Float64 = 500.0 # Increase base observation noise
-    σ_obs_p::Float64 = 1.0 # Standard deviation of the observation noise for price
+    σ_obs_p::Float64 = 100.0 # Standard deviation of the observation noise for price
 
     γ::Float64 = 0.97 #discounted reward
     time_horizon::Int64 = 29 #time horizon

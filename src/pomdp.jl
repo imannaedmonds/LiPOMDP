@@ -407,6 +407,23 @@ function POMDPs.actions(P::LiPOMDP)
     return acts
 end
 
+
+# Stateful action generator
+function POMDPs.actions(P::LiPOMDP, s::State)
+    acts = Action[]
+    # always allow “do nothing”
+    push!(acts, Action(site=0, type=0))
+    for site in 1:P.n_deposits
+        push!(acts, Action(site=site, type=1))  # explore
+        push!(acts, Action(site=site, type=2))  # open mine
+        # only allow operate if the site is ready
+        if s.ready_to_operate[site]
+            push!(acts, Action(site=site, type=3))
+        end
+    end
+    return acts
+end
+
 function POMDPs.actionindex(P::LiPOMDP, a::Action)
     if a.site == 0 && a.type == 0
         return 1
