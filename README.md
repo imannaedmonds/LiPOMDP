@@ -2,68 +2,124 @@
 
 [![Build Status](https://github.com/imannaedmonds/LitPOMDP.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/imannaedmonds/LitPOMDP.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
-## Version 2.0 - Multi-Site Action Space with Automatic Production
+A Julia package for modeling lithium mining operations as a Partially Observable Markov Decision Process (POMDP). The framework simulates decision-making under uncertainty for lithium extraction using both Direct Lithium Extraction (DLE) and traditional mining methods.
 
-### Major Changes
-This version introduces a significant restructuring of the action space to support simultaneous actions across multiple mining sites with automatic production. Key changes include:
+## Features
 
-#### 1. **Action Space Redesign**
-- **Old**: Single site action per timestep (`Action(site=Int, type=Int)`)
-- **New**: Vector-based actions for all sites (`Action(site=Vector{Int}, type=Vector{Int})`)
-- Allows simultaneous actions across all 4 mining sites
-- Action types: 0=DoNothing, 1=Explore, 2=Open
-- **Removed**: Operate action (type 3) - mines now produce automatically after opening
-- **Action space size**: 3^4 = 81 possible action combinations
+- **Multi-site mining decisions**: Model considers 4 deposit sites (2 DLE, 2 traditional)
+- **Automatic mine operation**: Once opened, mines produce automatically without explicit operate actions
+- **Environmental considerations**: Tracks CO2 emissions with different costs for DLE vs traditional mining
+- **Market dynamics**: Multiple pricing models (static, linear, exponential, stochastic)
+- **Uncertainty handling**: Manages uncertainty in deposit sizes, prices, and demand
+- **Policy optimization**: Uses POMCPOW for finding optimal mining strategies
 
-#### 2. **Simplified State Representation**
-- **Removed**: `have_operated` and `ready_to_operate` boolean vectors
-- **Consolidated**: Single `have_opened` boolean vector tracking mine status
-- **Automatic Production**: Opened mines produce lithium automatically each year
+## Installation
 
-#### 3. **Reward Function Updates**
-- Automatic production calculation from all opened mines
-- No action needed to operate mines - they produce if opened and have remaining deposits
-- Aggregates costs (CAPEX for opening, OPEX for all producing mines)
-- Emissions calculated for all producing mines
-- Market revenue based on total sellable production (limited by company demand)
-- Exploration costs (1000 per site) when exploring
+```julia
+using Pkg
+Pkg.add(url="https://github.com/imannaedmonds/LitPOMDP.jl")
+```
 
-#### 4. **Transition Logic**
-- Opening actions set `have_opened[site] = true`
-- All opened mines automatically produce each timestep
-- Production randomness (±10%) applied independently to each producing mine
-- Deposits decrease and volume increases automatically for opened mines
+For development:
+```julia
+using Pkg
+Pkg.activate(".")
+Pkg.instantiate()
+```
 
-#### 5. **Complete Action Space**
-The action space now includes all 81 combinations:
-- Each site can independently: DoNothing (0), Explore (1), or Open (2)
-- Examples: 
-  - `[0,0,0,0]` - Do nothing at all sites
-  - `[2,0,0,0]` - Open site 1 only
-  - `[2,2,2,2]` - Open all sites simultaneously
-  - `[1,2,0,0]` - Explore site 1 and open site 2
+## Quick Start
 
-#### 6. **Belief Updates**
-- Tracks mine openings through action observations
-- Updates cumulative volume based on automatic production from all opened mines
-- Simplified belief structure without operational status tracking
+```julia
+using LitPOMDP
+using POMDPs
+using POMCPOW
 
+# Create POMDP instance
+pomdp = LiPOMDP(
+    price_model_type=1,  # Static pricing
+    market_share_target=0.05,  # Target 5% of global market
+    n_deposits=4
+)
 
-## Dev Notes
+# Setup initial belief
+s0, initial_belief = create_initial_belief(pomdp)
 
-- [x] Added Codespace and bethpage
-- [x] Module installation and dependencies
-- [x] Fix the `observation` function
-    - [x] We also add `gen` function
-- [ ] Fix the belief update (Mansur)
-- [ ] Go over `initialstate` function (Mansur)
-- [ ] Add `hist_data` to `LiPOMDP` to be able to use historical data (Anna)
-- [ ] Add slope + intercept and exponential parameters for pricing models
-- [ ] Set up the `LiPOMDP` to be able to 
-    - [ ] use different pricing models 
-        - [ ] historical model, 
-        - [ ] simple model (static, exponential, linear), 
-        - [ ] dynamic model (action- and state-dependent))
-    - [ ] add stochastic option
-- [ ] Run experiments (plan vs. eval)
+# Create POMCPOW solver
+solver = POMCPOWSolver(
+    tree_queries=1000,
+    max_depth=10,
+    criterion=MaxUCB(20.0)
+)
+
+policy = solve(solver, pomdp)
+```
+
+## State and Action Structure
+
+### State
+```julia
+@with_kw mutable struct State
+    deposit::Vector{Float64}      # Remaining deposits at each site
+    time::Float64                 # Current time step
+    volume::Float64               # Total lithium mined
+    price::Float64                # Current market price
+    demand::Float64               # Current demand
+    have_opened::Vector{Bool}     # Which mines are opened (operate automatically)
+    company_demand::Float64       # Company's target demand
+end
+```
+
+### Action
+```julia
+@with_kw mutable struct Action
+    site::Vector{Int64}   # Sites to act on (0=DoNothing, 1-4=site number)
+    type::Vector{Int64}   # Action types (0=DoNothing, 1=explore, 2=open)
+end
+```
+
+Note: Mines operate automatically once opened - no explicit "operate" action needed.
+
+## Available Policies
+
+The package includes several heuristic policies for comparison:
+
+- **ExploreFirstPolicy**: Prioritizes exploration before opening mines
+- **OperateFirstPolicy**: Opens mines as quickly as possible
+- **DLEFirstPolicy**: Opens DLE mines first (lower emissions, higher efficiency)
+- **ConservativePolicy**: Waits for high demand before opening mines
+- **RandomHeuristicPolicy**: Random baseline for comparison
+
+## Running Experiments
+
+Compare POMCPOW with heuristic policies:
+
+```julia
+include("scripts/experiment.jl")
+```
+
+This will run a comprehensive comparison showing:
+- Mean rewards for each policy
+- Statistical analysis (std dev, min/max, median)
+- Relative performance compared to POMCPOW
+- Key insights about policy effectiveness
+
+## Pricing Models
+
+The package supports multiple pricing models:
+- Type 0: Static pricing
+- Type 1: Linear pricing (price increases over time)
+- Type 2: Exponential pricing
+- Type 3: Stochastic pricing with noise
+
+## Development Status
+
+- [x] Core POMDP implementation
+- [x] Multiple site actions
+- [x] Automatic mine operation
+- [x] Belief updates
+- [x] Historical data integration
+- [x] Multiple pricing models
+- [x] Policy comparison framework
+- [ ] Extended stochastic pricing models
+- [ ] Additional experiments
 

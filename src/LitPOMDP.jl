@@ -22,4 +22,7 @@ include("utils.jl")
 export reward, transition, observation, update, gen, initialstate, isterminal, discount, actions, actionindex, 
 initialobs, obs_weight, create_initial_belief
 include("pomdp.jl")
+
+export ExploreFirstPolicy, OperateFirstPolicy, DLEFirstPolicy, ConservativePolicy, RandomHeuristicPolicy
+include("policies.jl")
 end

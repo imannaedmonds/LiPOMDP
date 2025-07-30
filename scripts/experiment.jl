@@ -8,174 +8,157 @@ using Statistics
 using Distributions
 
 # Create POMDP instance
-pomdp = LiPOMDP(
-    mine_output=1.2,
-    price_model_type=3,  # Exponential pricing
-)
+pomdp = LiPOMDP(price_model_type=1)  # Static pricing
 
 # Set random seed for reproducibility
 rng = MersenneTwister(1234)
 
-# Initial state distribution
-s0_dist = initialstate(pomdp)
-s0 = rand(rng, s0_dist)
+# Initial state and belief setup
+s0, initial_belief = create_initial_belief(pomdp)
 
 # Create belief updater
 belief_updater = LiBeliefUpdater(P=pomdp)
 
-# Initial belief - assume perfect knowledge at start
-initial_belief = LiBelief(
-    deposits_distribution=[Normal(d, 1.0) for d in s0.deposit],
-    time=s0.time,
-    volume=s0.volume,
-    price_distribution=Normal(s0.price, 1.0),
-    demand_distribution=Normal(s0.demand, 1.0),
-    have_opened=copy(s0.have_opened)
-)
+println("="^80)
+println("LITHIUM MINING POMDP POLICY COMPARISON")
+println("="^80)
 
 # Create POMCPOW solver
+println("\nConfiguring POMCPOW solver...")
 solver = POMCPOWSolver(
-    tree_queries=1000,
+    tree_queries=200,
     max_depth=10,
     criterion=MaxUCB(20.0),
     final_criterion=MaxTries(),
     enable_action_pw=false,
     k_observation=5.0,
     alpha_observation=1/20,
-    estimate_value=FORollout(RandomPolicy(pomdp)),
+    estimate_value=FORollout(OperateFirstPolicy(pomdp)),  # Use heuristic for rollouts
     tree_in_info=true,
     rng=MersenneTwister(1234)
 )
 
-# Solve to get policy
-println("Solving POMDP with POMCPOW...")
-planner = solve(solver, pomdp)
+pomcpow_policy = solve(solver, pomdp)
 
 # Function to evaluate a policy
-function evaluate_policy(pomdp, planner, updater, n_simulations=100; rng=MersenneTwister(42))
+function evaluate_policy(pomdp, policy, updater, n_sims; rng=Random.GLOBAL_RNG)
     rewards = Float64[]
     
-    for sim in 1:n_simulations
-        # Reset to initial conditions
-        s = rand(rng, initialstate(pomdp))
-        b = LiBelief(
-            deposits_distribution=[Normal(d, 1.0) for d in s.deposit],
-            time=s.time,
-            volume=s.volume,
-            price_distribution=Normal(s.price, 1.0),
-            demand_distribution=Normal(s.demand, 1.0),
-            have_opened=copy(s.have_opened)
-        )
-        
+    for i in 1:n_sims
         total_reward = 0.0
+        b = initial_belief
+        s = rand(rng, initialstate(pomdp))
         
-        # Run episode
-        while !isterminal(pomdp, s)
-            # Get action from policy
-            a = action(planner, b)
-            
-            # Step the environment
+        for t in 1:pomdp.time_horizon
+            a = action(policy, b)
             sp, o, r = gen(pomdp, s, a, rng)
             
-            # Update belief
+            total_reward += pomdp.γ^(t-1) * r
+            
+            if isterminal(pomdp, sp)
+                break
+            end
+            
             b = update(updater, b, a, o)
-            
-            # Accumulate reward
-            total_reward += discount(pomdp)^(s.time-1) * r
-            
-            # Update state
             s = sp
         end
         
         push!(rewards, total_reward)
-        
-        if sim % 10 == 0
-            println("Completed simulation $sim/$n_simulations")
-        end
     end
     
     return rewards
 end
 
-# Evaluate the POMCPOW policy
-println("\nEvaluating POMCPOW policy...")
-pomcpow_rewards = evaluate_policy(pomdp, planner, belief_updater, 50, rng=rng)
+# Policies to test
+println("\n\nPolicies to evaluate:")
+println("1. POMCPOW (optimal planning)")
+println("2. Explore First (prioritize exploration)")
+println("3. Operate First (open mines quickly)")
+println("4. DLE First (prioritize low-emission mines)")
+println("5. Conservative (wait for high demand)")
+println("6. Random (baseline)")
 
-println("\nPOMCPOW Policy Performance:")
-println("Mean total reward: $(mean(pomcpow_rewards))")
-println("Std deviation: $(std(pomcpow_rewards))")
-println("Min reward: $(minimum(pomcpow_rewards))")
-println("Max reward: $(maximum(pomcpow_rewards))")
-
-# Compare with a simple heuristic policy
-struct HeuristicPolicy <: Policy end
-
-function POMDPs.action(p::HeuristicPolicy, b::LiBelief)
-    # Simple heuristic: Open first DLE site early, then do nothing (mines operate automatically)
-    site_vec = zeros(Int, 4)
-    type_vec = zeros(Int, 4)
-    
-    if b.time < 3.0 && !b.have_opened[1]
-        # Open first DLE site
-        type_vec[1] = 2
-    elseif b.time < 5.0 && !b.have_opened[2]
-        # Open second DLE site
-        type_vec[2] = 2
-    end
-    # Otherwise do nothing - opened mines produce automatically
-    
-    return Action(site=site_vec, type=type_vec)
-end
-
-heuristic_policy = HeuristicPolicy()
-
-println("\nEvaluating heuristic policy...")
-heuristic_rewards = evaluate_policy(pomdp, heuristic_policy, belief_updater, 50, rng=rng)
-
-println("\nHeuristic Policy Performance:")
-println("Mean total reward: $(mean(heuristic_rewards))")
-println("Std deviation: $(std(heuristic_rewards))")
-println("Min reward: $(minimum(heuristic_rewards))")
-println("Max reward: $(maximum(heuristic_rewards))")
-
-# Compare policies
-println("\nPolicy Comparison:")
-println("POMCPOW advantage: $(mean(pomcpow_rewards) - mean(heuristic_rewards))")
-println("Relative improvement: $(100 * (mean(pomcpow_rewards) - mean(heuristic_rewards)) / abs(mean(heuristic_rewards)))%")
-
-# Single episode trace for debugging
-println("\n\nRunning single episode trace...")
-s = rand(rng, initialstate(pomdp))
-b = LiBelief(
-    deposits_distribution=[Normal(d, 1.0) for d in s.deposit],
-    time=s.time,
-    volume=s.volume,
-    price_distribution=Normal(s.price, 1.0),
-    demand_distribution=Normal(s.demand, 1.0),
-    have_opened=copy(s.have_opened)
+policies = Dict(
+    "POMCPOW" => pomcpow_policy,
+    "ExploreFirst" => ExploreFirstPolicy(pomdp),
+    "OperateFirst" => OperateFirstPolicy(pomdp),
+    "DLEFirst" => DLEFirstPolicy(pomdp),
+    "Conservative" => ConservativePolicy(pomdp, demand_threshold=100.0),
+    "Random" => RandomHeuristicPolicy(pomdp, rng=MersenneTwister(456))
 )
 
-total_reward = 0.0
-step = 1
+# Results storage
+results = Dict{String, Vector{Float64}}()
+n_simulations = 50
 
-while !isterminal(pomdp, s) && step <= 10
-    println("\nStep $step:")
-    println("  State: time=$(s.time), deposits=$(s.deposit), price=$(s.price)")
-    println("  Company demand: $(s.company_demand)")
-    println("  Have opened: $(s.have_opened)")
+# Evaluate each policy
+println("\n" * "="^80)
+println("EVALUATING POLICIES ($(n_simulations) simulations each)")
+println("="^80)
+
+for (name, policy) in policies
+    println("\nEvaluating $name policy...")
+    rewards = evaluate_policy(pomdp, policy, belief_updater, n_simulations, rng=MersenneTwister(1234))
+    results[name] = rewards
     
-    a = action(planner, b)
-    println("  Actions: $([(i, a.type[i]) for i in 1:4 if a.type[i] != 0])")
-    
-    sp, o, r = gen(pomdp, s, a, rng)
-    println("  Reward: $r")
-    
-    b = update(belief_updater, b, a, o)
-    total_reward += discount(pomdp)^(s.time-1) * r
-    println("  Cumulative reward: $total_reward")
-    
-    s = sp
-    step += 1
+    println("  Mean reward: $(round(mean(rewards), digits=2))")
+    println("  Std dev: $(round(std(rewards), digits=2))")
+    println("  Min: $(round(minimum(rewards), digits=2))")
+    println("  Max: $(round(maximum(rewards), digits=2))")
 end
 
-println("\nTotal discounted reward: $total_reward")
+# Summary comparison
+println("\n" * "="^80)
+println("POLICY COMPARISON SUMMARY")
+println("="^80)
+
+# Sort by mean reward
+sorted_results = sort(collect(results), by=x->mean(x[2]), rev=true)
+
+println("\nRanking by mean reward:")
+for (i, (name, rewards)) in enumerate(sorted_results)
+    mean_reward = mean(rewards)
+    relative_to_pomcpow = 100 * (mean_reward - mean(results["POMCPOW"])) / abs(mean(results["POMCPOW"]))
+    
+    println("$i. $name:")
+    println("   Mean reward: $(round(mean_reward, digits=2))")
+    println("   Relative to POMCPOW: $(round(relative_to_pomcpow, digits=2))%")
+end
+
+# Statistical analysis
+println("\n" * "="^80)
+println("DETAILED STATISTICS")
+println("="^80)
+
+println("\nReward statistics by policy:")
+println("Policy         | Mean      | Std Dev   | Min       | Max       | Median")
+println("-"^75)
+for (name, _) in sorted_results
+    rewards = results[name]
+    println(
+        rpad(name, 14) * " | " *
+        rpad(round(mean(rewards), digits=2), 9) * " | " *
+        rpad(round(std(rewards), digits=2), 9) * " | " *
+        rpad(round(minimum(rewards), digits=2), 9) * " | " *
+        rpad(round(maximum(rewards), digits=2), 9) * " | " *
+        string(round(median(rewards), digits=2))
+    )
+end
+
+# Performance insights
+println("\n" * "="^80)
+println("KEY INSIGHTS")
+println("="^80)
+
+pomcpow_mean = mean(results["POMCPOW"])
+best_heuristic = sorted_results[2][1]  # Second best after POMCPOW
+best_heuristic_mean = mean(results[best_heuristic])
+
+println("\n1. POMCPOW achieves $(round(pomcpow_mean, digits=2)) mean reward")
+println("2. Best heuristic ($best_heuristic) achieves $(round(best_heuristic_mean, digits=2)) mean reward")
+println("3. POMCPOW improvement over best heuristic: $(round(100*(pomcpow_mean - best_heuristic_mean)/abs(best_heuristic_mean), digits=2))%")
+println("4. Random policy baseline: $(round(mean(results["Random"]), digits=2)) mean reward")
+
+println("\n" * "="^80)
+println("EXPERIMENT COMPLETE")
+println("="^80)

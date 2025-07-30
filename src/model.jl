@@ -23,6 +23,7 @@ end
 @with_kw mutable struct LiBelief{T<:UnivariateDistribution} 
     deposits_distribution::Vector{UnivariateDistribution} # [v₁, v₂, v₃, v₄] # allow mixed LogNormal, etc
     time::Float64 = 1.0  # current time, year
+    volume::Float64 = 0.0  # current amt of Li mined up to time t
     price_distribution::T  # Price per thousand
     demand_distribution::T  # Demand distribution
     have_opened::Vector{Bool}  # Boolean value to represent whether or not we have opened a mine
@@ -62,8 +63,7 @@ end
     mining_opex::Int64 = 2_000     # $4500 per ton operating cost
 
     # DLE parameters
-    dle_CO2_cost::Int64 = 80      # Lower environmental cost14557hyqpstanford2023
-    
+    dle_CO2_cost::Int64 = 80      # Lower environmental cost
     dle_CO2_emissions::Int64 = 5   # Lower emissions
     dle_capex::Int64 = 50_000       # Higher initial investment ($5000 per ton)
     dle_opex::Int64 = 1_000        # Lower operating costs ($3500 per ton)
@@ -105,13 +105,10 @@ function Base.rand(rng::AbstractRNG, b::LiBelief)
     return State(
         deposit = sampled_deposits,
         time = b.time,
+        volume = b.volume,
         price = sampled_price,
-        company_demand = sampled_demand,
-        have_operated = copy(b.have_operated),
-        ready_to_operate = copy(b.ready_to_operate)
-=======
+        demand = sampled_demand,
         have_opened = copy(b.have_opened),
         company_demand = sampled_demand
->>>>>>> 44c47afbc1b15075434eb71708ccf59820e7099c
     )
 end
