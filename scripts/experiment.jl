@@ -8,7 +8,10 @@ using Statistics
 using Distributions
 
 # Create POMDP instance
-pomdp = LiPOMDP(price_model_type=1)  # Static pricing
+pomdp = LiPOMDP(
+    mine_output=1.2,
+    price_model_type=3,  # Exponential pricing
+)
 
 # Set random seed for reproducibility
 rng = MersenneTwister(1234)
