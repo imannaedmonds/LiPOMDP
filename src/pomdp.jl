@@ -35,6 +35,15 @@ function compute_costs(P::LiPOMDP, s::State, a::Action)
 end
 
 function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
+    # Add exploration incentive at the start of the reward function
+    if a.type == 1  # Exploration action
+        site = a.site
+        if site > 0 && site <= length(s.deposit) && !s.ready_to_operate[site]
+            # Small positive reward for exploring unexplored sites
+            return P.exploration_bonus
+        end
+    end
+
     current_production = 0.0
     if a.type == 3 && s.ready_to_operate[a.site]
         in_situ = min(P.output, s.deposit[a.site])
@@ -139,26 +148,18 @@ end
 
 #give signal of where you end up 
 function POMDPs.observation(P::LiPOMDP, s::State,  a::Action, sp::State)
-    # Add Gaussian noise to deposits, price, and demand
-    deposit_estimate_dist = [Normal(d, P.σ_obs_d) for d in sp.deposit]
-
-    #TODO ADD EXPLORATION?
-    # deposit_estimate_dist = []
-    # for i in 1:length(sp.deposit)
-    #     if a.type == 1 && a.site == i
-    #         # If exploring this site, get very accurate reading
-    #         noise = P.σ_obs_d * 0.05  # Very low noise
-    #         push!(deposit_estimate_dist, Normal(sp.deposit[i], noise))
-    #     elseif s.explored[i]
-    #         # Previously explored sites have low noise
-    #         noise = P.σ_obs_d * 0.2
-    #         push!(deposit_estimate_dist, Normal(sp.deposit[i], noise))
-    #     else
-    #         # Unexplored sites have high noise
-    #         noise = P.σ_obs_d * 10.0  # Very high uncertainty
-    #         push!(deposit_estimate_dist, Normal(sp.deposit[i], noise))
-    #     end
-    # end
+    # Replace existing observation code with this version that considers exploration
+    deposit_estimate_dist = []
+    for i in 1:length(sp.deposit)
+        if a.type == 1 && a.site == i
+            # If exploring this site, get very accurate reading
+            noise = P.σ_obs_d * 0.05  # Very low noise for exploration
+            push!(deposit_estimate_dist, Normal(sp.deposit[i], noise))
+        else
+            # Regular observation noise
+            push!(deposit_estimate_dist, Normal(sp.deposit[i], P.σ_obs_d))
+        end
+    end
 
     price_estimate_dist = Normal(sp.price, P.σ_obs_p)
     demand_estimate_dist = Normal(sp.company_demand, P.σ_obs_demand)
@@ -231,7 +232,6 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
     return LiBelief(
         deposits_distribution = updated_deposits,  # new beliefs over each site's deposit
         time = b.time + 1,                               # increment time
-        volume = b.volume,                                   # total lithium mined so far (unchanged here)
         price_distribution = updated_price,            # updated price belief
         demand_distribution = updated_demand,           # Add updated demand distribution
         have_operated = updated_have_operated,           # UPDATE: retain mining history
@@ -260,7 +260,6 @@ function POMDPs.initialstate(P::LiPOMDP)
     return Deterministic(State(
         deposit = init_deposits,
         time = 1.0,
-        volume = 0.0,
         price = P.p₀, 
         company_demand = company_demand,
         have_operated = have_operated,
@@ -294,7 +293,6 @@ function create_initial_belief(P::LiPOMDP)
     belief = LiBelief(
         deposits_distribution = deposits_distribution,
         time = s0.time,
-        volume = s0.volume,
         price_distribution = Normal(s0.price, price_uncertainty),
         demand_distribution = Normal(s0.company_demand, demand_uncertainty),
         have_operated = copy(s0.have_operated),
@@ -349,7 +347,6 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
             
             saleable = mined * P.recovery[site]
             sp.deposit[site] -= mined
-            sp.volume += saleable
         end
         return Deterministic(sp)
     end

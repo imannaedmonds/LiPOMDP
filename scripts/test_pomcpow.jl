@@ -5,27 +5,25 @@ using POMCPOW
 using Random
 using Distributions
 
+include("explore_first_policy.jl")
 include("operate_first_policy.jl")
 
-println("Setting up POMDP and policies this is the Random Policy as base policy...")
+println("Setting up POMDP and policies with ExploreFirst as base policy...")
+#println("Setting up POMDP with OperateFirst as rollout policy...")
 rng = MersenneTwister(1234) # Set random seed for reproducibility
 pomdp = LiPOMDP(price_model_type=3)
-base_policy = RandomPolicy(pomdp) #change to operatefirst policy?
+base_policy = ExploreFirstPolicy(pomdp, false)
+# base_policy = OperateFirstPolicy(pomdp, false)  
+# base_policy = RandomPolicy(pomdp)  
 
-
-#base_policy = OperateFirstPolicy(pomdp, false)
-
-# POMCPOW solver
+# Adjust POMCPOW solver parameters to favor exploration
 solver = POMCPOWSolver(
-    tree_queries=1_000,  # Reduced for testing
+    tree_queries=10_000,  # Increase number of simulations
     max_depth=500,
-    criterion=MaxUCB(200.0), #TODO what is this?
-    final_criterion=MaxTries(), #TODO what is this?
-    enable_action_pw=true,  #uses progressive widening TODO what is this?
+    criterion=MaxUCB(200.0),  # Increase exploration bonus
+    enable_action_pw=true,
     k_observation=5.0,
-    #k_action=5.0, #TODO what is this?
-    #alpha_action=1/20, #TODO what is this?
-    alpha_observation=1/20,
+    alpha_observation=1/20,  # Increase observation progressive widening
     estimate_value=FORollout(base_policy),
     tree_in_info=false,
     rng=rng
@@ -55,20 +53,6 @@ println("="^60)
 
 hr_pomcpow = HistoryRecorder(max_steps=20, rng=MersenneTwister(1234))
 hist_pomcpow = simulate(hr_pomcpow, pomdp, planner, LiBeliefUpdater(P=pomdp), b0, s0)
-
-#MANSURS
-# println("\nStep-by-step POMCPOW simulation:")
-# global total_reward_pomcpow = 0.0
-# for (i, step) in enumerate(eachstep(hist_pomcpow))
-#     println("\nStep $i:")
-#     println("  State: time=$(step.s.time), deposits=[$(round(step.s.deposit[1], digits=2)), $(round(step.s.deposit[2], digits=2))], price=$(round(step.s.price, digits=2))")
-#     println("  Company demand: $(round(step.s.company_demand, digits=2))")
-#     println("  Ready to operate: $(step.s.ready_to_operate)")
-#     println("  $(describe_action(step.a))")
-#     println("  Reward: $(round(step.r, digits=2))")
-#     global total_reward_pomcpow += step.r
-# end
-
 
 # Replace your POMCPOW simulation section with this:
 
@@ -190,7 +174,6 @@ println("="^60)
 test_state = State(
     deposit = [7.0e6, 7.0e6, 7.0e6, 7.0e6],
     time = 3.0,
-    volume = 0.0,
     price = 1200.0,
     company_demand = 700.0,
     have_operated = [false, false, false, false],

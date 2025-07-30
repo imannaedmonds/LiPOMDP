@@ -1,7 +1,6 @@
 @with_kw mutable struct State
     deposit::Vector{Float64} # [v₁, v₂, v₃, v₄]
     time::Float64  # current time, year
-    volume::Float64  #TODO remove? current amt of Li mined up to time t
     price::Float64   # Price per thousand
     company_demand::Float64  # Company's target demand (market share * global)
     have_operated::Vector{Bool}  # Boolean value to represent whether or not we have taken a mine action
@@ -33,7 +32,7 @@ end
 
 @with_kw mutable struct LiPOMDP <: POMDP{State,Action,Observation}
     #Observation parameters
-    σ_obs_d::Float64 = 1.0 # Standard deviation of the observation noise
+    σ_obs_d::Float64 = 500.0 # Increase base observation noise
     σ_obs_p::Float64 = 1.0 # Standard deviation of the observation noise for price
 
     γ::Float64 = 0.97 #discounted reward
@@ -48,8 +47,8 @@ end
     
     # Production parameters
     output::Float64 = 1_000.0  # Annual output per mine
-    init_deposit_size_dle::Float64 = 30_000.0  # Initial deposit size 
-    init_deposit_size_mining::Float64 = 20_000.0  # Initial deposit size 
+    init_deposit_size_dle::Float64 = 15_000.0  # Initial deposit size 
+    init_deposit_size_mining::Float64 = 5_000.0  # Initial deposit size 
     dle_uncertainty_factor::Float64 = 0.25
     mining_uncertainty_factor::Float64 = 0.40 
 
@@ -66,7 +65,7 @@ end
     # DLE parameters
     dle_CO2_cost::Int64 = 80      # Lower environmental cost
     dle_CO2_emissions::Int64 = 5   # Lower emissions
-    dle_capex::Int64 = 5_000       # Higher initial investment ($5000 per ton)
+    dle_capex::Int64 = 50_000       # Higher initial investment ($5000 per ton)
     dle_opex::Int64 = 1_000        # Lower operating costs ($3500 per ton)
 
     #pricing model parameters
@@ -84,6 +83,9 @@ end
     σ_obs_demand::Float64 = 2.0  # Standard deviation for demand observation noise
     demand_growth_rate::Float64 = 0.05  # Annual demand growth rate
     demand_volatility::Float64 = 0.1  # Volatility in demand changes
+
+    # Add exploration parameters
+    exploration_bonus::Float64 = 1000.0  # Reward for exploration
 end
 
 @with_kw mutable struct LiBeliefUpdater <: Updater #TODO understand this
@@ -103,7 +105,6 @@ function Base.rand(rng::AbstractRNG, b::LiBelief)
     return State(
         deposit = sampled_deposits,
         time = b.time,
-        volume = b.volume,
         price = sampled_price,
         company_demand = sampled_demand,
         have_operated = copy(b.have_operated),
