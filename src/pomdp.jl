@@ -3,14 +3,14 @@
 #Rewards for mining
 function compute_emissions(P::LiPOMDP, s::State, a::Action)
     emissions = 0.0
-    if a.type == 3  # Operate mine
-        site = a.site
-        if s.ready_to_operate[site]
+    # Calculate emissions from all opened mines (they operate automatically)
+    for site in 1:P.n_deposits
+        if s.have_opened[site] && s.deposit[site] > 0  # Opened mine with remaining deposits
             amt = min(P.output, s.deposit[site])
             # Use appropriate emission factor based on deposit type
             emission_factor = P.deposit_types[site] ? P.dle_CO2_emissions : P.mining_CO2_emissions
             cost_factor = P.deposit_types[site] ? P.dle_CO2_cost : P.mining_CO2_cost
-            emissions = amt * emission_factor * cost_factor
+            emissions += amt * emission_factor * cost_factor
         end
     end
     return -emissions  # negative = penalty
@@ -18,39 +18,54 @@ end
 
 function compute_npv(P::LiPOMDP, s::State, a::Action)
     npv = 0.0
-    if a.type == 3  # Operate mine
-        site = a.site
-        if s.ready_to_operate[site]
+    
+    # Operating costs for all opened mines (they operate automatically)
+    for site in 1:P.n_deposits
+        if s.have_opened[site] && s.deposit[site] > 0  # Opened mine with remaining deposits
             amt = min(P.output, s.deposit[site])
-            # Don't calculate revenue here - let reward function handle market dynamics
             opex = P.deposit_types[site] ? P.dle_opex : P.mining_opex
-            npv = opex * amt  # Only operating costs, no revenue
+            npv += opex * amt  # Operating costs
         end
-    elseif a.type == 2  # Open mine
-        site = a.site
-        capex = P.deposit_types[site] ? P.dle_capex : P.mining_capex
-        npv = capex
     end
+    
+    # Capital costs for newly opened mines
+    for site in 1:P.n_deposits
+        if a.type[site] == 2 && !s.have_opened[site]  # Open new mine
+            capex = P.deposit_types[site] ? P.dle_capex : P.mining_capex
+            npv += capex * P.output  # Capital cost based on capacity
+        end
+    end
+    
     return npv
 end
 
 function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
-    current_production = if a.type == 3 && s.ready_to_operate[a.site]
-        min(P.output, s.deposit[a.site])
-    else
-        0.0
+    # Calculate total production from all opened mines (automatic operation)
+    current_production = 0.0
+    for site in 1:P.n_deposits
+        if s.have_opened[site] && s.deposit[site] > 0  # Opened mine with remaining deposits
+            current_production += min(P.output, s.deposit[site])
+        end
     end
     
     # Market-based revenue (only get paid for what you can sell)
-    sellable_amount = min(current_production, s.company_demand) #overproduction penalty
+    sellable_amount = min(current_production, s.company_demand)
     revenue = sellable_amount * s.price
     
-    # Operating costs and emissions
-    npv = compute_npv(P, s, a)  # Now only contains costs
+    # Operating costs and emissions (for all opened mines)
+    npv = compute_npv(P, s, a)  # Total costs across all sites
     emissions = compute_emissions(P, s, a)
     
+    # Exploration cost for sites being explored
+    exploration_cost = 0.0
+    for site in 1:P.n_deposits
+        if a.type[site] == 1  # Exploring
+            exploration_cost += 1000.0  # Fixed exploration cost per site
+        end
+    end
+    
     # Total reward
-    total_reward = revenue - npv + (1 - P.alpha) * emissions
+    total_reward = revenue - npv - exploration_cost + (1 - P.alpha) * emissions
     return total_reward
 end
 
@@ -92,7 +107,8 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         if a === nothing
             a_val = 0.0
         else
-            a_val = a.type
+            # Sum of all action types for market impact
+            a_val = sum(a.type)
         end
         return p₀ * exp(P.μ_drift * Δt + β * a_val + noise)
     end
@@ -178,15 +194,30 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
     μd_post = σd_post2 * (μd/σd^2 + zd/P.σ_obs_demand^2) # updated mean for demand
     updated_demand = Normal(μd_post, sqrt(σd_post2))
 
+    # Update have_opened based on action
+    new_have_opened = copy(b.have_opened)
+    for site in 1:P.n_deposits
+        if a.type[site] == 2 && !b.have_opened[site]
+            new_have_opened[site] = true
+        end
+    end
+    
+    # Update volume based on automatic production from opened mines
+    new_volume = b.volume
+    for site in 1:P.n_deposits
+        if new_have_opened[site] && mean(b.deposits_distribution[site]) > 0
+            new_volume += min(P.output, mean(b.deposits_distribution[site]))
+        end
+    end
+    
     # Construct and return the updated belief 
     return LiBelief(
         deposits_distribution = updated_deposits,  # new beliefs over each site's deposit
-        time = b.time + 1,                               # increment time
-        volume = b.volume,                                   # total lithium mined so far (unchanged here)
-        price_distribution = updated_price,            # updated price belief
-        demand_distribution = updated_demand,           # Add updated demand distribution
-        have_operated= copy(b.have_operated),           # retain mining history
-        ready_to_operate = copy(b.ready_to_operate)            # retain mine readiness
+        time = b.time + 1,                        # increment time
+        volume = new_volume,                      # total lithium mined
+        price_distribution = updated_price,       # updated price belief
+        demand_distribution = updated_demand,     # updated demand distribution
+        have_opened = new_have_opened            # updated mine status
     )
 end
 
@@ -209,14 +240,17 @@ function POMDPs.initialstate(P::LiPOMDP)
     global_production = get_historical_production(P, P.start_year)
     company_demand = update_demand(P, global_production)
     
+    # Calculate initial demand
+    initial_demand = global_production * P.market_share_target
+    
     return Deterministic(State(
         deposit = init_deposits,
         time = 1.0,
         volume = 0.0,
         price = P.p₀,
-        company_demand = company_demand,
-        have_operated = have_operated,
-        ready_to_operate = ready_to_operate
+        demand = initial_demand,
+        have_opened = have_opened,
+        company_demand = company_demand
     ))
 end
 
@@ -235,39 +269,37 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     # Update demands with uncertainty
     sp.company_demand = update_demand(P, global_production)
     
-    #create scenarios for each action item depending on state
-    #how to handle each action type 
-    #update all of the properties of sp
-    #changing price here based on type of pricing model
-
-    # Action: Do Nothing and Explore (type 0 and 1)
-    if a.type in (0, 1)
-        return Deterministic(sp)
-    end
-
-    # Action: Open Mine (type 2)
-    if a.type == 2
-        site = a.site
-        sp.ready_to_operate[site] = true
-        return Deterministic(sp)
-    end
-
-    #Action: Operate (type 3)
-    if a.type == 3
-        site = a.site
-        if sp.ready_to_operate[site]
-            max_amt = min(P.output, sp.deposit[site])
-            # Add randomness (10% std deviation)
-            amt_dist = Truncated(Normal(max_amt, 0.1 * max_amt), 0.0, max_amt)
-            amt = rand(amt_dist)
-
-            sp.deposit[site] -= amt
-            sp.volume += amt
+    # Process each site's action
+    for site in 1:P.n_deposits
+        action_type = a.type[site]
+        
+        # Action: Do Nothing or Explore (type 0 and 1)
+        if action_type in (0, 1)
+            # No state change for these actions
+            continue
         end
-        return Deterministic(sp)
+        
+        # Action: Open Mine (type 2)
+        if action_type == 2 && !s.have_opened[site]
+            sp.have_opened[site] = true
+        end
     end
-
-    # Fallback: return current state if action type is unrecognized
+    
+    # Automatic production from all opened mines
+    for site in 1:P.n_deposits
+        if sp.have_opened[site] && sp.deposit[site] > 0
+            max_amt = min(P.output, sp.deposit[site])
+            if max_amt > 0
+                # Add randomness (10% std deviation)
+                amt_dist = Truncated(Normal(max_amt, 0.1 * max_amt), 0.0, max_amt)
+                amt = rand(amt_dist)
+                
+                sp.deposit[site] -= amt
+                sp.volume += amt
+            end
+        end
+    end
+    
     return Deterministic(sp)
 end
 
@@ -305,32 +337,26 @@ function POMDPs.discount(P::LiPOMDP)
     return P.γ
 end
 
-# Define action space
+# Define action space - all combinations of actions for each site
 function POMDPs.actions(P::LiPOMDP)
-    acts = Action[]
-    # Do nothing
-    push!(acts, Action(site=0, type=0))
-    
-    # For each site
-    for site in 1:P.n_deposits
-        # Explore
-        push!(acts, Action(site=site, type=1))
-        # Open mine
-        push!(acts, Action(site=site, type=2))
-        # Operate
-        push!(acts, Action(site=site, type=3))
+    # Generate all 3^4 = 81 possible action combinations
+    # Each site can have action type: 0=DoNothing, 1=Explore, 2=Open
+    actions = Action[]
+    for combo in Iterators.product(0:2, 0:2, 0:2, 0:2)
+        push!(actions, Action(site=[0, 0, 0, 0], type=collect(combo)))
     end
-    return acts
+    return actions
 end
 
 function POMDPs.actionindex(P::LiPOMDP, a::Action)
-    if a.site == 0 && a.type == 0
-        return 1
-    else
-        # Calculate index based on site and type
-        # 3 actions per site (explore, open, operate)
-        return 1 + (a.site - 1) * 3 + a.type
+    # Find matching action in the action space
+    acts = actions(P)
+    for (idx, act) in enumerate(acts)
+        if act.type == a.type  # Compare type vectors
+            return idx
+        end
     end
+    error("Action not found in action space")
 end
 
 # Initial observation distribution

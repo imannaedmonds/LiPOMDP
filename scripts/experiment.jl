@@ -8,11 +8,7 @@ using Statistics
 using Distributions
 
 # Create POMDP instance
-pomdp = LiPOMDP(
-    demand=[1.0, 2.0],
-    mine_output=1.2,
-    price_model_type=3,  # Exponential pricing
-)
+pomdp = LiPOMDP(price_model_type=1)  # Static pricing
 
 # Set random seed for reproducibility
 rng = MersenneTwister(1234)
@@ -31,8 +27,7 @@ initial_belief = LiBelief(
     volume=s0.volume,
     price_distribution=Normal(s0.price, 1.0),
     demand_distribution=Normal(s0.demand, 1.0),
-    have_operated=copy(s0.have_operated),
-    ready_to_operate=copy(s0.ready_to_operate)
+    have_opened=copy(s0.have_opened)
 )
 
 # Create POMCPOW solver
@@ -66,8 +61,7 @@ function evaluate_policy(pomdp, planner, updater, n_simulations=100; rng=Mersenn
             volume=s.volume,
             price_distribution=Normal(s.price, 1.0),
             demand_distribution=Normal(s.demand, 1.0),
-            have_operated=copy(s.have_operated),
-            ready_to_operate=copy(s.ready_to_operate)
+            have_opened=copy(s.have_opened)
         )
         
         total_reward = 0.0
@@ -114,14 +108,20 @@ println("Max reward: $(maximum(pomcpow_rewards))")
 struct HeuristicPolicy <: Policy end
 
 function POMDPs.action(p::HeuristicPolicy, b::LiBelief)
-    # Simple heuristic: Open and operate the first DLE site (site 1)
-    if b.time < 3.0 && !b.ready_to_operate[1]
-        return Action(site=1, type=2)  # Open mine
-    elseif b.ready_to_operate[1]
-        return Action(site=1, type=3)  # Operate
-    else
-        return Action(site=0, type=0)  # Do nothing
+    # Simple heuristic: Open first DLE site early, then do nothing (mines operate automatically)
+    site_vec = zeros(Int, 4)
+    type_vec = zeros(Int, 4)
+    
+    if b.time < 3.0 && !b.have_opened[1]
+        # Open first DLE site
+        type_vec[1] = 2
+    elseif b.time < 5.0 && !b.have_opened[2]
+        # Open second DLE site
+        type_vec[2] = 2
     end
+    # Otherwise do nothing - opened mines produce automatically
+    
+    return Action(site=site_vec, type=type_vec)
 end
 
 heuristic_policy = HeuristicPolicy()
@@ -149,8 +149,7 @@ b = LiBelief(
     volume=s.volume,
     price_distribution=Normal(s.price, 1.0),
     demand_distribution=Normal(s.demand, 1.0),
-    have_operated=copy(s.have_operated),
-    ready_to_operate=copy(s.ready_to_operate)
+    have_opened=copy(s.have_opened)
 )
 
 total_reward = 0.0
@@ -158,17 +157,19 @@ step = 1
 
 while !isterminal(pomdp, s) && step <= 10
     println("\nStep $step:")
-    println("  State: time=$(s.time), deposits=$(s.deposit[1:2]), price=$(s.price)")
+    println("  State: time=$(s.time), deposits=$(s.deposit), price=$(s.price)")
     println("  Company demand: $(s.company_demand)")
+    println("  Have opened: $(s.have_opened)")
     
     a = action(planner, b)
-    println("  Action: site=$(a.site), type=$(a.type)")
+    println("  Actions: $([(i, a.type[i]) for i in 1:4 if a.type[i] != 0])")
     
     sp, o, r = gen(pomdp, s, a, rng)
     println("  Reward: $r")
     
     b = update(belief_updater, b, a, o)
     total_reward += discount(pomdp)^(s.time-1) * r
+    println("  Cumulative reward: $total_reward")
     
     s = sp
     step += 1
