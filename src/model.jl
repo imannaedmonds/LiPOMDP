@@ -2,7 +2,7 @@
     deposit::Vector{Float64} # [v₁, v₂, v₃, v₄]
     time::Float64 = 1.0  # current time, year
     volume::Float64 = 0.0  # current amt of Li mined up to time t
-    price::Float64 = 10_000.0  # Price per thousand
+    price::Float64 = 1_000.0  # Price per thousand
     demand::Float64 = 0.0 
     have_opened::Vector{Bool}  # Boolean value to represent whether or not we have opened a mine
     company_demand::Float64 = 0.0  # Company's target demand (market share * global)
