@@ -67,14 +67,14 @@ for (i, step) in enumerate(eachstep(hist_pomcpow))
     println("\nStep $i:")
     println("  State: time=$(step.s.time), deposits=[$(round(step.s.deposit[1], digits=2)), $(round(step.s.deposit[2], digits=2))], price=$(round(step.s.price, digits=2))")
     println("  Company demand: $(round(step.s.company_demand, digits=2))")
-    println("  Ready to operate: $(step.s.ready_to_operate)")
+    println("  Have Opened: $(step.s.have_opened)")
     
     # BELIEF DIAGNOSTICS - Add here
     global current_belief  # Declare as global inside loop
     println("  POMCPOW's belief state:")
-    println("    Belief ready_to_operate: $(current_belief.ready_to_operate)")
+    println("    Belief have_opened: $(current_belief.have_opened)")
     sampled_state = rand(MersenneTwister(1234), current_belief)
-    println("    Sampled state ready_to_operate: $(sampled_state.ready_to_operate)")
+    println("    Sampled state have_opened: $(sampled_state.have_opened)")
     
     # Test what the rollout policy would do
     rollout_action = action(base_policy, sampled_state)
@@ -82,11 +82,11 @@ for (i, step) in enumerate(eachstep(hist_pomcpow))
     
     # Show which actions would be profitable
     println("  Profitable actions available:")
-    for site in 1:length(step.s.ready_to_operate)
-        if step.s.ready_to_operate[site]
+    for site in 1:length(step.s.have_opened)
+        if step.s.have_opened[site]
             potential_reward = min(10000.0, step.s.deposit[site]) * step.s.price  # Rough estimate
             println("    - Operate site $site: ~$(round(potential_reward, digits=0)) revenue potential")
-        elseif !step.s.ready_to_operate[site]
+        elseif !step.s.have_opened[site]
             println("    - Open site $site: -$(pomdp.deposit_types[site] ? pomdp.dle_capex : pomdp.mining_capex) cost")
         end
     end
@@ -119,7 +119,7 @@ for (i, step) in enumerate(eachstep(hist_random))
     println("\nStep $i:")
     println("  State: time=$(step.s.time), deposits=[$(round(step.s.deposit[1], digits=2)), $(round(step.s.deposit[2], digits=2))], price=$(round(step.s.price, digits=2))")
     println("  Company demand: $(round(step.s.company_demand, digits=2))")
-    println("  Ready to operate: $(step.s.ready_to_operate)")
+    println("  Have opened: $(step.s.have_opened)")
     println("  $(describe_action(step.a))")
     println("  Reward: $(round(step.r, digits=2))")
     global total_reward_random += step.r
@@ -164,23 +164,3 @@ println("\nRandom policy action frequencies:")
 for (action, count) in sort(collect(random_actions), by=x->x[2], rev=true)
     println("  $action: $count times")
 end
-
-# Test manual operation after the simulation
-println("\n" * "="^60)
-println("Manual Operation Test")
-println("="^60)
-
-# Create a test state where site 2 is ready to operate
-test_state = State(
-    deposit = [7.0e6, 7.0e6, 7.0e6, 7.0e6],
-    time = 3.0,
-    price = 1200.0,
-    company_demand = 700.0,
-    have_operated = [false, false, false, false],
-    ready_to_operate = [false, true, false, false]  # Site 2 ready
-)
-
-# Test operating site 2
-operate_action = Action(site=2, type=3)
-test_reward = reward(pomdp, test_state, operate_action)
-println("Manual operation of site 2 reward: $test_reward")

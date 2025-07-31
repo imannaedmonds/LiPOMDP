@@ -26,17 +26,6 @@ function compute_costs(P::LiPOMDP, s::State, a::Action)
         end
     end
     
-    # # Capital costs for opening new mines
-    # for i in 1:length(a.site)
-    #     if a.type[i] == 2 && a.site[i] > 0  # Open mine action
-    #         site = a.site[i]
-    #         if site <= P.n_deposits && !s.have_opened[site]
-    #             capex = P.deposit_types[site] ? P.dle_capex : P.mining_capex
-    #             costs += capex
-    #         end
-    #     end
-    # end
-    
     # Capital costs for newly opened mines
     for site in 1:P.n_deposits
         if a.type[site] == 2 && !s.have_opened[site]  # Open new mine
@@ -49,18 +38,6 @@ function compute_costs(P::LiPOMDP, s::State, a::Action)
 end
 
 function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
-    
-    #TODO which one of them two?
-    # Add exploration incentive for exploration actions
-    exploration_reward = 0.0
-    for i in 1:length(a.site)
-        if a.type[i] == 1 && a.site[i] > 0  # Exploration action
-            site = a.site[i]
-            if site <= P.n_deposits && !s.have_opened[site]
-                exploration_reward += P.exploration_bonus
-            end
-        end
-    end
 
      # Exploration cost for sites being explored
      exploration_cost = 0.0
@@ -89,8 +66,8 @@ function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
     emissions = compute_emissions(P, s, a)
     
     # Total reward
-    total_reward = exploration_reward + revenue - costs + (1 - P.alpha) * emissions
-    #total_reward = revenue - costs - exploration_cost + (1 - P.alpha) * emissions
+    #total_reward = exploration_reward + revenue - costs + (1 - P.alpha) * emissions
+    total_reward = revenue - costs - exploration_cost + (1 - P.alpha) * emissions
     return total_reward
 end
 
@@ -108,7 +85,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         # Use proportional noise for static pricing
         noise = rand(Normal(0, p₀ * 0.05))  # 5% noise relative to base price
         new_price = p₀ + noise
-        return max(new_price, 100.0)  # Ensure minimum price
+        return max(new_price, 1000.0)  # Ensure minimum price
     end
 
     # 2. Linear Pricing
@@ -118,7 +95,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         # Use proportional noise relative to current price level
         noise = rand(Normal(0, abs(base_price) * 0.1))  # 10% noise
         new_price = base_price + noise
-        return max(new_price, 100.0)  # Ensure minimum price
+        return max(new_price, 1000.0)  # Ensure minimum price
     end
 
     # 3. Exponential Pricing
@@ -131,7 +108,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         noise = rand(Normal(0, noise_std))
         
         new_price = base_price + noise
-        return max(new_price, 100.0)  # Ensure minimum price
+        return max(new_price, 1000.0)  # Ensure minimum price
     end
 #TODO -- change the dynamic pricing
     # 4. Dynamic (Market Maker, action-dependent)
@@ -145,7 +122,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         # For exponential models, noise should be in the exponent for log-normal behavior
         noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
         new_price = p₀ * exp(P.μ_drift * Δt + β * a_val + noise)
-        return max(new_price, 100.0)  # Ensure minimum price
+        return max(new_price, 1000.0)  # Ensure minimum price
     end
 
     # 5. Dynamic Pricing (Market Maker) -- State-Dependent
@@ -155,11 +132,11 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         # For exponential models, noise should be in the exponent
         noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
         new_price = p₀ * exp(P.μ_drift * Δt + γ * scarcity + noise)
-        return max(new_price, 100.0)  # Ensure minimum price
+        return max(new_price, 1000.0)  # Ensure minimum price
     end
     
     # Fallback case
-    return max(p₀, 100.0)
+    return max(p₀, 1000.0)
 end
 
 # Add function to calculate company's demand
@@ -260,23 +237,37 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
             updated_have_opened[site] = true
         end
     end
-    
-    # Update volume based on production
-    new_volume = b.volume
+
+    expected_production_this_step = 0.0
     for site in 1:P.n_deposits
-        if updated_have_opened[site] && mean(updated_deposits[site]) > 0
-            in_situ = min(P.output, mean(updated_deposits[site]))
-            new_volume += in_situ * P.recovery[site] #difference
+        if updated_have_opened[site]
+    # Use PRIOR deposit belief (before observation update) for production calculation
+            prior_deposit_mean = mean(b.deposits_distribution[site]) 
+            if prior_deposit_mean > 0
+                expected_in_situ = min(P.output, prior_deposit_mean)
+                expected_saleable = expected_in_situ * P.recovery[site]
+                expected_production_this_step += expected_saleable
+                   
+                # Update the deposit belief to account for mining depletion
+                # Reduce the mean by the amount mined
+                current_mean = mean(updated_deposits[site])
+                current_std = std(updated_deposits[site])
+                depleted_mean = max(0.0, current_mean - expected_in_situ)
+                updated_deposits[site] = Normal(depleted_mean, current_std)
+            end
         end
     end
+
+    updated_total_mined = b.total_mined + expected_production_this_step
+
 
     # Construct and return the updated belief 
     return LiBelief(
         deposits_distribution = updated_deposits,  # new beliefs over each site's deposit
         time = b.time + 1,                        # increment time
-        volume = new_volume,                      #TODO DELETE updated total volume
         price_distribution = updated_price,       # updated price belief
         demand_distribution = updated_demand,     # updated demand distribution
+        total_mined = updated_total_mined,
         have_opened = updated_have_opened         # track which mines are opened
     )
 end
@@ -301,11 +292,10 @@ function POMDPs.initialstate(P::LiPOMDP)
     return Deterministic(State(
         deposit = init_deposits,
         time = 1.0,
-        volume = 0.0,
         price = P.p₀,
-        demand = 0.0,  #TODO take this out of everything# This gets updated in transition
-        have_opened = have_opened,
-        company_demand = company_demand
+        company_demand = company_demand,
+        total_mined = 0.0,  # Start with no mining done
+        have_opened = have_opened
     ))
 end
 
@@ -335,9 +325,9 @@ function create_initial_belief(P::LiPOMDP)
     belief = LiBelief(
         deposits_distribution = deposits_distribution,
         time = s0.time,
-        volume = s0.volume,
         price_distribution = Normal(s0.price, price_uncertainty),
         demand_distribution = Normal(s0.company_demand, demand_uncertainty),
+        total_mined = 0.0,
         have_opened = copy(s0.have_opened)
     )
     
@@ -359,7 +349,8 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     
     # Update demands with uncertainty
     sp.company_demand = update_demand(P, global_production)
-    
+    total_mined_this_step = 0.0
+
     # Process each site's action
     for site in 1:P.n_deposits
         action_type = a.type[site]
@@ -377,6 +368,7 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     end
 
     #TODO check difference---- Automatic production from all open mines
+    total_mined_this_step = 0.0
     for site in 1:P.n_deposits
         if sp.have_opened[site] && sp.deposit[site] > 0
             in_situ = min(P.output, sp.deposit[site])
@@ -384,26 +376,12 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
             mined = rand(Truncated(Normal(in_situ, 0.1*in_situ), 0.0, in_situ))
             saleable = mined * P.recovery[site]
             sp.deposit[site] -= mined
-            sp.volume += saleable  # Update total volume produced
+            total_mined_this_step += saleable  # Track what was actually recovered
         end
     end
 
-    """
-     # Automatic production from all opened mines
-    for site in 1:P.n_deposits
-        if sp.have_opened[site] && sp.deposit[site] > 0
-            max_amt = min(P.output, sp.deposit[site])
-            if max_amt > 0
-                # Add randomness (10% std deviation)
-                amt_dist = Truncated(Normal(max_amt, 0.1 * max_amt), 0.0, max_amt)
-                amt = rand(amt_dist)
-                
-                sp.deposit[site] -= amt
-                sp.volume += amt
-            end
-        end
-    end
-    """
+    sp.total_mined = s.total_mined + total_mined_this_step  # Accumulate
+
 
     return Deterministic(sp)
 end

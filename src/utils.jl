@@ -48,3 +48,11 @@ function get_historical_data(pomdp::LiPOMDP, year::Int64)
 end
 
 
+function total_mined_so_far(P::LiPOMDP, initial_state::State, current_state::State)
+    total = 0.0
+    for site in 1:P.n_deposits
+        mined_raw = initial_state.deposit[site] - current_state.deposit[site]
+        total += mined_raw * P.recovery[site]  # Apply recovery factor
+    end
+    return total
+end

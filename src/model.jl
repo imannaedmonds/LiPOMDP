@@ -1,11 +1,10 @@
 @with_kw mutable struct State
     deposit::Vector{Float64} # [v₁, v₂, v₃, v₄]
     time::Float64 = 1.0  # current time, year
-    volume::Float64 = 0.0  # current amt of Li mined up to time t
     price::Float64 = 1_000.0  # Price per thousand
-    demand::Float64 = 0.0 
-    have_opened::Vector{Bool}  # Boolean value to represent whether or not we have opened a mine
     company_demand::Float64 = 0.0  # Company's target demand (market share * global)
+    total_mined::Float64  # track how much has been mined so far
+    have_opened::Vector{Bool}  # Boolean value to represent whether or not we have opened a mine
 end
 
 @with_kw mutable struct Action
@@ -23,9 +22,9 @@ end
 @with_kw mutable struct LiBelief{T<:UnivariateDistribution} 
     deposits_distribution::Vector{UnivariateDistribution} # [v₁, v₂, v₃, v₄] # allow mixed LogNormal, etc
     time::Float64 = 1.0  # current time, year
-    volume::Float64 = 0.0  # current amt of Li mined up to time t
     price_distribution::T  # Price per thousand
     demand_distribution::T  # Demand distribution
+    total_mined::Float64  # track how much has been mined so far
     have_opened::Vector{Bool}  # Boolean value to represent whether or not we have opened a mine
 end
     
@@ -38,7 +37,7 @@ end
     γ::Float64 = 0.97 #discounted reward
     time_horizon::Int64 = 29 #time horizon
     n_deposits::Int64 = 4 # number of deposits
-    alpha::Float64 = 1.0 # Parameter to control tradeoff between emissions and volume
+    alpha::Float64 = 0.5 # Parameter to control tradeoff between emissions and volume
     stochastic_price::Bool = false
 
     # Add market parameters
@@ -105,10 +104,9 @@ function Base.rand(rng::AbstractRNG, b::LiBelief)
     return State(
         deposit = sampled_deposits,
         time = b.time,
-        volume = b.volume,
         price = sampled_price,
-        demand = sampled_demand,
-        have_opened = copy(b.have_opened),
-        company_demand = sampled_demand
+        company_demand = sampled_demand,
+        total_mined = b.total_mined,
+        have_opened = copy(b.have_opened)
     )
 end
