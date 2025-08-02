@@ -1,0 +1,180 @@
+PLANNING vs HISTORICAL EVALUATION RESULTS
+Planning Model: Linear (Type 2)
+Evaluation: True Historical Prices
+============================================================
+
+RandomHeuristicPolicy:
+  opening_actions: 4.0
+  total_revenue: 1.9315811145775104e8
+  opening_actions_std: 0.0
+  mines_opened: 4.0
+  final_uncertainty_std: 25.987226288388133
+  mines_opened_std: 0.0
+  total_production_std: 2099.75776028868
+  exploration_actions: 4.126666666666667
+  total_profit_std: 7.481188886316155e7
+  total_production: 36531.04913205659
+  exploration_actions_std: 2.869175843752237
+  total_costs: 1.1208491425801025e8
+  total_emissions: -4.667165289516737e7
+  total_emissions_std: 1.6000916640488224e6
+  total_reward_std: 3.239682531563618e7
+  total_revenue_std: 7.40768951818334e7
+  final_uncertainty: 376.89208150193195
+  total_reward: 3.1123930921968557e6
+  total_costs_std: 5.18754981669799e6
+  total_profit: 8.10731971997408e7
+
+OpenFirstPolicy:
+  opening_actions: 4.0
+  total_revenue: 9.865830731392677e7
+  opening_actions_std: 0.0
+  mines_opened: 4.0
+  final_uncertainty_std: 28.03538848654105
+  mines_opened_std: 0.0
+  total_production_std: 367.1280185116313
+  exploration_actions: 0.0
+  total_profit_std: 3.4229698016632125e6
+  total_production: 37077.266523893406
+  exploration_actions_std: 0.0
+  total_costs: 1.0693698187884437e8
+  total_emissions: -4.711089102540882e7
+  total_emissions_std: 519982.7985725831
+  total_reward_std: 2.3748048042995697e6
+  total_revenue_std: 3.610653057070242e6
+  final_uncertainty: 373.8647588392514
+  total_reward: -4.472451476247611e7
+  total_costs_std: 903721.3503507356
+  total_profit: -8.27867456491759e6
+
+OperateFirstPolicy:
+  opening_actions: 4.0
+  total_revenue: 9.804676815282738e7
+  opening_actions_std: 0.0
+  mines_opened: 4.0
+  final_uncertainty_std: 27.957732360293193
+  mines_opened_std: 0.0
+  total_production_std: 339.9011604742242
+  exploration_actions: 0.0
+  total_profit_std: 3.221219182282778e6
+  total_production: 37059.17807027433
+  exploration_actions_std: 0.0
+  total_costs: 1.0690668681890662e8
+  total_emissions: -4.710623882700402e7
+  total_emissions_std: 484699.98086373264
+  total_reward_std: 2.2380682641588165e6
+  total_revenue_std: 3.43990924367011e6
+  final_uncertainty: 379.6713611204437
+  total_reward: -4.5147276799455106e7
+  total_costs_std: 840773.4192662137
+  total_profit: -8.859918666079244e6
+
+ExploreFirstPolicy:
+  opening_actions: 0.0
+  total_revenue: 0.0
+  opening_actions_std: 0.0
+  mines_opened: 0.0
+  final_uncertainty_std: 25.119082761581552
+  mines_opened_std: 0.0
+  total_production_std: 0.0
+  exploration_actions: 29.0
+  total_profit_std: 0.0
+  total_production: 0.0
+  exploration_actions_std: 0.0
+  total_costs: 0.0
+  total_emissions: 0.0
+  total_emissions_std: 0.0
+  total_reward_std: 0.0
+  total_revenue_std: 0.0
+  final_uncertainty: 376.321910301568
+  total_reward: -19553.021699547837
+  total_costs_std: 0.0
+  total_profit: 0.0
+
+DLEFirstPolicy:
+  opening_actions: 4.0
+  total_revenue: 9.809216617624933e7
+  opening_actions_std: 0.0
+  mines_opened: 4.0
+  final_uncertainty_std: 27.1861403583806
+  mines_opened_std: 0.0
+  total_production_std: 322.07479791851404
+  exploration_actions: 0.0
+  total_profit_std: 3.4357817083361736e6
+  total_production: 37045.48478319172
+  exploration_actions_std: 0.0
+  total_costs: 1.0683648426723418e8
+  total_emissions: -4.704319355282876e7
+  total_emissions_std: 442464.69173239387
+  total_reward_std: 2.3169606052368567e6
+  total_revenue_std: 3.682931013903773e6
+  final_uncertainty: 377.49739730212843
+  total_reward: -4.506569455858743e7
+  total_costs_std: 785800.923125649
+  total_profit: -8.74431809098485e6
+
+ConservativePolicy:
+  opening_actions: 1.0
+  total_revenue: 6.4371674162481345e7
+  opening_actions_std: 0.0
+  mines_opened: 1.0
+  final_uncertainty_std: 25.804144168489092
+  mines_opened_std: 0.0
+  total_production_std: 201.6463156558133
+  exploration_actions: 0.0
+  total_profit_std: 1.2614523832580294e6
+  total_production: 13115.95977354553
+  exploration_actions_std: 0.0
+  total_costs: 2.6231919547091052e7
+  total_emissions: -8.743973182363685e6
+  total_emissions_std: 134430.8771038755
+  total_reward_std: 799449.8024107968
+  total_revenue_std: 1.591582705087342e6
+  final_uncertainty: 373.21395439348186
+  total_reward: 1.3569466834399689e7
+  total_costs_std: 403292.6313116262
+  total_profit: 3.8139754615390286e7
+
+RandomSolver:
+  opening_actions: 4.0
+  total_revenue: 1.8885974997426254e8
+  opening_actions_std: 0.0
+  mines_opened: 4.0
+  final_uncertainty_std: 25.93646478758148
+  mines_opened_std: 0.0
+  total_production_std: 1921.1374792394008
+  exploration_actions: 4.326666666666667
+  total_profit_std: 7.406241275493342e7
+  total_production: 36459.77916842773
+  exploration_actions_std: 3.1011941122251963
+  total_costs: 1.1234455274901763e8
+  total_emissions: -4.660169759426714e7
+  total_emissions_std: 1.6798172457122959e6
+  total_reward_std: 3.202385343912403e7
+  total_revenue_std: 7.220024182275553e7
+  final_uncertainty: 380.2892803151915
+  total_reward: 2.127671535143855e6
+  total_costs_std: 4.938616136236584e6
+  total_profit: 7.651519722524494e7
+
+POMCPOW:
+  opening_actions: 10.086666666666666
+  total_revenue: 4.08781368105267e8
+  opening_actions_std: 2.0916473924439734
+  mines_opened: 4.0
+  final_uncertainty_std: 26.736198432305006
+  mines_opened_std: 0.0
+  total_production_std: 1844.783948916522
+  exploration_actions: 15.2
+  total_profit_std: 5.2124452084148064e7
+  total_production: 32876.13863184912
+  exploration_actions_std: 2.5776530608313877
+  total_costs: 1.0492162914337769e8
+  total_emissions: -4.104475775119946e7
+  total_emissions_std: 2.166708681262235e6
+  total_reward_std: 2.022012964311955e7
+  total_revenue_std: 5.1896823617950834e7
+  final_uncertainty: 378.03699601236383
+  total_reward: 1.0244667960925509e8
+  total_costs_std: 3.6469688444124516e6
+  total_profit: 3.038597389618892e8

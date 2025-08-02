@@ -109,9 +109,8 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         new_price = base_price + noise
         return max(new_price, 1000.0)  # Ensure minimum price
     end
-#TODO -- change the dynamic pricing
     # 4. Dynamic (Market Maker, action-dependent)
-    if P.price_model_type == 5
+    if P.price_model_type == 4
         β = P.β_action
         if a === nothing
             a_val = 0.0
@@ -125,7 +124,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
     end
 
     # 5. Dynamic Pricing (Market Maker) -- State-Dependent
-    if P.price_model_type == 6
+    if P.price_model_type == 5
         γ = P.γ_state
         scarcity = sum(s.deposit)   # Example: total remaining deposits
         # For exponential models, noise should be in the exponent

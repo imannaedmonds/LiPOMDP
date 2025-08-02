@@ -42,7 +42,6 @@ end
     time_horizon::Int64 = 29 #time horizon
     n_deposits::Int64 = 4 # number of deposits
     alpha::Float64 = 0.5 # Parameter to control tradeoff between emissions and volume
-    stochastic_price::Bool = false
 
     # Add market parameters
     market_share_target::Float64 = 0.05  # Target 0.5% of global market
@@ -71,13 +70,13 @@ end
     dle_opex::Int64 = 1_500        # Lower operating costs ($3500 per ton)
 
     #pricing model parameters
-    price_model_type::Int64 = 1  #different pricing models 1) static 2) linear, 3) exponential, 4) stochastic pricing (GBM), 5) Dynamic Price  
+    price_model_type::Int64 = 1  #different pricing models 1) static 2) linear, 3) exponential, 4) Dynamic Price, 5) State-Dependent
     hist_data::Dict{Int64, Tuple{Float64, Float64, Float64}} = lithium_data  # Historical data as (demand, price, production) tuples by year
     start_year::Int64 = 1995  #TODO-MANSUR check this Starting year for historical data
     p₀::Float64 = 1_000.0 # TODO-MANSUR should this change for each price model? 
     α_slope::Float64 = 878.39   # linear slope (for linear pricing), increasing 10,000 dollars every year 
     λ_exp::Float64 = 0.1261     # exponential growth rate
-    μ_drift::Float64 = 0.0     # drift for stochastic, TODO mention in the paper that you can set it to something 
+    μ_drift::Float64 = 0.0     # drift for dynamic pricing models 
     β_action::Float64 = 0.01   # market-maker action sensitivity
     γ_state::Float64 = 0.01    # state-dependence sensitivity
 

@@ -9,7 +9,7 @@ A Julia package for modeling lithium mining operations as a Partially Observable
 - **Multi-site mining decisions**: Model considers 4 deposit sites (2 DLE, 2 traditional)
 - **Automatic mine operation**: Once opened, mines produce automatically without explicit operate actions
 - **Environmental considerations**: Tracks CO2 emissions with different costs for DLE vs traditional mining
-- **Market dynamics**: Multiple pricing models (static, linear, exponential, stochastic)
+- **Market dynamics**: Multiple pricing models (static, linear, exponential, dynamic)
 - **Uncertainty handling**: Manages uncertainty in deposit sizes, prices, and demand
 - **Policy optimization**: Uses POMCPOW for finding optimal mining strategies
 
@@ -107,10 +107,11 @@ This will run a comprehensive comparison showing:
 ## Pricing Models
 
 The package supports multiple pricing models:
-- Type 0: Static pricing
-- Type 1: Linear pricing (price increases over time)
-- Type 2: Exponential pricing
-- Type 3: Stochastic pricing with noise
+- Type 1: Static pricing
+- Type 2: Linear pricing (price increases over time)
+- Type 3: Exponential pricing
+- Type 4: Dynamic pricing (action-dependent)
+- Type 5: State-dependent pricing
 
 ## Development Status
 
@@ -121,6 +122,6 @@ The package supports multiple pricing models:
 - [x] Historical data integration
 - [x] Multiple pricing models
 - [x] Policy comparison framework
-- [ ] Extended stochastic pricing models
+- [ ] Extended dynamic pricing models
 - [ ] Additional experiments
 
