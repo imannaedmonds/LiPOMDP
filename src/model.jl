@@ -1,3 +1,7 @@
+using Parameters
+using POMDPs
+using POMDPTools
+
 @with_kw mutable struct State
     deposit::Vector{Float64} # [v₁, v₂, v₃, v₄]
     time::Float64 = 1.0  # current time, year
@@ -8,7 +12,7 @@
 end
 
 @with_kw mutable struct Action
-    site::Vector{Int64} = [0, 0, 0, 0]   # site: 0=DoNothing, 1-2=DLE, 3-4=Traditional
+    site::Vector{Int64} = [0, 0, 0, 0]   # site: 0=DoNothing, 1-2=DLE, 3-4=Hard Rock Mining
     type::Vector{Int64} = [0, 0, 0, 0]    # type: 0=DoNothing, 1=explore, 2=open (no operate - mines produce automatically after opening)
 end
 
@@ -31,7 +35,7 @@ end
 
 @with_kw mutable struct LiPOMDP <: POMDP{State,Action,Observation}
     #Observation parameters
-    σ_obs_d::Float64 = 500.0 # Increase base observation noise
+    σ_obs_d::Float64 = 1000.0 # Increased base observation noise for more realistic uncertainty
     σ_obs_p::Float64 = 100.0 # Standard deviation of the observation noise for price
 
     γ::Float64 = 0.97 #discounted reward
@@ -46,26 +50,25 @@ end
     
     # Production parameters
     output::Float64 = 1_000.0  # Annual output per mine
-    init_deposit_size_dle::Float64 = 15_000.0  # Initial deposit size 
-    init_deposit_size_mining::Float64 = 5_000.0  # Initial deposit size 
-    dle_uncertainty_factor::Float64 = 0.25
+    init_deposit_size_dle::Float64 = 17_000.0  # Initial deposit size 
+    init_deposit_size_mining::Float64 = 10_000.0  # Initial deposit size 
+    dle_uncertainty_factor::Float64 = 0.50  # Increased from 0.25 for higher profit impact
     mining_uncertainty_factor::Float64 = 0.40 
 
-    # Mining method for each deposit (true = DLE, false = traditional)
-    deposit_types::Vector{Bool} = [true, true, false, false]  # First two are DLE, last two traditional
+    # Mining method for each deposit (true = DLE, false = hard rock mining)
+    deposit_types::Vector{Bool} = [true, true, false, false]  # First two are DLE, last two Hard Rock Mining
     recovery::Vector{Float64} = [0.75, 0.75, 0.55, 0.55]    # Fraction of in‑situ Li recovered as saleable product
+    CO2_cost::Int64 = 100
 
-    # Traditional mining parameters
-    mining_CO2_cost::Int64 = 120
+    # Hard Rock mining parameters
     mining_CO2_emissions::Int64 = 15
-    mining_capex::Int64 = 30_000    # $3000 per ton of capacity
+    mining_capex::Int64 = 3_000    # $3000 per ton of capacity
     mining_opex::Int64 = 2_000     # $4500 per ton operating cost
 
     # DLE parameters
-    dle_CO2_cost::Int64 = 80      # Lower environmental cost
     dle_CO2_emissions::Int64 = 5   # Lower emissions
-    dle_capex::Int64 = 50_000       # Higher initial investment ($5000 per ton)
-    dle_opex::Int64 = 1_000        # Lower operating costs ($3500 per ton)
+    dle_capex::Int64 = 9_000       # Higher initial investment ($5000 per ton)
+    dle_opex::Int64 = 1_500        # Lower operating costs ($3500 per ton)
 
     #pricing model parameters
     price_model_type::Int64 = 1  #different pricing models 1) static 2) linear, 3) exponential, 4) stochastic pricing (GBM), 5) Dynamic Price  
@@ -83,8 +86,6 @@ end
     demand_growth_rate::Float64 = 0.05  # Annual demand growth rate
     demand_volatility::Float64 = 0.1  # Volatility in demand changes
 
-    # Add exploration parameters
-    exploration_bonus::Float64 = 1000.0  # Reward for exploration
 end
 
 @with_kw mutable struct LiBeliefUpdater <: Updater #TODO understand this

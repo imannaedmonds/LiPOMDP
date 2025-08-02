@@ -4,14 +4,69 @@ using POMDPs
 using Random
 
 """
-ExploreFirstPolicy - A heuristic policy that prioritizes exploration
+OpenFirstPolicy - A heuristic policy that prioritizes opening mines
 
 Priority order:
-1. Explore unexplored sites first
-2. Open explored mines that aren't already opened
-3. Do nothing if no other options
+1. Open unopened mines first
+2. Do nothing if all mines are opened
 
-This policy encourages thorough exploration before committing to mining operations.
+This policy focuses on opening mines to enable automatic production.
+"""
+struct OpenFirstPolicy <: Policy
+    pomdp::LiPOMDP
+    debug::Bool
+end
+
+OpenFirstPolicy(pomdp::LiPOMDP) = OpenFirstPolicy(pomdp, false)
+
+function POMDPs.action(policy::OpenFirstPolicy, s::State)
+    if policy.debug
+        println("\n[DEBUG] OpenFirstPolicy evaluating state:")
+        println("  Time: $(s.time)")
+        println("  Have opened: $(s.have_opened)")
+        println("  Deposits: $(round.(s.deposit, digits=1))")
+    end
+    
+    # First priority: Open unopened mines
+    for i in 1:policy.pomdp.n_deposits
+        if !s.have_opened[i]
+            if policy.debug
+                println("  [DEBUG] Choosing to open site $i (unopened)")
+            end
+            site_vec = zeros(Int, 4)
+            type_vec = zeros(Int, 4)
+            site_vec[i] = i
+            type_vec[i] = 2  # Open mine
+            return Action(site=site_vec, type=type_vec)
+        end
+    end
+    
+    # Fallback: do nothing if all sites are opened
+    if policy.debug
+        println("  [DEBUG] All sites opened, doing nothing")
+    end
+    return Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0])
+end
+
+function POMDPs.action(policy::OpenFirstPolicy, b::LiBelief)
+    if policy.debug
+        println("\n[DEBUG] OpenFirstPolicy evaluating belief state")
+    end
+    
+    # Sample a state from the belief
+    s = rand(MersenneTwister(1234), b)
+    return action(policy, s)
+end
+
+"""
+ExploreFirstPolicy - A heuristic policy that prioritizes exploration before opening
+
+Priority order:
+1. Explore unexplored sites (to gather information)
+2. Open explored sites that aren't opened
+3. Do nothing if all sites are opened
+
+This policy focuses on information gathering before making opening decisions.
 """
 struct ExploreFirstPolicy <: Policy
     pomdp::LiPOMDP
@@ -28,7 +83,7 @@ function POMDPs.action(policy::ExploreFirstPolicy, s::State)
         println("  Deposits: $(round.(s.deposit, digits=1))")
     end
     
-    # First priority: Explore unexplored sites
+    # First priority: Explore unopened sites
     for i in 1:policy.pomdp.n_deposits
         if !s.have_opened[i]
             if policy.debug
@@ -36,8 +91,22 @@ function POMDPs.action(policy::ExploreFirstPolicy, s::State)
             end
             site_vec = zeros(Int, 4)
             type_vec = zeros(Int, 4)
-            site_vec[1] = i
-            type_vec[1] = 1  # Explore
+            site_vec[i] = i
+            type_vec[i] = 1  # Explore
+            return Action(site=site_vec, type=type_vec)
+        end
+    end
+    
+    # Second priority: Open unopened mines
+    for i in 1:policy.pomdp.n_deposits
+        if !s.have_opened[i]
+            if policy.debug
+                println("  [DEBUG] Choosing to open site $i (unopened)")
+            end
+            site_vec = zeros(Int, 4)
+            type_vec = zeros(Int, 4)
+            site_vec[i] = i
+            type_vec[i] = 2  # Open mine
             return Action(site=site_vec, type=type_vec)
         end
     end
@@ -64,8 +133,7 @@ OperateFirstPolicy - A heuristic policy that opens mines as quickly as possible
 
 Priority order:
 1. Open any unopened mines (invest for future production)
-2. Explore if needed before opening
-3. Do nothing (if all mines are opened)
+2. Do nothing (if all mines are opened)
 
 Since mines operate automatically, this policy focuses on opening mines.
 """
@@ -96,8 +164,8 @@ function POMDPs.action(policy::OperateFirstPolicy, s::State)
             end
             site_vec = zeros(Int, 4)
             type_vec = zeros(Int, 4)
-            site_vec[1] = i
-            type_vec[1] = 2  # Open mine
+            site_vec[i] = i
+            type_vec[i] = 2  # Open mine
             return Action(site=site_vec, type=type_vec)
         end
     end
@@ -149,8 +217,8 @@ function POMDPs.action(policy::DLEFirstPolicy, s::State)
             end
             site_vec = zeros(Int, 4)
             type_vec = zeros(Int, 4)
-            site_vec[1] = i
-            type_vec[1] = 2  # Open mine
+            site_vec[i] = i
+            type_vec[i] = 2  # Open mine
             return Action(site=site_vec, type=type_vec)
         end
     end
@@ -163,8 +231,8 @@ function POMDPs.action(policy::DLEFirstPolicy, s::State)
             end
             site_vec = zeros(Int, 4)
             type_vec = zeros(Int, 4)
-            site_vec[1] = i
-            type_vec[1] = 2  # Open mine
+            site_vec[i] = i
+            type_vec[i] = 2  # Open mine
             return Action(site=site_vec, type=type_vec)
         end
     end
@@ -213,8 +281,8 @@ function POMDPs.action(policy::ConservativePolicy, s::State)
                 end
                 site_vec = zeros(Int, 4)
                 type_vec = zeros(Int, 4)
-                site_vec[1] = i
-                type_vec[1] = 2  # Open mine
+                site_vec[i] = i
+                type_vec[i] = 2  # Open mine
                 return Action(site=site_vec, type=type_vec)
             end
         end

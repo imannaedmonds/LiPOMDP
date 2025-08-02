@@ -83,8 +83,9 @@ Note: Mines operate automatically once opened - no explicit "operate" action nee
 
 The package includes several heuristic policies for comparison:
 
-- **ExploreFirstPolicy**: Prioritizes exploration before opening mines
-- **OperateFirstPolicy**: Opens mines as quickly as possible
+- **OpenFirstPolicy**: Prioritizes opening mines as quickly as possible
+- **ExploreFirstPolicy**: Prioritizes exploration before opening mines (information gathering)
+- **OperateFirstPolicy**: Opens mines as quickly as possible (same as OpenFirstPolicy)
 - **DLEFirstPolicy**: Opens DLE mines first (lower emissions, higher efficiency)
 - **ConservativePolicy**: Waits for high demand before opening mines
 - **RandomHeuristicPolicy**: Random baseline for comparison

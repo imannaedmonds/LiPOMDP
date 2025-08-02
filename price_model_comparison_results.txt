@@ -1,0 +1,347 @@
+PRICE MODEL POLICY PERFORMANCE COMPARISON RESULTS
+================================================================================
+
+Static PRICING MODEL (Type 1)
+============================================================
+
+RandomHeuristicPolicy:
+  total_demand: 63045.62371631589
+  total_demand_std: 2392.078191591803
+  demand_meeting_ratio_std: 0.02327623989750514
+  final_uncertainty_std: 26.519388470544733
+  total_emission_cost: 2.52540672948014e7
+  total_production_std: 1197.2545817367534
+  total_emission_cost_std: 858842.1922153541
+  total_profit_std: 2.7204851753356382e7
+  total_production: 22820.948924591703
+  demand_meeting_ratio: 0.36250092403560136
+  final_uncertainty: 375.5516528840152
+  total_profit: 9.511482899181557e7
+
+OpenFirstPolicy:
+  total_demand: 62868.73271228563
+  total_demand_std: 2494.542476452308
+  demand_meeting_ratio_std: 0.015063634740363088
+  final_uncertainty_std: 27.063408348817685
+  total_emission_cost: 2.534390481566049e7
+  total_production_std: 251.02561350830794
+  total_emission_cost_std: 320063.850082317
+  total_profit_std: 4.855555905368557e6
+  total_production: 22923.72329920613
+  demand_meeting_ratio: 0.36520022621661796
+  final_uncertainty: 373.6316026056272
+  total_profit: 4.7852645484647386e7
+
+OperateFirstPolicy:
+  total_demand: 63018.7855496261
+  total_demand_std: 2479.923783350882
+  demand_meeting_ratio_std: 0.015101983176756883
+  final_uncertainty_std: 27.98956158233251
+  total_emission_cost: 2.5304399647853523e7
+  total_production_std: 280.323506088433
+  total_emission_cost_std: 370736.31885338534
+  total_profit_std: 5.423851878613427e6
+  total_production: 22917.009820559182
+  demand_meeting_ratio: 0.3642174560980349
+  final_uncertainty: 377.83401917599383
+  total_profit: 4.85566713176301e7
+
+ExploreFirstPolicy:
+  total_demand: 63045.23757028952
+  total_demand_std: 2289.2707553443706
+  demand_meeting_ratio_std: 0.0
+  final_uncertainty_std: 27.951048431007553
+  total_emission_cost: 0.0
+  total_production_std: 0.0
+  total_emission_cost_std: 0.0
+  total_profit_std: 0.0
+  total_production: 0.0
+  demand_meeting_ratio: 0.0
+  final_uncertainty: 374.01466533045283
+  total_profit: 0.0
+
+DLEFirstPolicy:
+  total_demand: 62980.51375979733
+  total_demand_std: 2454.946859104535
+  demand_meeting_ratio_std: 0.014713732295022782
+  final_uncertainty_std: 27.18219696020348
+  total_emission_cost: 2.5385855591757428e7
+  total_production_std: 296.5976783460667
+  total_emission_cost_std: 364350.736881534
+  total_profit_std: 5.21057862544447e6
+  total_production: 22976.87809213651
+  demand_meeting_ratio: 0.36536500028114427
+  final_uncertainty: 378.1524782733085
+  total_profit: 4.804277542406048e7
+
+ConservativePolicy:
+  total_demand: 63219.73336259671
+  total_demand_std: 2552.335835163737
+  demand_meeting_ratio_std: 0.006634379111471677
+  final_uncertainty_std: 24.216899949283796
+  total_emission_cost: 6.010788192601266e6
+  total_production_std: 181.11940638856288
+  total_emission_cost_std: 120746.27092570865
+  total_profit_std: 2.618245594759024e6
+  total_production: 9016.182288901899
+  demand_meeting_ratio: 0.1428557515853399
+  final_uncertainty: 377.34123089101973
+  total_profit: 7.095383954607277e7
+
+RandomSolver:
+  total_demand: 62872.14137576793
+  total_demand_std: 2399.2108809822817
+  demand_meeting_ratio_std: 0.018263588127338786
+  final_uncertainty_std: 28.21792312605126
+  total_emission_cost: 2.5293401002346657e7
+  total_production_std: 694.0343251192826
+  total_emission_cost_std: 535516.1432990351
+  total_profit_std: 2.834678490946203e7
+  total_production: 22857.311579188638
+  demand_meeting_ratio: 0.3641120566820556
+  final_uncertainty: 373.53594922444444
+  total_profit: 9.349105743034494e7
+
+POMCPOW:
+  total_demand: 63430.082915675055
+  total_demand_std: 2491.9426329976277
+  demand_meeting_ratio_std: 0.015009220623904427
+  final_uncertainty_std: 27.03442484367845
+  total_emission_cost: 2.5339949170765843e7
+  total_production_std: 264.0525466262939
+  total_emission_cost_std: 342454.96436393535
+  total_profit_std: 1.5671098488495192e7
+  total_production: 22934.324610653828
+  demand_meeting_ratio: 0.36213039757901344
+  final_uncertainty: 375.499675478776
+  total_profit: 1.3378761024679108e8
+
+Linear PRICING MODEL (Type 2)
+============================================================
+
+RandomHeuristicPolicy:
+  total_demand: 62864.519839591034
+  total_demand_std: 2578.7920465374623
+  demand_meeting_ratio_std: 0.02420606377922943
+  final_uncertainty_std: 26.22441250478587
+  total_emission_cost: 2.524873698812843e7
+  total_production_std: 1202.0078581517887
+  total_emission_cost_std: 867603.7105991727
+  total_profit_std: 6.315528724183504e7
+  total_production: 22824.012765441024
+  demand_meeting_ratio: 0.3636636310097759
+  final_uncertainty: 371.92550541250364
+  total_profit: 1.3493674686172003e8
+
+OpenFirstPolicy:
+  total_demand: 62627.0717015802
+  total_demand_std: 2604.559035237906
+  demand_meeting_ratio_std: 0.015785437443608878
+  final_uncertainty_std: 27.794602588452943
+  total_emission_cost: 2.5349335380607042e7
+  total_production_std: 276.7394251971633
+  total_emission_cost_std: 362208.87920395005
+  total_profit_std: 5.80541575514705e6
+  total_production: 22942.86211005454
+  demand_meeting_ratio: 0.36696556656654666
+  final_uncertainty: 375.30276657449025
+  total_profit: 3.4040678293297745e7
+
+OperateFirstPolicy:
+  total_demand: 62889.0304221471
+  total_demand_std: 2273.8943419359607
+  demand_meeting_ratio_std: 0.013657753471485281
+  final_uncertainty_std: 25.672354678965096
+  total_emission_cost: 2.5356806378443774e7
+  total_production_std: 272.54008481454866
+  total_emission_cost_std: 341083.94006393483
+  total_profit_std: 5.460566373338762e6
+  total_production: 22924.80186711759
+  demand_meeting_ratio: 0.36499268168554866
+  final_uncertainty: 377.47305918661317
+  total_profit: 3.4662577763174385e7
+
+ExploreFirstPolicy:
+  total_demand: 62640.9541238548
+  total_demand_std: 2443.015045418861
+  demand_meeting_ratio_std: 0.0
+  final_uncertainty_std: 25.572418502156147
+  total_emission_cost: 0.0
+  total_production_std: 0.0
+  total_emission_cost_std: 0.0
+  total_profit_std: 0.0
+  total_production: 0.0
+  demand_meeting_ratio: 0.0
+  final_uncertainty: 379.292094627578
+  total_profit: 0.0
+
+DLEFirstPolicy:
+  total_demand: 62995.45505162131
+  total_demand_std: 2731.949815639934
+  demand_meeting_ratio_std: 0.016213175134451092
+  final_uncertainty_std: 24.521199477664673
+  total_emission_cost: 2.5350746483166307e7
+  total_production_std: 253.2469496829543
+  total_emission_cost_std: 351858.6877683666
+  total_profit_std: 5.62706603259292e6
+  total_production: 22927.441233879792
+  demand_meeting_ratio: 0.36462968231493514
+  final_uncertainty: 379.05604176348857
+  total_profit: 3.3505677047915667e7
+
+ConservativePolicy:
+  total_demand: 62951.76487659493
+  total_demand_std: 2586.0302545176546
+  demand_meeting_ratio_std: 0.006371853626715365
+  final_uncertainty_std: 26.516185346773497
+  total_emission_cost: 6.018834819839644e6
+  total_production_std: 166.24248298293995
+  total_emission_cost_std: 110828.32198862665
+  total_profit_std: 3.192239437888844e6
+  total_production: 9028.252229759468
+  demand_meeting_ratio: 0.1436513764760693
+  final_uncertainty: 375.7874764564224
+  total_profit: 5.260505607432387e7
+
+RandomSolver:
+  total_demand: 63026.32950080439
+  total_demand_std: 2623.173121457529
+  demand_meeting_ratio_std: 0.019462781090108815
+  final_uncertainty_std: 28.18102161343041
+  total_emission_cost: 2.5238686473547716e7
+  total_production_std: 703.9574966220895
+  total_emission_cost_std: 532482.181391115
+  total_profit_std: 6.747166146001068e7
+  total_production: 22817.735730572247
+  demand_meeting_ratio: 0.36270009949524734
+  final_uncertainty: 380.28094163505585
+  total_profit: 1.3459337863419676e8
+
+POMCPOW:
+  total_demand: 62786.79067399938
+  total_demand_std: 2649.920979144389
+  demand_meeting_ratio_std: 0.016317606105596356
+  final_uncertainty_std: 24.438516643732438
+  total_emission_cost: 2.5322842138893213e7
+  total_production_std: 284.35831617418654
+  total_emission_cost_std: 364197.30056527705
+  total_profit_std: 3.976477241278328e7
+  total_production: 22932.76627203611
+  demand_meeting_ratio: 0.3659058054597359
+  final_uncertainty: 374.8732559778693
+  total_profit: 2.2037163818111756e8
+
+Exponential PRICING MODEL (Type 3)
+============================================================
+
+RandomHeuristicPolicy:
+  total_demand: 62898.956566345856
+  total_demand_std: 2590.8225811634866
+  demand_meeting_ratio_std: 0.0247272102319338
+  final_uncertainty_std: 25.722122206402826
+  total_emission_cost: 2.527013894774757e7
+  total_production_std: 1210.600439784687
+  total_emission_cost_std: 881627.1777608863
+  total_profit_std: 4.305850899580606e7
+  total_production: 22831.4840960181
+  demand_meeting_ratio: 0.3636369049166679
+  final_uncertainty: 376.4903581827176
+  total_profit: 1.1827926830355499e7
+
+OpenFirstPolicy:
+  total_demand: 62862.34025498322
+  total_demand_std: 2469.2370070967663
+  demand_meeting_ratio_std: 0.016059326836082626
+  final_uncertainty_std: 25.530898852069985
+  total_emission_cost: 2.5288139686845325e7
+  total_production_std: 281.9037472546503
+  total_emission_cost_std: 338075.3449245165
+  total_profit_std: 1.7613950930337803e6
+  total_production: 22913.387491440302
+  demand_meeting_ratio: 0.3651042026501133
+  final_uncertainty: 375.8023991420699
+  total_profit: -3.8605242793373965e7
+
+OperateFirstPolicy:
+  total_demand: 63190.38594751121
+  total_demand_std: 2583.2279507551943
+  demand_meeting_ratio_std: 0.015067032430270333
+  final_uncertainty_std: 25.140776809006088
+  total_emission_cost: 2.53794072413465e7
+  total_production_std: 270.2463924682192
+  total_emission_cost_std: 368786.1644096222
+  total_profit_std: 1.9110195800719585e6
+  total_production: 22956.21279853013
+  demand_meeting_ratio: 0.3638716096203727
+  final_uncertainty: 380.17010450852945
+  total_profit: -3.826209369155127e7
+
+ExploreFirstPolicy:
+  total_demand: 63376.36448089683
+  total_demand_std: 2320.859775461011
+  demand_meeting_ratio_std: 0.0
+  final_uncertainty_std: 28.062608402916986
+  total_emission_cost: 0.0
+  total_production_std: 0.0
+  total_emission_cost_std: 0.0
+  total_profit_std: 0.0
+  total_production: 0.0
+  demand_meeting_ratio: 0.0
+  final_uncertainty: 375.5682920802445
+  total_profit: 0.0
+
+DLEFirstPolicy:
+  total_demand: 62973.0938839371
+  total_demand_std: 2720.6630581312243
+  demand_meeting_ratio_std: 0.016291847227067415
+  final_uncertainty_std: 26.41192014260207
+  total_emission_cost: 2.536366542724703e7
+  total_production_std: 260.3354819155834
+  total_emission_cost_std: 321362.7455729307
+  total_profit_std: 1.8815249510055345e6
+  total_production: 22981.766486372027
+  demand_meeting_ratio: 0.36562106612239254
+  final_uncertainty: 375.59863558372933
+  total_profit: -3.820708829778114e7
+
+ConservativePolicy:
+  total_demand: 63230.96430582624
+  total_demand_std: 2373.8291026777447
+  demand_meeting_ratio_std: 0.006524764103254718
+  final_uncertainty_std: 27.636806275466235
+  total_emission_cost: 6.031916842696181e6
+  total_production_std: 186.6528803193469
+  total_emission_cost_std: 124435.2535462311
+  total_profit_std: 831200.8588967599
+  total_production: 9047.875264044269
+  demand_meeting_ratio: 0.14330912697938347
+  final_uncertainty: 375.18392650583377
+  total_profit: 2.127592091799851e6
+
+RandomSolver:
+  total_demand: 63288.452862401806
+  total_demand_std: 2395.5346784355384
+  demand_meeting_ratio_std: 0.018121095418057703
+  final_uncertainty_std: 27.4775962136819
+  total_emission_cost: 2.5331759010760598e7
+  total_production_std: 719.6216103176888
+  total_emission_cost_std: 565528.5095649662
+  total_profit_std: 5.017031557206549e7
+  total_production: 22879.14858644214
+  demand_meeting_ratio: 0.3620466262945495
+  final_uncertainty: 377.4582527739445
+  total_profit: 1.2262661438177496e7
+
+POMCPOW:
+  total_demand: 62524.67934431835
+  total_demand_std: 2387.708885101949
+  demand_meeting_ratio_std: 0.02618335200700638
+  final_uncertainty_std: 27.414892383439373
+  total_emission_cost: 2.4544171998697985e7
+  total_production_std: 1420.8188647710924
+  total_emission_cost_std: 1.0577124176347542e6
+  total_profit_std: 5.057596170126061e7
+  total_production: 21903.592959655707
+  demand_meeting_ratio: 0.35080781301549746
+  final_uncertainty: 375.76494353490267
+  total_profit: 1.7555609975012925e8

@@ -5,20 +5,21 @@ using POMCPOW
 using Random
 using Distributions
 
-include("explore_first_policy.jl")
-include("operate_first_policy.jl")
+#include("explore_first_policy.jl")
+#include("operate_first_policy.jl")
 
-println("Setting up POMDP and policies with ExploreFirst as base policy...")
+#println("Setting up POMDP and policies with ExploreFirst as base policy...")
 #println("Setting up POMDP with OperateFirst as rollout policy...")
+println("Setting up POMDP with Random policy...")
 rng = MersenneTwister(1234) # Set random seed for reproducibility
 pomdp = LiPOMDP(price_model_type=3)
-base_policy = ExploreFirstPolicy(pomdp, false)
+#base_policy = ExploreFirstPolicy(pomdp, false)
 # base_policy = OperateFirstPolicy(pomdp, false)  
-# base_policy = RandomPolicy(pomdp)  
+ base_policy = RandomPolicy(pomdp)  
 
 # Adjust POMCPOW solver parameters to favor exploration
 solver = POMCPOWSolver(
-    tree_queries=10_000,  # Increase number of simulations
+    tree_queries=1_000,  # Increase number of simulations
     max_depth=500,
     criterion=MaxUCB(200.0),  # Increase exploration bonus
     enable_action_pw=true,
@@ -34,16 +35,25 @@ planner = solve(solver, pomdp)
 # Initial state and belief
 s0, b0 = create_initial_belief(pomdp)
 
-
-# Test single action
-a = action(planner, b0)
-println("\nSingle action test - Selected action: site=$(a.site), type=$(a.type)")
-
 # Function to describe action
 function describe_action(a::Action)
-    site_desc = a.site == 0 ? "none" : "site $(a.site)"
-    type_desc = ["do nothing", "explore", "open mine", "operate"][a.type + 1]
-    return "Action: $type_desc at $site_desc"
+    # Find the first non-zero action
+    active_actions = []
+    for i in 1:length(a.site)
+        if a.site[i] > 0 && a.type[i] > 0
+            site_desc = "site $(a.site[i])"
+            type_desc = ["do nothing", "explore", "open mine"][a.type[i] + 1]
+            push!(active_actions, "$type_desc at $site_desc")
+        end
+    end
+    
+    if isempty(active_actions)
+        return "Action: do nothing"
+    elseif length(active_actions) == 1
+        return "Action: $(active_actions[1])"
+    else
+        return "Action: " * join(active_actions, ", ")
+    end
 end
 
 # Simulate with POMCPOW policy
@@ -52,6 +62,7 @@ println("POMCPOW Policy Simulation")
 println("="^60)
 
 hr_pomcpow = HistoryRecorder(max_steps=20, rng=MersenneTwister(1234))
+# This is EVALUATION - testing how well the planned policy performs
 hist_pomcpow = simulate(hr_pomcpow, pomdp, planner, LiBeliefUpdater(P=pomdp), b0, s0)
 
 # Replace your POMCPOW simulation section with this:
@@ -63,10 +74,11 @@ global total_reward_pomcpow = 0.0
 global current_belief = b0  # Add 'global' here
 updater = LiBeliefUpdater(P=pomdp)
 
+# Each step shows the RESULT of planning decisions
 for (i, step) in enumerate(eachstep(hist_pomcpow))
     println("\nStep $i:")
-    println("  State: time=$(step.s.time), deposits=[$(round(step.s.deposit[1], digits=2)), $(round(step.s.deposit[2], digits=2))], price=$(round(step.s.price, digits=2))")
-    println("  Company demand: $(round(step.s.company_demand, digits=2))")
+    println("  State: time=$(step.s.time), deposits=[$(round.(step.s.deposit, digits=2))], price=$(round(step.s.price, digits=2))")
+    println("  Company demand: $(round.(step.s.company_demand, digits=2))")
     println("  Have Opened: $(step.s.have_opened)")
     
     # BELIEF DIAGNOSTICS - Add here
@@ -85,13 +97,14 @@ for (i, step) in enumerate(eachstep(hist_pomcpow))
     for site in 1:length(step.s.have_opened)
         if step.s.have_opened[site]
             potential_reward = min(10000.0, step.s.deposit[site]) * step.s.price  # Rough estimate
-            println("    - Operate site $site: ~$(round(potential_reward, digits=0)) revenue potential")
+            println("    - Operate site $site: ~$(round.(potential_reward, digits=0)) revenue potential")
         elseif !step.s.have_opened[site]
             println("    - Open site $site: -$(pomdp.deposit_types[site] ? pomdp.dle_capex : pomdp.mining_capex) cost")
         end
     end
     
     println("  $(describe_action(step.a))")
+    
     println("  Reward: $(round(step.r, digits=2))")
     global total_reward_pomcpow += step.r
     
@@ -117,7 +130,7 @@ println("\nStep-by-step Random policy simulation:")
 global total_reward_random = 0.0
 for (i, step) in enumerate(eachstep(hist_random))
     println("\nStep $i:")
-    println("  State: time=$(step.s.time), deposits=[$(round(step.s.deposit[1], digits=2)), $(round(step.s.deposit[2], digits=2))], price=$(round(step.s.price, digits=2))")
+    println("  State: time=$(step.s.time), deposits=[$(round.(step.s.deposit, digits=2))], price=$(round(step.s.price, digits=2))")
     println("  Company demand: $(round(step.s.company_demand, digits=2))")
     println("  Have opened: $(step.s.have_opened)")
     println("  $(describe_action(step.a))")
