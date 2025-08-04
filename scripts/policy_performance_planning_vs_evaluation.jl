@@ -18,6 +18,8 @@ include("../src/utils.jl")
 include("../src/pomdp.jl")
 include("../src/policies.jl")
 
+println("Running planning vs evaluation analysis...")
+
 function evaluate_policy_with_evaluation_model(planning_pomdp, evaluation_pomdp, policy, updater, n_sims; rng=Random.GLOBAL_RNG)
     """Evaluate a policy using a different POMDP for evaluation than planning."""
     
@@ -300,39 +302,37 @@ function create_planning_vs_evaluation_summary(results, planning_model_name, eva
 end
 
 # Main execution
-if abspath(PROGRAM_FILE) == @__FILE__
-    println("Running planning vs evaluation analysis...")
-    
-    # Example: Plan with Linear (2), Evaluate with Static (1)
-    planning_model = 2  # Linear
-    evaluation_model = 1  # Static
-    
-    # Run comparison
-    results, planning_name, evaluation_name = compare_planning_vs_evaluation(planning_model, evaluation_model, 50, 3)
-    
-    # Create summary
-    create_planning_vs_evaluation_summary(results, planning_name, evaluation_name)
-    
-    # Save detailed results
-    filename = "planning_$(planning_model)_evaluation_$(evaluation_model)_results.txt"
-    open(filename, "w") do io
-        println(io, "PLANNING vs EVALUATION RESULTS")
-        println(io, "Planning Model: $planning_name (Type $planning_model)")
-        println(io, "Evaluation Model: $evaluation_name (Type $evaluation_model)")
-        println(io, "="^60)
-        for (name, metrics) in results
-            println(io, "\n$name:")
-            for (metric, value) in metrics
-                println(io, "  $metric: $value")
-            end
+println("Running planning vs evaluation analysis...")
+
+# Example: Plan with Linear (2), Evaluate with Static (1)
+planning_model = 2  # Linear
+evaluation_model = 1  # Static
+
+# Run comparison
+results, planning_name, evaluation_name = compare_planning_vs_evaluation(planning_model, evaluation_model, 50, 3)
+
+# Create summary
+create_planning_vs_evaluation_summary(results, planning_name, evaluation_name)
+
+# Save detailed results
+filename = "planning_$(planning_model)_evaluation_$(evaluation_model)_results_3.txt"
+open(filename, "w") do io
+    println(io, "PLANNING vs EVALUATION RESULTS")
+    println(io, "Planning Model: $planning_name (Type $planning_model)")
+    println(io, "Evaluation Model: $evaluation_name (Type $evaluation_model)")
+    println(io, "="^60)
+    for (name, metrics) in results
+        println(io, "\n$name:")
+        for (metric, value) in metrics
+            println(io, "  $metric: $value")
         end
     end
-    
-    println("\nDetailed results saved to: $filename")
-    println("\n" * "="^120)
-    println("ANALYSIS COMPLETE")
-    println("="^120)
-    println("This test shows how well policies planned with one price model")
-    println("perform when evaluated with a different price model.")
-    println("This tests the robustness of planning assumptions!")
-end 
+end
+
+println("\nDetailed results saved to: $filename")
+println("\n" * "="^120)
+println("ANALYSIS COMPLETE")
+println("="^120)
+println("This test shows how well policies planned with one price model")
+println("perform when evaluated with a different price model.")
+println("This tests the robustness of planning assumptions!")

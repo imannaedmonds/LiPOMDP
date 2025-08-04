@@ -20,7 +20,7 @@ export get_historical_price, #TODO add all functions from utils
 include("utils.jl")
 
 export reward, transition, observation, update, gen, initialstate, isterminal, discount, actions, actionindex, 
-initialobs, obs_weight, create_initial_belief
+initialobs, obs_weight, create_initial_belief, compute_costs, compute_emissions
 include("pomdp.jl")
 
 export ExploreFirstPolicy, OperateFirstPolicy, DLEFirstPolicy, ConservativePolicy, RandomHeuristicPolicy

@@ -300,28 +300,26 @@ function save_detailed_results(all_results, filename="price_model_comparison_res
 end
 
 # Main execution
-if abspath(PROGRAM_FILE) == @__FILE__
-    println("Running price model policy performance comparison...")
-    
-    # Run comprehensive comparison
-    all_results = compare_policies_across_price_models(50, 3)  # 50 sims per seed, 3 seeds
-    
-    # Create comprehensive summary
-    create_comprehensive_summary(all_results)
-    
-    # Save detailed results
-    save_detailed_results(all_results)
-    
-    println("\n" * "="^120)
-    println("ANALYSIS COMPLETE")
-    println("="^120)
-    println("Key metrics compared:")
-    println("  • Profit: Revenue - Costs")
-    println("  • Demand Meeting: Production / Demand ratio")
-    println("  • Emission Cost: Environmental cost (higher values = higher cost)")
-    println("  • Uncertainty: Belief state uncertainty (lower is better)")
-    println("\nPrice Models:")
-    println("  • Static (Type 1): Fixed price with noise")
-    println("  • Linear (Type 2): Linear growth with noise")
-    println("  • Exponential (Type 3): Exponential growth with noise")
-end 
+println("Running price model policy performance comparison...")
+
+# Run comprehensive comparison
+all_results = compare_policies_across_price_models(50, 3)  # 50 sims per seed, 3 seeds
+
+# Create comprehensive summary
+create_comprehensive_summary(all_results)
+
+# Save detailed results
+save_detailed_results(all_results)
+
+println("\n" * "="^120)
+println("ANALYSIS COMPLETE")
+println("="^120)
+println("Key metrics compared:")
+println("  • Profit: Revenue - Costs")
+println("  • Demand Meeting: Production / Demand ratio")
+println("  • Emission Cost: Environmental cost (higher values = higher cost)")
+println("  • Uncertainty: Belief state uncertainty (lower is better)")
+println("\nPrice Models:")
+println("  • Static (Type 1): Fixed price with noise")
+println("  • Linear (Type 2): Linear growth with noise")
+println("  • Exponential (Type 3): Exponential growth with noise")

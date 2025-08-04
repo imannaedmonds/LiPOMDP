@@ -365,32 +365,30 @@ function create_performance_summary_real(results)
 end
 
 # Main execution
-if abspath(PROGRAM_FILE) == @__FILE__
-    println("Running real policy performance comparison...")
-    
-    # Run real simulations with multiple seeds
-    results = compare_all_policies_real(50, 5)  # 50 sims per seed, 5 seeds = 250 total per policy
-    
-    # Create plots
-    p_combined, results = plot_policy_comparison_real(results)
-    
-    # Save plot
-    savefig(p_combined, "policy_performance_real.png")
-    println("Plot saved as: policy_performance_real.png")
-    
-    # Print summary
-    create_performance_summary_real(results)
-    
-    # Save detailed results
-    println("\nDetailed results saved to policy_performance_real_results.txt")
-    open("policy_performance_real_results.txt", "w") do io
-        println(io, "REAL POLICY PERFORMANCE COMPARISON RESULTS")
-        println(io, "="^60)
-        for (name, metrics) in results
-            println(io, "\n$name:")
-            for (metric, value) in metrics
-                println(io, "  $metric: $value")
-            end
+println("Running real policy performance comparison...")
+
+# Run real simulations with multiple seeds
+results = compare_all_policies_real(50, 5)  # 50 sims per seed, 5 seeds = 250 total per policy
+
+# Create plots
+p_combined, results = plot_policy_comparison_real(results)
+
+# Save plot
+savefig(p_combined, "policy_performance_real.png")
+println("Plot saved as: policy_performance_real.png")
+
+# Print summary
+create_performance_summary_real(results)
+
+# Save detailed results
+println("\nDetailed results saved to policy_performance_real_results.txt")
+open("policy_performance_real_results.txt", "w") do io
+    println(io, "REAL POLICY PERFORMANCE COMPARISON RESULTS")
+    println(io, "="^60)
+    for (name, metrics) in results
+        println(io, "\n$name:")
+        for (metric, value) in metrics
+            println(io, "  $metric: $value")
         end
     end
-end 
+end

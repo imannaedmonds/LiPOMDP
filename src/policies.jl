@@ -97,20 +97,6 @@ function POMDPs.action(policy::ExploreFirstPolicy, s::State)
         end
     end
     
-    # Second priority: Open unopened mines
-    for i in 1:policy.pomdp.n_deposits
-        if !s.have_opened[i]
-            if policy.debug
-                println("  [DEBUG] Choosing to open site $i (unopened)")
-            end
-            site_vec = zeros(Int, 4)
-            type_vec = zeros(Int, 4)
-            site_vec[i] = i
-            type_vec[i] = 2  # Open mine
-            return Action(site=site_vec, type=type_vec)
-        end
-    end
-    
     # Fallback: do nothing if all sites are opened
     if policy.debug
         println("  [DEBUG] All sites opened, doing nothing")
