@@ -4,6 +4,9 @@ using POMDPs
 using Random
 using Distributions
 
+# Import the types we need
+import LitPOMDP: LiPOMDP, State, Action, LiBelief
+
 """
 SmartGreedyPolicy - A sophisticated policy that maximizes expected rewards
 
@@ -27,7 +30,7 @@ struct SmartGreedyPolicy <: Policy
     price_threshold::Float64        # Minimum price to consider opening
 end
 
-SmartGreedyPolicy(pomdp::LiPOMDP; debug=false, exploration_threshold=0.1, profit_threshold=500.0, price_threshold=3000.0) = 
+SmartGreedyPolicy(pomdp::LiPOMDP; debug=false, exploration_threshold=0.1, profit_threshold=0.0, price_threshold=1000.0) = 
     SmartGreedyPolicy(pomdp, debug, exploration_threshold, profit_threshold, price_threshold)
 
 function POMDPs.action(policy::SmartGreedyPolicy, s::State)
@@ -60,9 +63,12 @@ function POMDPs.action(policy::SmartGreedyPolicy, s::State)
     
     # Second priority: Open profitable mines when market conditions are good
     if s.price >= policy.price_threshold
+        best_site = 0
+        best_profit = policy.profit_threshold
+        
         for site in 1:policy.pomdp.n_deposits
             if !s.have_opened[site]
-                # Calculate expected profit
+                # Simple current-year profit calculation
                 expected_production = min(s.deposit[site], policy.pomdp.output) * policy.pomdp.recovery[site]
                 expected_revenue = expected_production * s.price
                 
@@ -71,28 +77,27 @@ function POMDPs.action(policy::SmartGreedyPolicy, s::State)
                 opex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_opex : policy.pomdp.mining_opex
                 annual_opex = opex * policy.pomdp.output
                 
-                # Simple NPV calculation (5 years with discounting)
-                discount_rate = 0.97
-                npv = 0.0
-                for year in 1:5
-                    year_revenue = expected_revenue * (discount_rate ^ (year - 1))
-                    year_opex = annual_opex * (discount_rate ^ (year - 1))
-                    npv += year_revenue - year_opex
-                end
-                npv -= capex  # Initial investment
+                # Simple profit calculation (revenue - costs - capex)
+                annual_profit = expected_revenue - annual_opex
+                total_profit = annual_profit - capex
                 
-                if npv > policy.profit_threshold
-                    if policy.debug
-                        mine_type = policy.pomdp.deposit_types[site] ? "DLE" : "Traditional"
-                        println("  [DEBUG] Opening site $site ($mine_type, NPV: $(round(npv, digits=0)))")
-                    end
-                    site_vec = zeros(Int, 4)
-                    type_vec = zeros(Int, 4)
-                    site_vec[site] = site
-                    type_vec[site] = 2  # Open mine
-                    return Action(site=site_vec, type=type_vec)
+                if total_profit > best_profit
+                    best_profit = total_profit
+                    best_site = site
                 end
             end
+        end
+        
+        if best_site > 0
+            if policy.debug
+                mine_type = policy.pomdp.deposit_types[best_site] ? "DLE" : "Traditional"
+                println("  [DEBUG] Opening site $best_site ($mine_type, profit: $(round(best_profit, digits=0)))")
+            end
+            site_vec = zeros(Int, 4)
+            type_vec = zeros(Int, 4)
+            site_vec[best_site] = best_site
+            type_vec[best_site] = 2  # Open mine
+            return Action(site=site_vec, type=type_vec)
         end
     end
     
@@ -219,7 +224,7 @@ struct ConservativePolicy <: Policy
     low_uncertainty_threshold::Float64
 end
 
-ConservativePolicy(pomdp::LiPOMDP; debug=false, high_price_threshold=15000.0, low_uncertainty_threshold=0.1) = 
+ConservativePolicy(pomdp::LiPOMDP; debug=false, high_price_threshold=5000.0, low_uncertainty_threshold=0.5) = 
     ConservativePolicy(pomdp, debug, high_price_threshold, low_uncertainty_threshold)
 
 function POMDPs.action(policy::ConservativePolicy, s::State)
@@ -293,7 +298,7 @@ function POMDPs.action(policy::EmissionMinimizerPolicy, s::State)
         println("  Have opened: $(s.have_opened)")
     end
     
-    # Only open DLE mines (sites 1-2) to minimize emissions
+    # Always open DLE mines (sites 1-2) to minimize emissions
     for site in 1:policy.pomdp.n_deposits
         if policy.pomdp.deposit_types[site] && !s.have_opened[site]  # DLE mine not opened
             if policy.debug
@@ -307,9 +312,23 @@ function POMDPs.action(policy::EmissionMinimizerPolicy, s::State)
         end
     end
     
-    # If all DLE mines are opened, do nothing (avoid traditional mines)
+    # If all DLE mines are opened, open traditional mines but prioritize lower emission ones
+    for site in 1:policy.pomdp.n_deposits
+        if !policy.pomdp.deposit_types[site] && !s.have_opened[site]  # Traditional mine not opened
+            if policy.debug
+                println("  [DEBUG] Opening traditional site $site (higher emissions but needed)")
+            end
+            site_vec = zeros(Int, 4)
+            type_vec = zeros(Int, 4)
+            site_vec[site] = site
+            type_vec[site] = 2  # Open mine
+            return Action(site=site_vec, type=type_vec)
+        end
+    end
+    
+    # If all mines are opened, do nothing
     if policy.debug
-        println("  [DEBUG] All DLE mines opened, doing nothing to avoid emissions")
+        println("  [DEBUG] All mines opened, doing nothing")
     end
     return Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0])
 end
@@ -374,27 +393,27 @@ function POMDPs.action(policy::ProfitMaximizerPolicy, s::State)
     best_site = 0
     best_profit = policy.min_profit_threshold
     
-    for site in 1:policy.pomdp.n_deposits
-        if !s.have_opened[site]
-            # Calculate expected profit
-            expected_production = min(s.deposit[site], policy.pomdp.output) * policy.pomdp.recovery[site]
-            expected_revenue = expected_production * s.price
-            
-            # Calculate costs (ignore emissions)
-            capex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_capex : policy.pomdp.mining_capex
-            opex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_opex : policy.pomdp.mining_opex
-            annual_opex = opex * policy.pomdp.output
-            
-            # Simple profit calculation (annual revenue - annual costs - capex)
-            annual_profit = expected_revenue - annual_opex
-            total_profit = annual_profit * 5 - capex  # 5 years of profit minus capex
-            
-            if total_profit > best_profit
-                best_profit = total_profit
-                best_site = site
+                    for site in 1:policy.pomdp.n_deposits
+            if !s.have_opened[site]
+                # Simple current-year profit calculation
+                expected_production = min(s.deposit[site], policy.pomdp.output) * policy.pomdp.recovery[site]
+                expected_revenue = expected_production * s.price
+                
+                # Calculate costs (ignore emissions)
+                capex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_capex : policy.pomdp.mining_capex
+                opex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_opex : policy.pomdp.mining_opex
+                annual_opex = opex * policy.pomdp.output
+                
+                # Simple profit calculation (revenue - costs - capex)
+                annual_profit = expected_revenue - annual_opex
+                total_profit = annual_profit - capex
+                
+                if total_profit > best_profit
+                    best_profit = total_profit
+                    best_site = site
+                end
             end
         end
-    end
     
     # Open the most profitable mine
     if best_site > 0
