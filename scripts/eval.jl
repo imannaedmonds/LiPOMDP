@@ -22,11 +22,11 @@ p = LiPOMDP(
     dle_uncertainty_factor = 0.50,
     mining_uncertainty_factor = 0.40,
     deposit_types = [true, true, false, false],
-    recovery = [0.75, 0.75, 0.55, 0.55],
+    recovery = [0.35, 0.35, 0.55, 0.55],
     CO2_cost = 100,
     mining_CO2_emissions = 15,
-    mining_capex = 3_000,
-    mining_opex = 2_000,
+    mining_capex = 13_000,
+    mining_opex = 10_355_000,
     dle_CO2_emissions = 5,
     dle_capex = 9_000,
     dle_opex = 1_500,
@@ -49,19 +49,11 @@ explore_only = ExploreOnlyPolicy(p)
 profitmax1 = ProfitMaximizerPolicy(p, top_k=1, times=[1])
 profitmax2 = ProfitMaximizerPolicy(p, top_k=2, times=[1])
 profitmax4 = ProfitMaximizerPolicy(p, top_k=4, times=[1])
+emissionmin1 = EmissionMinimizerPolicy(p, top_k=1, times=[1])
+emissionmin2 = EmissionMinimizerPolicy(p, top_k=2, times=[1])
+emissionmin4 = EmissionMinimizerPolicy(p, top_k=4, times=[1])
 
 s0, b0 = create_initial_belief(p)
-
-## manual rollout
-# a0 = action(explore1policy, s0)
-# sp, o, r = gen(p, s0, a0, rng)
-# bp = update(up, b0, a0, o)
-
-## using simulate
-# hr = HistoryRecorder(max_steps=p.time_horizon)
-# hist = simulate(hr, p, explore_only, up, b0)
-
-
 
 pomcpow_solver = POMCPOWSolver(tree_queries=1000,
             max_depth=20,
@@ -76,8 +68,10 @@ policies = ["ExploreOnlyPolicy" => explore_only,
             "ProfitMaximizerPolicy1" => profitmax1,
             "ProfitMaximizerPolicy2" => profitmax2,
             "ProfitMaximizerPolicy4" => profitmax4, 
+            "EmissionMinimizerPolicy1" => emissionmin1,
+            "EmissionMinimizerPolicy2" => emissionmin2,
+            "EmissionMinimizerPolicy4" => emissionmin4,
             "POMCPOW" => pomcpow_policy]
 
 K = 10  
-# evaluate_policy_comprehensive(p, explore_only, up, K)
 results = compare_policies(p, policies, up, K);
