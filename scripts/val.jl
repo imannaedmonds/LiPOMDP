@@ -10,7 +10,7 @@ rng = MersenneTwister(1234)
 p = LiPOMDP(
     σ_obs_d = 1000.0,
     σ_obs_p = 100.0,
-    γ = 1.00,
+    γ = 0.97,
     time_horizon = 10,
     n_deposits = 4,
     alpha = 0.5,
@@ -57,23 +57,27 @@ s0, b0 = create_initial_belief(p)
 # sp, o, r = gen(p, s0, a0, rng)
 # bp = update(up, b0, a0, o)
 
+## using simulate
+# hr = HistoryRecorder(max_steps=p.time_horizon)
+# hist = simulate(hr, p, explore_only, up, b0)
 
-hr = HistoryRecorder(max_steps=p.time_horizon)
-hist = simulate(hr, p, explore_only, up, b0)
 
-policies = ["ExploreOnlyPolicy" => explore_only, 
-            "ProfitMaximizerPolicy1" => profitmax1,
-            "ProfitMaximizerPolicy2" => profitmax2,
-            "ProfitMaximizerPolicy4" => profitmax4]
-
-K = 10  
-results = compare_policies(p, policies, up, K);
 
 pomcpow_solver = POMCPOWSolver(tree_queries=1000,
-            max_depth=10,
+            max_depth=20,
+            k_observation=5.0,
+            estimate_value=FORollout(profitmax1),
             tree_in_info=true,
             criterion=MaxUCB(20.0),)
 
 pomcpow_policy = solve(pomcpow_solver, p)
-evaluate_policy_comprehensive(p, pomcpow_policy, up, K)
 
+policies = ["ExploreOnlyPolicy" => explore_only, 
+            "ProfitMaximizerPolicy1" => profitmax1,
+            "ProfitMaximizerPolicy2" => profitmax2,
+            "ProfitMaximizerPolicy4" => profitmax4, 
+            "POMCPOW" => pomcpow_policy]
+
+K = 10  
+# evaluate_policy_comprehensive(p, explore_only, up, K)
+results = compare_policies(p, policies, up, K);
