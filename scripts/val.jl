@@ -3,6 +3,7 @@ using Random
 using POMDPs
 using POMDPTools
 using Statistics
+using POMCPOW
 
 rng = MersenneTwister(1234)
 
@@ -44,44 +45,35 @@ p = LiPOMDP(
 
 
 up = LiBeliefUpdater(p)
-explore1policy = ExploreFirstPolicy(p)
+explore_only = ExploreOnlyPolicy(p)
+profitmax1 = ProfitMaximizerPolicy(p, top_k=1, times=[1])
+profitmax2 = ProfitMaximizerPolicy(p, top_k=2, times=[1])
+profitmax4 = ProfitMaximizerPolicy(p, top_k=4, times=[1])
 
 s0, b0 = create_initial_belief(p)
-a0 = action(explore1policy, s0)
-sp, o, r = gen(p, s0, a0, rng)
-bp = update(up, b0, a0, o)
 
-s0
+## manual rollout
+# a0 = action(explore1policy, s0)
+# sp, o, r = gen(p, s0, a0, rng)
+# bp = update(up, b0, a0, o)
 
-T = 30
-hr = HistoryRecorder(max_steps=T)
-hist = simulate(hr, p, explore1policy, up, b0)
 
-discounted_reward(hist)
+hr = HistoryRecorder(max_steps=p.time_horizon)
+hist = simulate(hr, p, explore_only, up, b0)
 
-[step.r for step in hist]
-[step.a for step in hist]
+policies = ["ExploreOnlyPolicy" => explore_only, 
+            "ProfitMaximizerPolicy1" => profitmax1,
+            "ProfitMaximizerPolicy2" => profitmax2,
+            "ProfitMaximizerPolicy4" => profitmax4]
 
-profitmaximizerpolicy = ProfitMaximizerPolicy(p, top_k=3, times=[2, 5, 9])
-
-s0, b0 = create_initial_belief(p)
-a0 = action(profitmaximizerpolicy, b0)
-sp, o, r = gen(p, s0, a0, rng)
-bp = update(up, b0, a0, o)
-
-a1 = action(profitmaximizerpolicy, bp)
-
-K = 10  #number of simulations
-evaluate_policy_comprehensive(p, explore1policy, up, K)
-
-explore1policy = ExploreFirstPolicy(p)
-profitmaximizerpolicy1 = ProfitMaximizerPolicy(p, top_k=1, times=[1])
-profitmaximizerpolicy2 = ProfitMaximizerPolicy(p, top_k=2, times=[1])
-profitmaximizerpolicy4 = ProfitMaximizerPolicy(p, top_k=4, times=[1])
-
-policies = ["ExploreOnlyPolicy" => explore1policy, 
-            "ProfitMaximizerPolicy1" => profitmaximizerpolicy1,
-            "ProfitMaximizerPolicy2" => profitmaximizerpolicy2,
-            "ProfitMaximizerPolicy4" => profitmaximizerpolicy4]
-
+K = 10  
 results = compare_policies(p, policies, up, K);
+
+pomcpow_solver = POMCPOWSolver(tree_queries=1000,
+            max_depth=10,
+            tree_in_info=true,
+            criterion=MaxUCB(20.0),)
+
+pomcpow_policy = solve(pomcpow_solver, p)
+evaluate_policy_comprehensive(p, pomcpow_policy, up, K)
+

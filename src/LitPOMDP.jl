@@ -23,9 +23,13 @@ export reward, transition, observation, update, gen, initialstate, isterminal, d
 initialobs, obs_weight, create_initial_belief, compute_costs, compute_emissions
 include("pomdp.jl")
 
-export ExploreFirstPolicy, OperateFirstPolicy, DLEFirstPolicy, ConservativePolicy, RandomHeuristicPolicy
+export ExploreOnlyPolicy
 include("policies.jl") 
 
 export ProfitMaximizerPolicy
 include("policies_advanced.jl")
+
+export compare_policies, evaluate_policy_comprehensive, calculate_belief_uncertainty
+include("eval.jl")
+
 end
