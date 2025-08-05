@@ -1,0 +1,98 @@
+""" Select top k sites to open at period times based on profit maximization
+"""
+
+@with_kw struct ProfitMaximizerPolicy <: Policy
+    pomdp::LiPOMDP
+    debug::Bool
+    top_k::Int=1 # number of sites to open
+    times::Vector{Int}=[1] # vector of times to open the sites
+end
+
+ProfitMaximizerPolicy(pomdp::LiPOMDP; debug=false, top_k=1, times=[1]) = 
+    ProfitMaximizerPolicy(pomdp, debug, top_k, times)
+
+function POMDPs.action(policy::ProfitMaximizerPolicy, s::State)
+    if policy.debug
+        println("\n[DEBUG] ProfitMaximizerPolicy evaluating state:")
+        println("  Time: $(s.time)")
+        println("  Price: $(round(s.price, digits=2))")
+        println("  Deposits: $(round.(s.deposit, digits=1))")
+        println("  Have opened: $(s.have_opened)")
+    end
+    
+    # Find the most profitable mine to open
+    profits = zeros(policy.pomdp.n_deposits)
+    remaining_time = policy.pomdp.time_horizon - s.time
+    
+    if s.time in policy.times
+        for site in 1:policy.pomdp.n_deposits
+            if !s.have_opened[site]
+                # Simple current-year profit calculation
+                expected_production = min(s.deposit[site], policy.pomdp.output * remaining_time) 
+                expected_recovery = expected_production * policy.pomdp.recovery[site]
+                expected_revenue = expected_recovery * s.price
+                
+                # Calculate costs (ignore emissions)
+                capex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_capex : policy.pomdp.mining_capex
+                opex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_opex : policy.pomdp.mining_opex
+                lifetime_opex = opex * expected_production
+                
+                # Simple profit calculation (revenue - costs - capex)
+                lifetime_profit = expected_revenue - lifetime_opex
+                total_profit = lifetime_profit - capex
+                
+                profits[site] = total_profit
+            end
+        end
+    
+        opened_sites = zeros(Int, policy.pomdp.n_deposits)
+        opened_types = zeros(Int, policy.pomdp.n_deposits)
+
+        ranked_sites = sortperm(profits, rev=true)
+        
+        for i in 1:policy.top_k
+            opened_sites[ranked_sites[i]] = 1
+            opened_types[ranked_sites[i]] = 2
+        end
+
+        if policy.debug
+
+            for i in 1:policy.pomdp.n_deposits
+                if opened_sites[i] == 1
+                    println("  [DEBUG] Opening site $i with type $(opened_types[i])")
+                end
+            end
+        end
+
+        return Action(site=opened_sites, type=opened_types)
+    else
+        if policy.debug
+            println("  [DEBUG] ProfitMaximizerPolicy not activated at time $(s.time), opening no mines")
+        end
+        return Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0])
+    end
+    
+end
+
+function POMDPs.action(policy::ProfitMaximizerPolicy, b::LiBelief)
+    if policy.debug
+        println("\n[DEBUG] ProfitMaximizerPolicy evaluating belief")
+    end
+    
+    # Use mean values from belief for stable decisions
+    mean_deposits = [mean(d) for d in b.deposits_distribution] #using the mean of the belief 
+    mean_price = mean(b.price_distribution)
+    mean_demand = mean(b.demand_distribution)
+    
+    # Create a representative state
+    s = State(
+        deposit = mean_deposits,
+        time = b.time,
+        price = mean_price,
+        company_demand = mean_demand,
+        total_mined = b.total_mined,
+        have_opened = copy(b.have_opened)
+    )
+    
+    return POMDPs.action(policy, s)
+end

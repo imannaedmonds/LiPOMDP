@@ -13,7 +13,7 @@ include("historical_data.jl")
 export State, Action, Observation, LiPOMDP, LiBelief, LiBeliefUpdater
 include("model.jl")
 
-export get_historical_price, #TODO add all functions from utils
+export get_historical_price, 
          get_historical_demand,
          get_historical_production,
          get_historical_data
@@ -24,5 +24,8 @@ initialobs, obs_weight, create_initial_belief, compute_costs, compute_emissions
 include("pomdp.jl")
 
 export ExploreFirstPolicy, OperateFirstPolicy, DLEFirstPolicy, ConservativePolicy, RandomHeuristicPolicy
-include("policies.jl")
+include("policies.jl") 
+
+export ProfitMaximizerPolicy
+include("policies_advanced.jl")
 end

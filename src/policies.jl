@@ -59,7 +59,7 @@ function POMDPs.action(policy::OpenFirstPolicy, b::LiBelief)
 end
 
 """
-ExploreFirstPolicy - A heuristic policy that prioritizes exploration before opening
+ExploreOnlyPolicy - A heuristic policy that prioritizes exploration before opening
 
 Priority order:
 1. Explore unexplored sites (to gather information)
@@ -68,33 +68,37 @@ Priority order:
 
 This policy focuses on information gathering before making opening decisions.
 """
-struct ExploreFirstPolicy <: Policy
+struct ExploreOnlyPolicy <: Policy
     pomdp::LiPOMDP
     debug::Bool
 end
 
-ExploreFirstPolicy(pomdp::LiPOMDP) = ExploreFirstPolicy(pomdp, false)
+ExploreOnlyPolicy(pomdp::LiPOMDP) = ExploreOnlyPolicy(pomdp, false)
 
-function POMDPs.action(policy::ExploreFirstPolicy, s::State)
+function POMDPs.action(policy::ExploreOnlyPolicy, s::State)
     if policy.debug
-        println("\n[DEBUG] ExploreFirstPolicy evaluating state:")
+        println("\n[DEBUG] ExploreOnlyPolicy evaluating state:")
         println("  Time: $(s.time)")
         println("  Have opened: $(s.have_opened)")
         println("  Deposits: $(round.(s.deposit, digits=1))")
     end
     
     # First priority: Explore unopened sites
+    explore_actions = zeros(Int, 4)
+    explore_sites = zeros(Int, 4)
+
     for i in 1:policy.pomdp.n_deposits
         if !s.have_opened[i]
             if policy.debug
                 println("  [DEBUG] Choosing to explore site $i (unopened)")
-            end
-            site_vec = zeros(Int, 4)
-            type_vec = zeros(Int, 4)
-            site_vec[i] = i
-            type_vec[i] = 1  # Explore
-            return Action(site=site_vec, type=type_vec)
+            end            
+            explore_actions[i] = 1
+            explore_sites[i] = i
         end
+    end
+
+    if sum(explore_actions) > 0
+        return Action(site=explore_sites, type=explore_actions)
     end
     
     # Fallback: do nothing if all sites are opened
@@ -104,9 +108,9 @@ function POMDPs.action(policy::ExploreFirstPolicy, s::State)
     return Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0])
 end
 
-function POMDPs.action(policy::ExploreFirstPolicy, b::LiBelief)
+function POMDPs.action(policy::ExploreOnlyPolicy, b::LiBelief)
     if policy.debug
-        println("\n[DEBUG] ExploreFirstPolicy evaluating belief state")
+        println("\n[DEBUG] ExploreOnlyPolicy evaluating belief state")
     end
     
     # Sample a state from the belief
