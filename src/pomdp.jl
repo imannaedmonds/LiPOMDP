@@ -42,7 +42,7 @@ function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
      exploration_cost = 0.0
      for site in 1:P.n_deposits
          if a.type[site] == 1  # Exploring
-             exploration_cost += 1000.0  # Fixed exploration cost per site
+             exploration_cost += 1000.0 #make higher eexplore costs # Fixed exploration cost per site
          end
      end
 

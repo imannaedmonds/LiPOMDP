@@ -312,23 +312,9 @@ function POMDPs.action(policy::EmissionMinimizerPolicy, s::State)
         end
     end
     
-    # If all DLE mines are opened, open traditional mines but prioritize lower emission ones
-    for site in 1:policy.pomdp.n_deposits
-        if !policy.pomdp.deposit_types[site] && !s.have_opened[site]  # Traditional mine not opened
-            if policy.debug
-                println("  [DEBUG] Opening traditional site $site (higher emissions but needed)")
-            end
-            site_vec = zeros(Int, 4)
-            type_vec = zeros(Int, 4)
-            site_vec[site] = site
-            type_vec[site] = 2  # Open mine
-            return Action(site=site_vec, type=type_vec)
-        end
-    end
-    
-    # If all mines are opened, do nothing
+    # If all DLE mines are opened, do nothing (never open traditional mines)
     if policy.debug
-        println("  [DEBUG] All mines opened, doing nothing")
+        println("  [DEBUG] All DLE mines opened, doing nothing (avoiding traditional mines)")
     end
     return Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0])
 end
