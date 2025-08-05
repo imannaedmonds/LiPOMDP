@@ -4,7 +4,7 @@ function compute_emissions(P::LiPOMDP, s::State, a::Action)
     # Calculate emissions from all operating mines (automatic production)
     for site in 1:P.n_deposits
         if s.have_opened[site] && s.deposit[site] > 0
-            amt = min(P.output, s.deposit[site])
+            amt = min(P.output, s.deposit[site], s.company_demand)  #TODO change this
             # Use appropriate emission factor based on deposit type
             emission_factor = P.deposit_types[site] ? P.dle_CO2_emissions : P.mining_CO2_emissions
            emissions += amt * emission_factor * P.CO2_cost
@@ -19,7 +19,7 @@ function compute_costs(P::LiPOMDP, s::State, a::Action)
     # Operating costs for all open mines (automatic production)
     for site in 1:P.n_deposits
         if s.have_opened[site] && s.deposit[site] > 0
-            amt = min(P.output, s.deposit[site])
+            amt = min(P.output, s.deposit[site], s.company_demand) #TODO change this
             opex = P.deposit_types[site] ? P.dle_opex : P.mining_opex
             costs += opex * amt
         end
@@ -48,6 +48,7 @@ function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
 
 
     # Calculate automatic production from all open mines
+    #TODO CHANGE THIS
     current_production = 0.0
     for site in 1:P.n_deposits
         if s.have_opened[site] && s.deposit[site] > 0
@@ -57,7 +58,7 @@ function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
     end
     
     # Market-based revenue (only get paid for what you can sell)
-    sellable_amount = min(current_production, s.company_demand) #overproduction penalty
+    sellable_amount = min(current_production, s.company_demand) 
     revenue = sellable_amount * s.price
     
     # Operating costs and emissions
@@ -369,12 +370,12 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     total_mined_this_step = 0.0
     for site in 1:P.n_deposits
         if sp.have_opened[site] && sp.deposit[site] > 0
-            in_situ = min(P.output, sp.deposit[site])
+            in_situ = min(P.output, sp.company_demand, sp.deposit[site])
             # Add some production uncertainty
             mined = rand(Truncated(Normal(in_situ, 0.1*in_situ), 0.0, in_situ))
-            saleable = mined * P.recovery[site]
+            sellable = mined * P.recovery[site]
             sp.deposit[site] -= mined
-            total_mined_this_step += saleable  # Track what was actually recovered
+            total_mined_this_step += sellable  # Track what was actually recovered
         end
     end
 
@@ -392,6 +393,7 @@ end
 
 # Update the gen function to handle demand observations
 function POMDPs.gen(P::LiPOMDP, s::State, a::Action, rng::AbstractRNG)
+    
     sp = rand(transition(P, s, a))
 
     o_array = rand(observation(P, s, a, sp))

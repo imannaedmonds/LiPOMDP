@@ -48,7 +48,7 @@ end
     demand_uncertainty::Float64 = 0.15    # 15% std dev in demand forecasts
     
     # Production parameters
-    output::Float64 = 1_000.0  # Annual output per mine
+    output::Float64 = 2_500.0  # Annual output per mine
     init_deposit_size_dle::Float64 = 15_000.0  # Initial deposit size 
     init_deposit_size_mining::Float64 = 12_000.0  # Initial deposit size 
     dle_uncertainty_factor::Float64 = 0.50  # Increased from 0.25 for higher profit impact
