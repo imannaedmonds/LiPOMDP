@@ -151,7 +151,7 @@ function estimate_action_value(pomdp::LiPOMDP, s::State, a::Action)
 end
 
 """
-BadPolicy - A deliberately poor policy that always explores
+BadPolicy- ExploreOnlyPolicy - A deliberately poor policy that always explores
 
 This policy is terrible because:
 1. Always explores (costs money but no revenue)
@@ -311,12 +311,13 @@ function POMDPs.action(policy::EmissionMinimizerPolicy, s::State)
             return Action(site=site_vec, type=type_vec)
         end
     end
+
     
-    # If all DLE mines are opened, do nothing (never open traditional mines)
+    # If all mines are opened, do nothing
     if policy.debug
-        println("  [DEBUG] All DLE mines opened, doing nothing (avoiding traditional mines)")
+        println("  [DEBUG] All mines opened, doing nothing")
     end
-    return Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0])
+    return Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0]) #do nothing 
 end
 
 function POMDPs.action(policy::EmissionMinimizerPolicy, b::LiBelief)
@@ -427,7 +428,7 @@ function POMDPs.action(policy::ProfitMaximizerPolicy, b::LiBelief)
     end
     
     # Use mean values from belief for stable decisions
-    mean_deposits = [mean(d) for d in b.deposits_distribution]
+    mean_deposits = [mean(d) for d in b.deposits_distribution] #using the mean of the belief 
     mean_price = mean(b.price_distribution)
     mean_demand = mean(b.demand_distribution)
     

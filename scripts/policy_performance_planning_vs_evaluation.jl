@@ -188,7 +188,7 @@ function compare_planning_vs_evaluation(planning_price_model::Int, evaluation_pr
         enable_action_pw=false,
         k_observation=5.0,
         alpha_observation=1/20,
-        estimate_value=FORollout(OperateFirstPolicy(planning_pomdp)),
+        estimate_value=FORollout(RandomSolver(planning_pomdp)), #rolloutpolicy?
         tree_in_info=true,
         rng=MersenneTwister(1234)
     )
