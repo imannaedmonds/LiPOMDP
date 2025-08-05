@@ -193,7 +193,7 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
     # Initialize new vector of updated distributions for deposits
     updated_deposits = Vector{UnivariateDistribution}(undef, length(o.deposits))
 
-    # Loop through each deposit site to update its belief
+    # Loop through each deposit site to update its belief 
     for i in 1:length(o.deposits)
         prior = b.deposits_distribution[i]      # prior belief (Normal) for site i
         μ_prior, σ_prior = mean(prior), std(prior)
