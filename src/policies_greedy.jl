@@ -379,11 +379,10 @@ function POMDPs.action(policy::ProfitMaximizerPolicy, s::State)
     # Find the most profitable mine to open
     best_site = 0
     best_profit = policy.min_profit_threshold
-    
                     for site in 1:policy.pomdp.n_deposits
             if !s.have_opened[site]
                 # Simple current-year profit calculation
-                expected_production = min(s.deposit[site], policy.pomdp.output) * policy.pomdp.recovery[site]
+                expected_production = min(s.deposit[site], policy.pomdp.output, s.company_demand) * policy.pomdp.recovery[site]
                 expected_revenue = expected_production * s.price
                 
                 # Calculate costs (ignore emissions)

@@ -52,7 +52,7 @@ function evaluate_policy_with_price_model(pomdp, policy, updater, n_sims; rng=Ra
                 current_production = 0.0
                 for site in 1:pomdp.n_deposits
                     if s.have_opened[site] && s.deposit[site] > 0
-                        in_situ = min(pomdp.output, s.deposit[site])
+                        in_situ = min(pomdp.output, s.deposit[site], s.company_demand)
                         current_production += in_situ * pomdp.recovery[site]
                     end
                 end

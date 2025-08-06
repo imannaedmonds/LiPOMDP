@@ -46,27 +46,24 @@ function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
          end
      end
 
-
-    # Calculate automatic production from all open mines
-    #TODO CHANGE THIS
+    # Calculate automatic production from all open mines (limited by demand)
     current_production = 0.0
     for site in 1:P.n_deposits
         if s.have_opened[site] && s.deposit[site] > 0
-            in_situ = min(P.output, s.deposit[site])
+            # Produce only what can be sold (limited by demand)
+            in_situ = min(P.output, s.deposit[site], s.company_demand)
             current_production += in_situ * P.recovery[site]
         end
     end
     
-    # Market-based revenue (only get paid for what you can sell)
-    sellable_amount = min(current_production, s.company_demand) 
-    revenue = sellable_amount * s.price
+    # Market-based revenue (production equals sales since we limit by demand)
+    revenue = current_production * s.price
     
     # Operating costs and emissions
     costs = compute_costs(P, s, a)  # Includes CAPEX for new mines and OPEX for all open mines
     emissions = compute_emissions(P, s, a)
     
     # Total reward
-    #total_reward = exploration_reward + revenue - costs + (1 - P.alpha) * emissions
     total_reward = revenue - costs - exploration_cost + (1 - P.alpha) * emissions
     return total_reward
 end
@@ -380,7 +377,6 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     end
 
     sp.total_mined = s.total_mined + total_mined_this_step  # Accumulate
-
 
     return Deterministic(sp)
 end
