@@ -49,8 +49,8 @@ end
     
     # Production parameters
     output::Float64 = 2_500.0  # Annual output per mine
-    # Individual deposit sizes for each site
-    deposit_sizes::Vector{Float64} = [11_000.0, 18_000.0, 12_000.0, 7_000.0]  # Individual sizes for each site
+    init_deposit_size_dle::Float64 = 15_000.0  # Initial deposit size 
+    init_deposit_size_mining::Float64 = 12_000.0  # Initial deposit size 
     dle_uncertainty_factor::Float64 = 0.50  # Increased from 0.25 for higher profit impact
     mining_uncertainty_factor::Float64 = 0.40 
 
