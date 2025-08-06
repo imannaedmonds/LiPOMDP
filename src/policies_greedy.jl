@@ -388,11 +388,13 @@ function POMDPs.action(policy::ProfitMaximizerPolicy, s::State)
                 # Calculate costs (ignore emissions)
                 capex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_capex : policy.pomdp.mining_capex
                 opex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_opex : policy.pomdp.mining_opex
-                annual_opex = opex * policy.pomdp.output
-                
+                #annual_opex = opex * policy.pomdp.output
+                annual_opex = opex * expected_production
+
                 # Simple profit calculation (revenue - costs - capex)
                 annual_profit = expected_revenue - annual_opex
-                total_profit = annual_profit - capex
+               # total_profit = annual_profit - capex
+                total_profit = annual_profit - (capex * expected_production)
                 
                 if total_profit > best_profit
                     best_profit = total_profit

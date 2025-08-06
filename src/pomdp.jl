@@ -29,7 +29,8 @@ function compute_costs(P::LiPOMDP, s::State, a::Action)
     for site in 1:P.n_deposits
         if a.type[site] == 2 && !s.have_opened[site]  # Open new mine
             capex = P.deposit_types[site] ? P.dle_capex : P.mining_capex
-            costs += capex * P.output  # Capital cost based on capacity
+            amt = min(P.output, s.deposit[site], s.company_demand) #TODO change this
+            costs += capex * amt  # Capital cost based on capacity
         end
     end
     
@@ -271,14 +272,8 @@ end
 
 # Completing Initial State
 function POMDPs.initialstate(P::LiPOMDP)
-    init_deposits = []
-    for i in 1:P.n_deposits
-        if P.deposit_types[i]  # DLE deposit
-            push!(init_deposits, P.init_deposit_size_dle)
-        else  # Traditional mining deposit
-            push!(init_deposits, P.init_deposit_size_mining)
-        end
-    end
+    # Use individual deposit sizes for each site
+    init_deposits = copy(P.deposit_sizes)
     have_opened = fill(false, P.n_deposits)
     
     # Calculate initial demands
