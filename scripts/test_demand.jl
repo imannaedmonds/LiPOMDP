@@ -80,11 +80,13 @@ end
 # Function to calculate production capacity
 function calculate_production(state, p)
     total_production = 0.0
+    remaining_demand = state.company_demand  # Track remaining demand across all sites
     for site in 1:p.n_deposits
         if state.have_opened[site] && state.deposit[site] > 0
-            amt = min(p.output, state.deposit[site], state.company_demand)
+            amt = min(p.output, state.deposit[site], remaining_demand)
             production = amt * p.recovery[site]
             total_production += production
+            remaining_demand -= production  # Reduce remaining demand
         end
     end
     return total_production
