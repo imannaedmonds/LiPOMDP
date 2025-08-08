@@ -35,7 +35,7 @@ end
 
 @with_kw mutable struct LiPOMDP <: POMDP{State,Action,Observation}
     #Observation parameters
-    σ_obs_d::Float64 = 1000.0 # Increased base observation noise for more realistic uncertainty
+    σ_obs_d::Float64 = 2000.0 # Increased base observation noise for more realistic uncertainty
     σ_obs_p::Float64 = 100.0 # Standard deviation of the observation noise for price
 
     γ::Float64 = 0.97 #discounted reward

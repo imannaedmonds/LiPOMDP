@@ -58,65 +58,6 @@ function POMDPs.action(policy::OpenFirstPolicy, b::LiBelief)
     return action(policy, s)
 end
 
-"""
-ExploreOnlyPolicy - A heuristic policy that prioritizes exploration before opening
-
-Priority order:
-1. Explore unexplored sites (to gather information)
-2. Open explored sites that aren't opened
-3. Do nothing if all sites are opened
-
-This policy focuses on information gathering before making opening decisions.
-"""
-struct ExploreOnlyPolicy <: Policy
-    pomdp::LiPOMDP
-    debug::Bool
-end
-
-ExploreOnlyPolicy(pomdp::LiPOMDP) = ExploreOnlyPolicy(pomdp, false)
-
-function POMDPs.action(policy::ExploreOnlyPolicy, s::State)
-    if policy.debug
-        println("\n[DEBUG] ExploreOnlyPolicy evaluating state:")
-        println("  Time: $(s.time)")
-        println("  Have opened: $(s.have_opened)")
-        println("  Deposits: $(round.(s.deposit, digits=1))")
-    end
-    
-    # First priority: Explore unopened sites
-    explore_actions = zeros(Int, 4)
-    explore_sites = zeros(Int, 4)
-
-    for i in 1:policy.pomdp.n_deposits
-        if !s.have_opened[i]
-            if policy.debug
-                println("  [DEBUG] Choosing to explore site $i (unopened)")
-            end            
-            explore_actions[i] = 1
-            explore_sites[i] = i
-        end
-    end
-
-    if sum(explore_actions) > 0
-        return Action(site=explore_sites, type=explore_actions)
-    end
-    
-    # Fallback: do nothing if all sites are opened
-    if policy.debug
-        println("  [DEBUG] All sites opened, doing nothing")
-    end
-    return Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0])
-end
-
-function POMDPs.action(policy::ExploreOnlyPolicy, b::LiBelief)
-    if policy.debug
-        println("\n[DEBUG] ExploreOnlyPolicy evaluating belief state")
-    end
-    
-    # Sample a state from the belief
-    s = rand(MersenneTwister(1234), b)
-    return action(policy, s)
-end
 
 """
 OperateFirstPolicy - A heuristic policy that opens mines as quickly as possible

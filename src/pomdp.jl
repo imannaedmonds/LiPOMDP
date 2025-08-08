@@ -29,7 +29,8 @@ function compute_costs(P::LiPOMDP, s::State, a::Action)
     for site in 1:P.n_deposits
         if a.type[site] == 2 && !s.have_opened[site]  # Open new mine
             capex = P.deposit_types[site] ? P.dle_capex : P.mining_capex
-            costs += capex * P.output  # Capital cost based on capacity
+            amt = min(P.output, s.deposit[site], s.company_demand) #TODO change this
+            costs += capex * amt  # Capital cost based on capacity
         end
     end
     
@@ -62,9 +63,10 @@ function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
     # Operating costs and emissions
     costs = compute_costs(P, s, a)  # Includes CAPEX for new mines and OPEX for all open mines
     emissions = compute_emissions(P, s, a)
+    profit = revenue - costs - exploration_cost
     
     # Total reward
-    total_reward = revenue - costs - exploration_cost + (1 - P.alpha) * emissions
+    total_reward = (profit) + (1 - P.alpha) * emissions
     return total_reward
 end
 
@@ -152,7 +154,7 @@ end
 
 #give signal of where you end up 
 function POMDPs.observation(P::LiPOMDP, s::State,  a::Action, sp::State)
-    # Replace existing observation code with this version that considers exploration
+    # Only generate meaningful observations for explored sites
     deposit_estimate_dist = []
     for i in 1:length(sp.deposit)
         # Check if any action is exploring this site
@@ -165,12 +167,14 @@ function POMDPs.observation(P::LiPOMDP, s::State,  a::Action, sp::State)
         end
         
         if is_exploring
-            # If exploring this site, get more accurate reading but not perfect
-            noise = P.σ_obs_d * 0.2  # 20% of regular noise for exploration (was 0.05)
+            # Generate meaningful observation for explored sites
+            noise = P.σ_obs_d * 0.2  # 20% of regular noise for exploration
             push!(deposit_estimate_dist, Normal(sp.deposit[i], noise))
         else
-            # Regular observation noise
-            push!(deposit_estimate_dist, Normal(sp.deposit[i], P.σ_obs_d))
+            # For unexplored sites, provide essentially no information
+            # Use very high noise to represent "no useful information"
+            noise = P.σ_obs_d * 50.0  # Very high noise = no useful information
+            push!(deposit_estimate_dist, Normal(sp.deposit[i], noise))
         end
     end
 
@@ -192,19 +196,33 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
 
     # Loop through each deposit site to update its belief
     for i in 1:length(o.deposits)
-        prior = b.deposits_distribution[i]      # prior belief (Normal) for site i
-        μ_prior, σ_prior = mean(prior), std(prior)
-        z = o.deposits[i]                        # observed noisy deposit value for site i
+        # Check if this site was explored in the action
+        was_explored = false
+        for j in 1:length(a.site)
+            if a.type[j] == 1 && a.site[j] == i
+                was_explored = true
+                break
+            end
+        end
+        
+        if was_explored
+            # Update belief for explored sites using Kalman filter
+            prior = b.deposits_distribution[i]      # prior belief (Normal) for site i
+            μ_prior, σ_prior = mean(prior), std(prior)
+            z = o.deposits[i]                        # observed noisy deposit value for site i
 
-        # Kalman filter update for Gaussian prior + Gaussian likelihood:
-        # posterior variance: 1 / (1/σ_prior² + 1/σ_obs²)
-        σ_obs2 = P.σ_obs_d^2
-        σ_prior2 = σ_prior^2
-        σ_post2 = 1 / (1/σ_prior2 + 1/σ_obs2)     # updated variance
-        μ_post = σ_post2 * (μ_prior/σ_prior2 + z/σ_obs2)  # updated mean (weighted avg)
+            # Use lower noise for exploration observations
+            σ_obs2 = (P.σ_obs_d * 0.2)^2  # 20% of regular noise for exploration
+            σ_prior2 = σ_prior^2
+            σ_post2 = 1 / (1/σ_prior2 + 1/σ_obs2)     # updated variance
+            μ_post = σ_post2 * (μ_prior/σ_prior2 + z/σ_obs2)  # updated mean (weighted avg)
 
-        # Store the updated Normal distribution
-        updated_deposits[i] = Normal(μ_post, sqrt(σ_post2))
+            # Store the updated Normal distribution
+            updated_deposits[i] = Normal(μ_post, sqrt(σ_post2))
+        else
+            # Keep prior belief unchanged for unexplored sites
+            updated_deposits[i] = b.deposits_distribution[i]
+        end
     end
 
     #Update the price belief

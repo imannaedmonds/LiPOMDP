@@ -115,6 +115,20 @@ The package supports multiple pricing models:
 
 ## Development Status
 
+## TODO August 7th
+[ ] Showing POMDP is good in comaprison to what? monte carlo sampling not MCTS?
+[ ] Remaining demand
+[ ] Add a random policy
+[ ] Start writing paper
+[ ] Opening and close mine
+
+[ ] Senstivity analysis?
+
+[ ] Parallelize code
+[ ] Profit Maximizer to do like every year and not only k amount of mines
+[ ] proft vs. emission cost pareto curve -- MANSUR
+
+
 - [x] Core POMDP implementation
 - [x] Multiple site actions
 - [x] Automatic mine operation
