@@ -231,24 +231,3 @@ function POMDPs.action(policy::ConservativePolicy, b::LiBelief)
     return action(policy, s)
 end
 
-"""
-RandomPolicy - Baseline random policy for comparison
-"""
-struct RandomHeuristicPolicy <: Policy
-    pomdp::LiPOMDP
-    rng::AbstractRNG
-end
-
-RandomHeuristicPolicy(pomdp::LiPOMDP; rng=Random.GLOBAL_RNG) = RandomHeuristicPolicy(pomdp, rng)
-
-function POMDPs.action(policy::RandomHeuristicPolicy, s::State)
-    # Get valid actions based on state
-    valid_actions = POMDPs.actions(policy.pomdp, s)
-    # Choose randomly
-    return rand(policy.rng, valid_actions)
-end
-
-function POMDPs.action(policy::RandomHeuristicPolicy, b::LiBelief)
-    s = rand(policy.rng, b)
-    return action(policy, s)
-end

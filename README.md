@@ -117,7 +117,7 @@ The package supports multiple pricing models:
 
 ## TODO August 7th
 [ ] Showing POMDP is good in comaprison to what? monte carlo sampling not MCTS?
-[ ] Remaining demand
+[x] Remaining demand
 [ ] Add a random policy
 [ ] Start writing paper
 [ ] Opening and close mine

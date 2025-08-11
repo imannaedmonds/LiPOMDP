@@ -1,36 +1,36 @@
 [
   {
-    "discounted_reward": 1.5016000160801923e8,
-    "profit_std": 3.238512438659487e7,
+    "discounted_reward": 1.4665780642954615e8,
+    "profit_std": 2.9502453813270792e7,
     "policy": "POMCPOW",
     "planning_model": 3,
     "eval_model": 1,
-    "profit": 1.1078561486590107e8,
-    "emissions": 4.641666739430096e7,
-    "emissions_std": 2.6682183340305877e6
+    "profit": 1.1716607346863179e8,
+    "emissions": 4.626078583083621e7,
+    "emissions_std": 1.6284058913409016e6
   },
   {
-    "discounted_reward": 6.435802328087966e7,
-    "profit_std": 1.4933151458543981e6,
+    "discounted_reward": 6.431002826750212e7,
+    "profit_std": 1.870504135992593e6,
     "policy": "ProfitMaximizer",
     "planning_model": 3,
     "eval_model": 1,
-    "profit": 5.3037673168174356e7,
-    "emissions": 3.565247610032297e7,
-    "emissions_std": 520872.96409574593
+    "profit": 5.308287835287819e7,
+    "emissions": 3.545845540674624e7,
+    "emissions_std": 796048.5194968577
   },
   {
-    "discounted_reward": 6.57862707426946e7,
-    "profit_std": 2.2700889878320643e6,
+    "discounted_reward": 6.605904059048452e7,
+    "profit_std": 2.8172806948246188e6,
     "policy": "EmissionMinimizer",
     "planning_model": 3,
     "eval_model": 1,
-    "profit": 9.17758243981362e7,
-    "emissions": 7.32349972056179e6,
-    "emissions_std": 128221.32056056944
+    "profit": 9.230271566721478e7,
+    "emissions": 7.371599199740589e6,
+    "emissions_std": 191580.6110717973
   },
   {
-    "discounted_reward": -71070.03929941704,
+    "discounted_reward": 71070.03929941704,
     "profit_std": 0.0,
     "policy": "ExploreOnly",
     "planning_model": 3,
@@ -38,5 +38,35 @@
     "profit": -96000.0,
     "emissions": 0.0,
     "emissions_std": 0.0
+  },
+  {
+    "discounted_reward": 1.8642606104797512e8,
+    "profit_std": 8.786585342443349e6,
+    "policy": "Random",
+    "planning_model": 3,
+    "eval_model": 1,
+    "profit": 6.270392082161681e7,
+    "emissions": 4.9681421979955785e7,
+    "emissions_std": 941704.8019332605
+  },
+  {
+    "discounted_reward": 1.2492691274572365e8,
+    "profit_std": 1.80364165073242e7,
+    "policy": "DynamicProfitMaximizer",
+    "planning_model": 3,
+    "eval_model": 1,
+    "profit": 5.200214316618697e7,
+    "emissions": 4.329860138260325e7,
+    "emissions_std": 7.505951751437759e6
+  },
+  {
+    "discounted_reward": 1.8786094202173072e8,
+    "profit_std": 3.1643762317433306e6,
+    "policy": "DynamicEmissionMinimizer",
+    "planning_model": 3,
+    "eval_model": 1,
+    "profit": 5.285589260921677e7,
+    "emissions": 4.9865822341301985e7,
+    "emissions_std": 805455.2968865178
   }
 ]
