@@ -23,13 +23,14 @@ export reward, transition, observation, update, gen, initialstate, isterminal, d
 initialobs, obs_weight, create_initial_belief, compute_costs, compute_emissions
 include("pomdp.jl")
 
-export ExploreOnlyPolicy, OpenFirstPolicy
-include("policies.jl") 
-
 export ProfitMaximizerPolicy, EmissionMinimizerPolicy, RandomHeuristicPolicy, DynamicProfitMaximizerPolicy, DynamicEmissionMinimizerPolicy
 include("policies_advanced.jl")
 
 export compare_policies, evaluate_policy_comprehensive, calculate_belief_uncertainty
 include("eval.jl")
+
+# BetaZero integration
+export create_betazero_solver, evaluate_betazero_policy, print_betazero_comparison
+include("betazero_integration.jl")
 
 end

@@ -16,7 +16,7 @@ include("../src/historical_data.jl")
 include("../src/model.jl")
 include("../src/utils.jl")
 include("../src/pomdp.jl")
-include("../src/policies.jl")
+# Policies are now in policies_advanced.jl
 
 function plot_clear_distributions()
     """Plot the initial deposit distributions vs true states."""

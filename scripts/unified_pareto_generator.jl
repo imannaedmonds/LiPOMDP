@@ -11,7 +11,7 @@ Uses actual LiPOMDP model parameters and functions.
 # Include the core POMDP functionality
 include("../src/model.jl")
 include("../src/pomdp.jl")
-include("../src/policies.jl")
+# Policies are now in policies_advanced.jl
 
 # ============================================================================
 # CORE SIMULATION FUNCTIONS

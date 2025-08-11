@@ -18,7 +18,7 @@ include("../src/historical_data.jl")
 include("../src/model.jl")
 include("../src/utils.jl") 
 include("../src/pomdp.jl")
-include("../src/policies.jl")
+# Policies are now in policies_advanced.jl
 include("../src/policies_advanced.jl")
 include("../src/eval.jl")
 

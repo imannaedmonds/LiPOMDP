@@ -510,18 +510,7 @@ function POMDPs.actions(P::LiPOMDP, s::State)
     return acts
 end
 
-"""
-# Define action space - all combinations of actions for each site
-function POMDPs.actions(P::LiPOMDP)
-    # Generate all 3^4 = 81 possible action combinations
-    # Each site can have action type: 0=DoNothing, 1=Explore, 2=Open
-    actions = Action[]
-    for combo in Iterators.product(0:2, 0:2, 0:2, 0:2)
-        push!(actions, Action(site=[0, 0, 0, 0], type=collect(combo)))
-    end
-    return actions
-end
-"""
+
 
 function POMDPs.actionindex(P::LiPOMDP, a::Action)
     # Simple indexing for single-action vectors
@@ -562,4 +551,102 @@ function POMDPTools.obs_weight(P::LiPOMDP, s::State, a::Action, sp::State, o::Ob
     
     # Calculate pdf
     return pdf(o_dist, o_vec)
+end
+
+# Handle Deterministic{State} for BetaZero compatibility
+function POMDPs.update(up::LiBeliefUpdater, b::POMDPTools.POMDPDistributions.Deterministic{State}, a::Action, o::Observation)
+    P = up.P  # Access the POMDP parameters
+    s = b.val  # Get the current state
+    
+    # Initialize updated deposits (only update if explored)
+    updated_deposits = copy(s.deposit)
+    
+    # Loop through each deposit site to update its belief
+    for i in 1:length(o.deposits)
+        # Check if this site was explored in the action
+        was_explored = false
+        for j in 1:length(a.site)
+            if a.type[j] == 1 && a.site[j] == i
+                was_explored = true
+                break
+            end
+        end
+        
+        if was_explored
+            # Update belief for explored sites using Kalman filter
+            # For deterministic state, we treat the current value as mean with small uncertainty
+            μ_prior = s.deposit[i]
+            σ_prior = 100.0  # Small uncertainty for deterministic state
+            z = o.deposits[i]  # observed noisy deposit value for site i
+
+            # Use lower noise for exploration observations
+            σ_obs2 = (P.σ_obs_d * 0.2)^2  # 20% of regular noise for exploration
+            σ_prior2 = σ_prior^2
+            σ_post2 = 1 / (1/σ_prior2 + 1/σ_obs2)     # updated variance
+            μ_post = σ_post2 * (μ_prior/σ_prior2 + z/σ_obs2)  # updated mean (weighted avg)
+
+            # Store the updated value (mean of posterior)
+            updated_deposits[i] = μ_post
+        end
+        # If not explored, keep the prior value unchanged
+    end
+
+    # Update price belief (always updated)
+    μp_prior = s.price
+    σp_prior = 50.0  # Small uncertainty for deterministic state
+    zp = o.observed_price
+
+    σp_post2 = 1 / (1/σp_prior^2 + 1/P.σ_obs_p^2)         # updated variance
+    μp_post = σp_post2 * (μp_prior/σp_prior^2 + zp/P.σ_obs_p^2) # updated mean
+    updated_price = μp_post
+
+    # Update demand belief (always updated)
+    μd_prior = s.company_demand
+    σd_prior = 100.0  # Small uncertainty for deterministic state
+    zd = o.observed_demand
+
+    σd_post2 = 1 / (1/σd_prior^2 + 1/P.σ_obs_demand^2)  # updated variance
+    μd_post = σd_post2 * (μd_prior/σd_prior^2 + zd/σd_post2) # updated mean
+    updated_demand = μd_post
+
+    # Update have_opened status based on action
+    updated_have_opened = copy(s.have_opened)
+    for site in 1:P.n_deposits
+        if a.type[site] == 2 && !s.have_opened[site]
+            updated_have_opened[site] = true
+        end
+    end
+
+    # Calculate production and update deposits for mining
+    expected_production_this_step = 0.0
+    for site in 1:P.n_deposits
+        if updated_have_opened[site]
+            # Use PRIOR deposit value for production calculation
+            prior_deposit = s.deposit[site]
+            if prior_deposit > 0
+                expected_in_situ = min(P.output, prior_deposit)
+                expected_saleable = expected_in_situ * P.recovery[site]
+                expected_production_this_step += expected_saleable
+                   
+                # Update the deposit to account for mining depletion
+                # Reduce by the amount mined
+                depleted_deposit = max(0.0, updated_deposits[site] - expected_in_situ)
+                updated_deposits[site] = depleted_deposit
+            end
+        end
+    end
+
+    updated_total_mined = s.total_mined + expected_production_this_step
+
+    # Construct and return the updated deterministic state
+    updated_state = State(
+        deposit = updated_deposits,
+        time = s.time + 1,
+        price = updated_price,
+        company_demand = updated_demand,
+        total_mined = updated_total_mined,
+        have_opened = updated_have_opened
+    )
+    
+    return POMDPTools.POMDPDistributions.Deterministic(updated_state)
 end
