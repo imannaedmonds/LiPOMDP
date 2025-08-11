@@ -4,6 +4,8 @@ using POMCPOW
 using Random
 using Statistics
 using Distributions
+using LitPOMDP
+using JSON
 
 """
 Simple Policy Testing Script
@@ -12,13 +14,13 @@ with different price models for planning vs evaluation.
 """
 
 # Include the core POMDP functionality
-include("../src/historical_data.jl")
-include("../src/model.jl")
-include("../src/utils.jl")
-include("../src/pomdp.jl")
-include("../src/policies.jl")
-include("../src/policies_advanced.jl")
-include("../src/eval.jl")
+# include("../src/historical_data.jl")
+# include("../src/model.jl")
+# include("../src/utils.jl")
+# include("../src/pomdp.jl")
+# include("../src/policies.jl")
+# include("../src/policies_advanced.jl")
+# include("../src/eval.jl")
 
 function create_policy(policy_type::String, pomdp::LiPOMDP)
     """Create a policy based on type."""
@@ -186,75 +188,92 @@ function calculate_reward_components(P::LiPOMDP, s::State, a::Action)
     )
 end
 
-function print_results(all_results::Dict)
-    """Print comprehensive results table."""
+function print_results(all_results::Dict, alphas::Vector{Float64})
+    """Print comprehensive results table grouped by alpha."""
     
     println("\n" * "="^120)
-    println("SIMPLE POLICY TESTING RESULTS")
+    println("POLICY COMPARISON ACROSS ALPHA VALUES")
     println("="^120)
     
     price_model_names = ["Static", "Linear", "Exponential", "State-Dependent", "Dynamic", "Historical"]
     
-    println("\n📊 PERFORMANCE SUMMARY")
-    println("-"^120)
-    println("Policy Name           | Planning | Eval | Total Reward | Disc. Reward | Emission Cost | Total Profit | Met Demand %")
-    println("-"^120)
-    
-    for (policy_name, results) in all_results
-        planning_model = results["planning_price_model"]
-        eval_model = results["evaluation_price_model"]
-        mean_reward = mean(results["total_reward"])
-        mean_disc_reward = mean(results["total_discounted_reward"])
-        mean_emission_cost = mean(results["total_emission_cost"])
-        mean_profit = mean(results["total_profit"])
+    for alpha in alphas
+        println("\n" * "="^120)
+        println("ALPHA = $alpha (Profit weight: $(round(1-alpha, digits=2)), Emission weight: $(round(alpha, digits=2)))")
+        println("="^120)
         
-        # Calculate demand meeting percentage
-        mean_demand = mean(results["total_demand"])
-        mean_production = mean(results["total_production"])
-        met_demand_pct = mean_demand > 0 ? (mean_production / mean_demand) * 100 : 0.0
+        # Filter results for this alpha
+        alpha_results = Dict(k => v for (k, v) in all_results if v["alpha"] == alpha)
         
-        planning_name = price_model_names[planning_model]
-        eval_name = price_model_names[eval_model]
+        if isempty(alpha_results)
+            println("No results for alpha = $alpha")
+            continue
+        end
         
-        println("$(lpad(policy_name, 20)) | $(lpad(planning_name, 8)) | $(lpad(eval_name, 4)) | $(lpad(round(mean_reward/1e6, digits=1), 12))M | $(lpad(round(mean_disc_reward/1e6, digits=1), 12))M | $(lpad(round(mean_emission_cost/1e6, digits=1), 12))M | $(lpad(round(mean_profit/1e6, digits=1), 11))M | $(lpad(round(met_demand_pct, digits=1), 10))%")
+        println("\n📊 PERFORMANCE METRICS")
+        println("-"^120)
+        println("Policy Type          | Planning | Eval | Total Profit | Emission Cost | Disc. Reward | Met Demand %")
+        println("-"^120)
+        
+        # Sort by policy type for consistent ordering
+        sorted_results = sort(collect(alpha_results), by = x -> x[2]["policy_type"])
+        
+        for (policy_name, results) in sorted_results
+            policy_type = results["policy_type"]
+            planning_model = results["planning_price_model"]
+            eval_model = results["evaluation_price_model"]
+            mean_profit = mean(results["total_profit"])
+            mean_emission_cost = mean(results["total_emission_cost"])
+            mean_disc_reward = mean(results["total_discounted_reward"])
+            
+            # Calculate demand meeting percentage
+            mean_demand = mean(results["total_demand"])
+            mean_production = mean(results["total_production"])
+            met_demand_pct = mean_demand > 0 ? (mean_production / mean_demand) * 100 : 0.0
+            
+            planning_name = planning_model <= length(price_model_names) ? price_model_names[planning_model] : "Unknown"
+            eval_name = eval_model <= length(price_model_names) ? price_model_names[eval_model] : "Unknown"
+            
+            println("$(rpad(policy_type, 20)) | $(lpad(planning_name[1], 8)) | $(lpad(eval_name[1], 4)) | $(lpad(round(mean_profit/1e6, digits=2), 11))M | $(lpad(round(mean_emission_cost/1e6, digits=2), 13))M | $(lpad(round(mean_disc_reward/1e6, digits=2), 11))M | $(lpad(round(met_demand_pct, digits=1), 10))%")
+        end
+        
+        # Best performers for this alpha
+        println("\n🏆 BEST PERFORMERS (α=$alpha)")
+        println("-"^120)
+        
+        if !isempty(alpha_results)
+            # Best by total profit
+            best_profit_idx = argmax([mean(r["total_profit"]) for r in values(alpha_results)])
+            best_profit_name = collect(keys(alpha_results))[best_profit_idx]
+            best_profit_value = mean(alpha_results[best_profit_name]["total_profit"])
+            println("Best Profit: $(alpha_results[best_profit_name]["policy_type"]) (\$$(round(best_profit_value/1e6, digits=2))M)")
+            
+            # Best by emission (lowest)
+            best_emission_idx = argmin([mean(r["total_emission_cost"]) for r in values(alpha_results)])
+            best_emission_name = collect(keys(alpha_results))[best_emission_idx]
+            best_emission_value = mean(alpha_results[best_emission_name]["total_emission_cost"])
+            println("Lowest Emissions: $(alpha_results[best_emission_name]["policy_type"]) (\$$(round(best_emission_value/1e6, digits=2))M)")
+            
+            # Best by combined objective (using alpha weighting)
+            best_combined_idx = argmax([mean(r["total_discounted_reward"]) for r in values(alpha_results)])
+            best_combined_name = collect(keys(alpha_results))[best_combined_idx]
+            best_combined_value = mean(alpha_results[best_combined_name]["total_discounted_reward"])
+            println("Best Combined (Discounted Reward): $(alpha_results[best_combined_name]["policy_type"]) (\$$(round(best_combined_value/1e6, digits=2))M)")
+        end
     end
-    
-    # Find best performers
-    println("\n🏆 BEST PERFORMERS")
-    println("-"^120)
-    
-    # Best by total profit
-    best_profit = argmax([mean(results["total_profit"]) for results in values(all_results)])
-    best_profit_name = collect(keys(all_results))[best_profit]
-    best_profit_value = mean(all_results[best_profit_name]["total_profit"])
-    println("Best Total Profit: $best_profit_name (\$$(round(best_profit_value/1e6, digits=1))M)")
-    
-    # Best by discounted reward
-    best_disc_reward = argmax([mean(results["total_discounted_reward"]) for results in values(all_results)])
-    best_disc_reward_name = collect(keys(all_results))[best_disc_reward]
-    best_disc_reward_value = mean(all_results[best_disc_reward_name]["total_discounted_reward"])
-    println("Best Discounted Reward: $best_disc_reward_name (\$$(round(best_disc_reward_value/1e6, digits=1))M)")
-    
-    # Best by demand meeting
-    best_demand_meeting = argmax([
-        mean(results["total_production"]) / mean(results["total_demand"]) 
-        for results in values(all_results) 
-        if mean(results["total_demand"]) > 0
-    ])
-    best_demand_name = collect(keys(all_results))[best_demand_meeting]
-    best_demand_pct = (mean(all_results[best_demand_name]["total_production"]) / mean(all_results[best_demand_name]["total_demand"])) * 100
-    println("Best Demand Meeting: $best_demand_name ($(round(best_demand_pct, digits=1))%)")
-    
-    # Best by emission cost (lowest)
-    best_emission = argmin([mean(results["total_emission_cost"]) for results in values(all_results)])
-    best_emission_name = collect(keys(all_results))[best_emission]
-    best_emission_value = mean(all_results[best_emission_name]["total_emission_cost"])
-    println("Best Emission Cost: $best_emission_name (\$$(round(best_emission_value/1e6, digits=1))M)")
     
     println("\n" * "="^120)
 end
 
-function run_simple_policy_test()
+function run_simple_policy_test(
+    policies::Vector{String}, 
+    planning_price_models::Vector{Int64},
+    evaluation_price_models::Vector{Int64}, 
+    alphas::Vector{Float64},
+    time_horizon::Int64 = 25,
+    n_sims::Int64 = 30, 
+    output_file::String = "simple_policy_test_results.txt"
+)
     """Run the simple policy testing."""
     
     println("🚀 SIMPLE POLICY TESTING")
@@ -264,11 +283,8 @@ function run_simple_policy_test()
     println("="^80)
     
     # Configuration
-    n_sims = 30
-    time_horizon = 25
-    planning_price_models = [1, 2, 3, 6]  # Static, Linear, Exponential, Historical
-    evaluation_price_models = [1, 2, 3, 6]
-    policies = ["POMCPOW", "ProfitMaximizer", "EmissionMinimizer", "ExploreOnly"]
+    n_sims = n_sims
+    time_horizon = time_horizon
     
     println("Configuration:")
     println("  • Simulations per policy: $n_sims")
@@ -280,54 +296,170 @@ function run_simple_policy_test()
     # Store all results
     all_results = Dict{String, Dict{String, Any}}()
     
+    # Create directory for output files if it doesn't exist
+    output_dir = dirname(output_file)
+    if !isdir(output_dir) && output_dir != ""
+        mkpath(output_dir)
+    end
+    
     # Test each policy configuration
-    total_configs = length(policies) * length(planning_price_models) * length(evaluation_price_models)
+    total_configs = length(policies) * length(planning_price_models) * length(evaluation_price_models) * length(alphas)
     config_count = 0
     
-    for policy_type in policies
-        for planning_model in planning_price_models
-            for eval_model in evaluation_price_models
-                config_count += 1
-                policy_name = "$(policy_type)_P$(planning_model)_E$(eval_model)"
-                
-                println("\n[$(config_count)/$(total_configs)] Testing $policy_name...")
-                
-                # Create planning and evaluation POMDPs by modifying the default one
-                planning_pomdp = LiPOMDP(price_model_type=planning_model, time_horizon=time_horizon)
-                evaluation_pomdp = LiPOMDP(price_model_type=eval_model, time_horizon=time_horizon)
-                
-                # Create belief updater
-                updater = LiBeliefUpdater(P=planning_pomdp)
-                
-                # Create policy
-                policy = create_policy(policy_type, planning_pomdp)
-                
-                # Evaluate policy
-                results = evaluate_policy_simple(planning_pomdp, evaluation_pomdp, policy, updater, n_sims)
-                
-                # Store results with metadata
-                all_results[policy_name] = merge(results, Dict(
-                    "planning_price_model" => planning_model,
-                    "evaluation_price_model" => eval_model,
-                    "policy_type" => policy_type
-                ))
-                
-                # Print quick summary
-                mean_profit = mean(results["total_profit"])
-                mean_disc_reward = mean(results["total_discounted_reward"])
-                mean_emission_cost = mean(results["total_emission_cost"])
-                println("  Profit: \$$(round(mean_profit/1e6, digits=1))M, Disc. Reward: \$$(round(mean_disc_reward/1e6, digits=1))M, Emission Cost: \$$(round(mean_emission_cost/1e6, digits=1))M")
+    # Store Pareto data for plotting
+    pareto_data = Dict{Float64, Vector{Dict{String, Any}}}()
+    for alpha in alphas
+        pareto_data[alpha] = []
+    end
+    
+    for alpha in alphas
+        println("\n" * "="^80)
+        println("Testing with ALPHA = $alpha")
+        println("="^80)
+        
+        for policy_type in policies
+            for planning_model in planning_price_models
+                for eval_model in evaluation_price_models
+                    config_count += 1
+                    policy_name = "$(policy_type)_P$(planning_model)_E$(eval_model)_A$(alpha)"
+                    
+                    println("\n[$(config_count)/$(total_configs)] Testing $(policy_type) with α=$alpha...")
+                    println("  Planning model: Type $planning_model, Evaluation model: Type $eval_model")
+                    
+                    # Create planning and evaluation POMDPs
+                    planning_pomdp = LiPOMDP(price_model_type=planning_model, time_horizon=time_horizon, alpha=alpha)
+                    evaluation_pomdp = LiPOMDP(price_model_type=eval_model, time_horizon=time_horizon, alpha=alpha)
+                    
+                    # Create belief updater
+                    updater = LiBeliefUpdater(P=planning_pomdp)
+                    
+                    # Create policy
+                    policy = create_policy(policy_type, planning_pomdp)
+                    
+                    # Evaluate policy
+                    results = evaluate_policy_simple(planning_pomdp, evaluation_pomdp, policy, updater, n_sims)
+                    
+                    # Calculate statistics
+                    mean_profit = mean(results["total_profit"])
+                    std_profit = std(results["total_profit"])
+                    mean_emission_cost = mean(results["total_emission_cost"])
+                    std_emission_cost = std(results["total_emission_cost"])
+                    mean_disc_reward = mean(results["total_discounted_reward"])
+                    
+                    # Store results with metadata
+                    all_results[policy_name] = merge(results, Dict(
+                        "planning_price_model" => planning_model,
+                        "evaluation_price_model" => eval_model,
+                        "policy_type" => policy_type,
+                        "alpha" => alpha,
+                        "mean_profit" => mean_profit,
+                        "std_profit" => std_profit,
+                        "mean_discounted_reward" => mean_disc_reward,
+                        "mean_emission_cost" => mean_emission_cost,
+                        "std_emission_cost" => std_emission_cost
+                    ))
+                    
+                    # Add to Pareto data
+                    push!(pareto_data[alpha], Dict(
+                        "policy" => policy_type,
+                        "profit" => mean_profit,
+                        "profit_std" => std_profit,
+                        "emissions" => mean_emission_cost,
+                        "emissions_std" => std_emission_cost,
+                        "discounted_reward" => mean_disc_reward,
+                        "planning_model" => planning_model,
+                        "eval_model" => eval_model
+                    ))
+                    
+                    # Print quick summary
+                    println("  ✓ Profit: \$$(round(mean_profit/1e6, digits=2))M ± $(round(std_profit/1e6, digits=2))M")
+                    println("  ✓ Emissions: \$$(round(mean_emission_cost/1e6, digits=2))M ± $(round(std_emission_cost/1e6, digits=2))M")
+                    println("  ✓ Disc. Reward: \$$(round(mean_disc_reward/1e6, digits=2))M")
+                end
             end
         end
     end
     
     # Print comprehensive results
-    print_results(all_results)
+    print_results(all_results, alphas)
     
-    println("\n✅ Simple policy testing complete!")
-    return all_results
+    # Save results per alpha for Pareto frontier plotting
+    for alpha in alphas
+        alpha_file = replace(output_file, ".txt" => "_alpha_$(alpha).json")
+        alpha_results = Dict(k => v for (k, v) in all_results if v["alpha"] == alpha)
+        
+        # Save detailed results
+        open(alpha_file, "w") do f
+            write(f, JSON.json(alpha_results, 2))  # Pretty print with indent
+        end
+        
+        # Save Pareto data for easy plotting
+        pareto_file = replace(output_file, ".txt" => "_pareto_alpha_$(alpha).json")
+        open(pareto_file, "w") do f
+            write(f, JSON.json(pareto_data[alpha], 2))
+        end
+        
+        println("\n📁 Saved results for α=$alpha:")
+        println("   - Detailed: $(alpha_file)")
+        println("   - Pareto data: $(pareto_file)")
+    end
+    
+    # Save all results in main file
+    open(output_file, "w") do f
+        write(f, JSON.json(all_results, 2))
+    end
+    
+    # Create summary CSV for easy analysis
+    summary_file = replace(output_file, ".txt" => "_summary.csv")
+    open(summary_file, "w") do f
+        println(f, "Alpha,Policy,PlanningModel,EvalModel,MeanProfit,StdProfit,MeanEmissions,StdEmissions,DiscountedReward")
+        for (_, results) in all_results
+            println(f, "$(results["alpha"]),$(results["policy_type"]),$(results["planning_price_model"]),$(results["evaluation_price_model"]),$(results["mean_profit"]),$(results["std_profit"]),$(results["mean_emission_cost"]),$(results["std_emission_cost"]),$(results["mean_discounted_reward"])")
+        end
+    end
+    
+    println("\n✅ Policy testing complete!")
+    println("📊 Results saved to:")
+    println("   - Main results: $(output_file)")
+    println("   - Summary CSV: $(summary_file)")
+    println("   - Individual alpha results in: $(dirname(output_file))")
+    
+    return all_results, pareto_data
 end
 
-# Run the test if this script is executed directly
-results = run_simple_policy_test()
+# Configuration
+time_horizon = 25
+n_sims = 30
+planning_price_models = [3]  # Exponential model for planning
+evaluation_price_models = [1]  # Static model for evaluation
+policies = ["POMCPOW", "ProfitMaximizer", "EmissionMinimizer", "ExploreOnly"]
+alphas = [0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pure emission minimization (1)
+output_file = "outputs/simple_policy_test_results.txt"
+
+println("\n" * "="^80)
+println("MULTI-ALPHA POLICY COMPARISON")
+println("="^80)
+println("Alpha values: $alphas")
+println("  α=0.0: Pure profit maximization")
+println("  α=0.5: Balanced profit and emissions")
+println("  α=1.0: Pure emission minimization")
+println("="^80)
+
+results, pareto_data = run_simple_policy_test(
+    policies, planning_price_models, evaluation_price_models, alphas,
+    time_horizon, n_sims, output_file)
+
+# Print Pareto frontier summary
+println("\n" * "="^80)
+println("PARETO FRONTIER SUMMARY")
+println("="^80)
+for alpha in alphas
+    println("\nα = $alpha:")
+    if haskey(pareto_data, alpha) && !isempty(pareto_data[alpha])
+        for point in pareto_data[alpha]
+            println("  $(point["policy"]): Profit=$(round(point["profit"]/1e6, digits=2))M, Emissions=$(round(point["emissions"]/1e6, digits=2))M")
+        end
+    end
+end
+println("="^80)
 

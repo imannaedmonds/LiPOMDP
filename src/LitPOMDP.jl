@@ -23,7 +23,7 @@ export reward, transition, observation, update, gen, initialstate, isterminal, d
 initialobs, obs_weight, create_initial_belief, compute_costs, compute_emissions
 include("pomdp.jl")
 
-export ExploreOnlyPolicy
+export ExploreOnlyPolicy, OpenFirstPolicy
 include("policies.jl") 
 
 export ProfitMaximizerPolicy, EmissionMinimizerPolicy
