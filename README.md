@@ -115,19 +115,35 @@ The package supports multiple pricing models:
 
 ## Development Status
 
-## TODO August 7th
-[ ] Showing POMDP is good in comaprison to what? monte carlo sampling not MCTS?
-[x] Remaining demand
-[ ] Add a random policy
-[ ] Start writing paper
-[ ] Opening and close mine
+## TODO August 21st
+- [] Send to Mykel the Rough Draft
 
-[ ] Senstivity analysis?
+## TODO August 18th-21st heads down on writing the paper
+Anna:
+- [] Talk to Mansur on what kind of plots to be creating for the paper
+- [] Finish writing Rough Draft 
 
-[ ] Parallelize code
-[ ] Profit Maximizer to do like every year and not only k amount of mines
-[ ] proft vs. emission cost pareto curve -- MANSUR
+## TODO August 11th for meeting on August 14th
+Anna:
+- [] Showing POMDP is good in comaprison to what? monte carlo sampling not MCTS? for Thursday
+- assume true initial state, create 10 different states and then build 10 policies and then compare them
+- updtes its state but does not update any of its belief
+- [] Opening and close mine
 
+Mansur:
+- [] Investigate what is happening with Random and Dynamic Emissions, and how is demand being met and mines are opening?
+- [] Look into the price modeling that is dynamic and change it baed on the correct assumptions
+- [] Start writing paper if you have time but I can take this over beginning of next week.
+
+## TODO August 7th 
+Anna:
+- [x] Remaining demand
+- [x] Add a random policy
+- [] Senstivity analysis?
+- [x] Profit Maximizer to do like every year and not only k amount of mines
+
+Mansur:
+- [x] proft vs. emission cost pareto curve 
 
 - [x] Core POMDP implementation
 - [x] Multiple site actions
