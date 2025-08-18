@@ -246,7 +246,7 @@ function POMDPs.action(policy::ExploreOnlyPolicy, b::LiBelief)
 end
 
 """
-RandomPolicy - Baseline random policy for comparison
+RandomHeuristicPolicy - Baseline random policy for comparison
 This policy makes random decisions for each mine independently at each time step.
 """
 struct RandomHeuristicPolicy <: Policy

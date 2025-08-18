@@ -128,6 +128,7 @@ Anna:
 - [] Showing POMDP is good in comaprison to what? monte carlo sampling not MCTS? for Thursday
 - assume true initial state, create 10 different states and then build 10 policies and then compare them
 - updtes its state but does not update any of its belief
+- [] Update plot
 - [] Opening and close mine
 
 Mansur:

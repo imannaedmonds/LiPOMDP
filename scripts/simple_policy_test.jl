@@ -24,7 +24,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
             enable_action_pw = true,
             k_observation = 4.0,
             alpha_observation = 1/15,
-            estimate_value = FORollout(OpenFirstPolicy(pomdp)),
+            estimate_value = FORollout(RandomPolicy(pomdp)),
             tree_in_info = false,
             rng = MersenneTwister(1234)
         )
@@ -336,7 +336,7 @@ function run_simple_policy_test(
     time_horizon::Int64 = 25,
     n_sims::Int64 = 30, 
     output_file::String = "simple_policy_test_results.txt",
-    use_alpha::Bool = false
+    use_alpha::Bool = true
 )
     """Run the simple policy testing."""
     
@@ -596,7 +596,7 @@ end
 time_horizon = 25
 n_sims = 30
 planning_price_models = [3]  # Exponential model for planning
-evaluation_price_models = [3]  # Static model for evaluation
+evaluation_price_models = [1]  # Static model for evaluation
 policies = ["POMCPOW", "ProfitMaximizer", "EmissionMinimizer", "ExploreOnly", "Random", "DynamicProfitMaximizer", "DynamicEmissionMinimizer"]
 alphas = [0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pure emission minimization (1)
 output_file = "outputs/simple_policy_test_results.txt"

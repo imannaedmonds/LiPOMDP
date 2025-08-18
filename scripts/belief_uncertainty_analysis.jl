@@ -92,10 +92,8 @@ function analyze_uncertainty_patterns(uncertainty_data)
     println("="^80)
     
     # Group policies by type
-    exploration_policies = ["ExploreFirstPolicy"]
-    exploitation_policies = ["OpenFirstPolicy", "OperateFirstPolicy", "DLEFirstPolicy"]
-    balanced_policies = ["POMCPOW", "RandomHeuristicPolicy", "RandomSolver"]
-    conservative_policies = ["ConservativePolicy"]
+    exploration_policies = ["ProfitMaximizerPolicy", "EmissionMinimizerPolicy", "ExploreOnlyPolicy", "RandomHeuristicPolicy", "DynamicProfitMaximizerPolicy", "DynamicEmissionMinimizerPolicy"]
+    balanced_policies = ["POMCPOW", "RandomHeuristicPolicy"]
     
     println("\n1. EXPLORATION POLICIES (High Uncertainty):")
     for policy in exploration_policies

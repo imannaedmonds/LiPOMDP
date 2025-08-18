@@ -504,7 +504,7 @@ function main()
         enable_action_pw=true,
         k_observation=4.0,
         alpha_observation=1/15,
-        estimate_value=FORollout(OpenFirstPolicy(pomdp)),
+        estimate_value=FORollout(RandomPolicy(pomdp)),
         tree_in_info=false,
         rng=rng
     )

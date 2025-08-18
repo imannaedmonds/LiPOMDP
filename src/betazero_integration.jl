@@ -86,8 +86,8 @@ function BetaZero.input_representation(b::POMDPTools.POMDPDistributions.Determin
     return Float32.(features)
 end
 
-# Handle particle collections if they're used (using Any to avoid import issues)
-function BetaZero.input_representation(b::Any)
+# Handle particle collections if they're used (using more specific types to avoid conflicts)
+function BetaZero.input_representation(b::Union{Vector, Tuple, AbstractArray})
     # Try to handle any other belief type by converting to a basic representation
     try
         # If it's iterable, treat it as a collection

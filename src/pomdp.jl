@@ -66,7 +66,7 @@ function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
     profit = revenue - (costs - exploration_cost)
     
     # Total reward
-    total_reward = (profit) + (1 - P.alpha) * emissions
+    total_reward = P.alpha * (profit) + (1 - P.alpha) * emissions
     return total_reward
 end
 
