@@ -101,8 +101,67 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
                 profit = revenue - costs - exploration_cost
                 total_profit += profit
                 
+                # FIXED: Call evaluation_reward AFTER we have the correct state and components
+                # This ensures the function uses the same values as our manual calculation
+                eval_r = evaluation_reward(evaluation_pomdp, s, a)
+                
+            #     # DEBUG: Show what's happening with emissions and rewards
+            
+            #    if i == 1 && t <= 3
+            #         # Get emissions value for debugging
+            #         emissions_debug = reward_components["emissions"]
+                    
+            #         # Calculate what the reward should be manually
+            #         manual_reward = evaluation_pomdp.alpha * profit + (1 - evaluation_pomdp.alpha) * (emissions_debug * evaluation_pomdp.emission_scale_factor)
+                    
+            #         println("  [DEBUG] t=$t: eval_r = $(round(eval_r/1e6, digits=2))M, alpha = $(evaluation_pomdp.alpha), profit = $(round(profit/1e6, digits=2))M, emissions = $(round(emissions_debug/1e6, digits=2))M")
+            #         println("  [DEBUG] t=$t: Manual calc: alpha*profit + (1-alpha)*emissions*scale = $(evaluation_pomdp.alpha)*$(round(profit/1e6, digits=2))M + $(1-evaluation_pomdp.alpha)*$(round(emissions_debug/1e6, digits=2))M*$(evaluation_pomdp.emission_scale_factor) = $(round(manual_reward/1e6, digits=2))M")
+            #         println("  [DEBUG] t=$t: Function call: evaluation_reward(evaluation_pomdp, s, a) with alpha=$(evaluation_pomdp.alpha), emission_scale_factor=$(evaluation_pomdp.emission_scale_factor)")
+                    
+            #         # ADDITIONAL DEBUG: Show the exact values being passed to the function
+            #         println("  [DEBUG] t=$t: Function inputs - s.company_demand=$(s.company_demand), s.price=$(round(s.price, digits=2))")
+            #         println("  [DEBUG] t=$t: Function inputs - a.type=$(a.type), s.have_opened=$(s.have_opened)")
+                    
+            #         # Check if there's a mismatch
+            #         if abs(eval_r - manual_reward) > 1e-6
+            #             println("  [ERROR] eval_r ($(round(eval_r/1e6, digits=2))M) != manual_reward ($(round(manual_reward/1e6, digits=2))M)")
+            #             println("  [ERROR] DIFFERENCE: $(round((eval_r - manual_reward)/1e6, digits=2))M")
+                        
+            #             # DIRECT TEST: Call evaluation_reward again to see if it's consistent
+            #             test_eval_r = evaluation_reward(evaluation_pomdp, s, a)
+            #             println("  [DEBUG] t=$t: DIRECT TEST - evaluation_reward(s, a) = $(round(test_eval_r/1e6, digits=2))M")
+            #             if abs(test_eval_r - eval_r) > 1e-6
+            #                 println("  [ERROR] Function is inconsistent! First call: $(round(eval_r/1e6, digits=2))M, Second call: $(round(test_eval_r/1e6, digits=2))M)")
+            #             end
+                        
+            #             # SIMPLE TEST: Check if the issue is with the function or the values
+            #             println("  [DEBUG] t=$t: SIMPLE TEST - eval_r/manual_reward ratio = $(round(eval_r/manual_reward, digits=3))")
+            #             if abs(eval_r/manual_reward + 1.0) < 0.01
+            #                 println("  [DEBUG] t=$t: PATTERN FOUND: eval_r = -manual_reward (sign flip detected!)")
+            #             end
+                        
+            #             # COMPREHENSIVE TEST: Call the function step by step to see where the issue is
+            #             println("  [DEBUG] t=$t: COMPREHENSIVE TEST:")
+            #             println("  [DEBUG] t=$t:   - Calling evaluation_reward with EXACT same parameters")
+            #             println("  [DEBUG] t=$t:   - evaluation_pomdp.alpha = $(evaluation_pomdp.alpha)")
+            #             println("  [DEBUG] t=$t:   - evaluation_pomdp.emission_scale_factor = $(evaluation_pomdp.emission_scale_factor)")
+            #             println("  [DEBUG] t=$t:   - s.company_demand = $(s.company_demand)")
+            #             println("  [DEBUG] t=$t:   - s.price = $(round(s.price, digits=2))")
+            #             println("  [DEBUG] t=$t:   - a.type = $(a.type)")
+            #             println("  [DEBUG] t=$t:   - s.have_opened = $(s.have_opened)")
+                        
+            #             # Test the function call again
+            #             final_test_eval_r = evaluation_reward(evaluation_pomdp, s, a)
+            #             println("  [DEBUG] t=$t:   - FINAL TEST RESULT: $(round(final_test_eval_r/1e6, digits=2))M")
+            #             println("  [DEBUG] t=$t:   - COMPARISON: eval_r=$(round(eval_r/1e6, digits=2))M, final_test=$(round(final_test_eval_r/1e6, digits=2))M, manual=$(round(manual_reward/1e6, digits=2))M")
+            #         end
+            #     end    
+                    
+                
+                
                 # Calculate emission cost (convert from negative penalty to positive cost)
-                emission_cost = -emissions
+                # emission_cost = -emissions 
+                emission_cost = emissions 
                 total_emission_cost += emission_cost
                 
                 # Calculate production from the reward components
@@ -111,11 +170,16 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
                 
                 # Track demand
                 total_demand += s.company_demand
+            else
+                # For t=1, we need to define eval_r but we don't have profit data yet
+                # Use a simple evaluation reward call for the initial state
+                eval_r = evaluation_reward(evaluation_pomdp, s, a)
             end
             
             # Track rewards
-            total_reward += r
-            total_discounted_reward += evaluation_pomdp.γ^(t-1) * r
+            total_reward += r  # Keep original reward for comparison
+
+            total_discounted_reward += evaluation_pomdp.γ^(t-1) * eval_r
             
             if isterminal(evaluation_pomdp, sp)
                 break
@@ -199,7 +263,7 @@ function print_results(all_results::Dict, alphas::Vector{Float64})
     
     for alpha in alphas
         println("\n" * "="^120)
-        println("ALPHA = $alpha (Profit weight: $(round(1-alpha, digits=2)), Emission weight: $(round(alpha, digits=2)))")
+        println("ALPHA = $alpha (Profit weight: $(round(alpha, digits=2)), Emission weight: $(round(1-alpha, digits=2)))")
         println("="^120)
         
         # Filter results for this alpha
@@ -392,7 +456,7 @@ function run_simple_policy_test(
         # Test with alpha values
         for alpha in alphas
             println("\n" * "="^80)
-            println("Testing with ALPHA = $alpha")
+            println("Testing with ALPHA = $alpha (POMCPOW adapts, heuristic policies use fixed alpha=0.5)")
             println("="^80)
             
             for policy_type in policies
@@ -405,8 +469,18 @@ function run_simple_policy_test(
                         println("  Planning model: Type $planning_model, Evaluation model: Type $eval_model")
                         
                         # Create planning and evaluation POMDPs
-                        planning_pomdp = LiPOMDP(price_model_type=planning_model, time_horizon=time_horizon, alpha=alpha)
-                        evaluation_pomdp = LiPOMDP(price_model_type=eval_model, time_horizon=time_horizon, alpha=alpha)
+                        # POMCPOW uses varying alpha for both planning and evaluation
+                        # Heuristic policies use fixed alpha=0.5 for planning (consistent behavior) 
+                        # but varying alpha for evaluation (proper alpha-based evaluation)
+                        if policy_type == "POMCPOW"
+                            planning_pomdp = LiPOMDP(price_model_type=planning_model, time_horizon=time_horizon, alpha=alpha)
+                            evaluation_pomdp = LiPOMDP(price_model_type=eval_model, time_horizon=time_horizon, alpha=alpha)
+                        else
+                            # Heuristic policies: fixed alpha for planning, varying alpha for evaluation
+                            # This ensures consistent behavior but proper alpha-based evaluation
+                            planning_pomdp = LiPOMDP(price_model_type=planning_model, time_horizon=time_horizon, alpha=0.5)
+                            evaluation_pomdp = LiPOMDP(price_model_type=eval_model, time_horizon=time_horizon, alpha=alpha)
+                        end
                         
                         # Create belief updater
                         updater = LiBeliefUpdater(P=planning_pomdp)
@@ -598,7 +672,7 @@ n_sims = 30
 planning_price_models = [3]  # Exponential model for planning
 evaluation_price_models = [1]  # Static model for evaluation
 policies = ["POMCPOW", "ProfitMaximizer", "EmissionMinimizer", "ExploreOnly", "Random", "DynamicProfitMaximizer", "DynamicEmissionMinimizer"]
-alphas = [0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pure emission minimization (1)
+alphas = [0.0, 0.25, 0.50, 0.75, 1.0]  # Range from pure profit (0) to pure emission minimization (1)
 output_file = "outputs/simple_policy_test_results.txt"
 
 # Usage examples:
@@ -612,9 +686,9 @@ println("\n" * "="^80)
 println("MULTI-ALPHA POLICY COMPARISON")
 println("="^80)
 println("Alpha values: $alphas")
-println("  α=0.0: Pure profit maximization")
+println("  α=0.0: Pure emission minimization")
 println("  α=0.5: Balanced profit and emissions")
-println("  α=1.0: Pure emission minimization")
+println("  α=1.0: Pure profit maximization")
 println("="^80)
 
 results, pareto_data = run_simple_policy_test(

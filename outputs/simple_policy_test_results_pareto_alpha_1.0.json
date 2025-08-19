@@ -1,36 +1,36 @@
 [
   {
-    "discounted_reward": 1.6294605455861238e8,
-    "profit_std": 2.6105745972623557e7,
+    "discounted_reward": 5.130672642984985e7,
+    "profit_std": 2.7337823319901e7,
     "policy": "POMCPOW",
     "planning_model": 3,
     "eval_model": 1,
-    "profit": 8.002320099831666e7,
-    "emissions": 4.815674033248822e7,
-    "emissions_std": 814804.429253484
+    "profit": 8.127464796117844e7,
+    "emissions": -4.815655847533558e7,
+    "emissions_std": 1.0253481278747531e6
   },
   {
-    "discounted_reward": 6.418739658841874e7,
-    "profit_std": 1.9191118958238235e6,
+    "discounted_reward": 3.872042400987008e7,
+    "profit_std": 1.8787062852885122e6,
     "policy": "ProfitMaximizer",
     "planning_model": 3,
     "eval_model": 1,
-    "profit": 5.3022254300698526e7,
-    "emissions": 3.539760372898217e7,
-    "emissions_std": 557081.0996680144
+    "profit": 5.2380184446108066e7,
+    "emissions": -3.5540071916050754e7,
+    "emissions_std": 732063.3741384308
   },
   {
-    "discounted_reward": 6.5990742603449784e7,
-    "profit_std": 2.5176380987119116e6,
+    "discounted_reward": 6.6379380550495885e7,
+    "profit_std": 2.574347940495327e6,
     "policy": "EmissionMinimizer",
     "planning_model": 3,
     "eval_model": 1,
-    "profit": 9.234750623790257e7,
-    "emissions": 7.38011231670623e6,
-    "emissions_std": 163690.7985109158
+    "profit": 9.263626739350024e7,
+    "emissions": -7.355292420521831e6,
+    "emissions_std": 155376.9612819615
   },
   {
-    "discounted_reward": 71070.03929941704,
+    "discounted_reward": -71070.03929941704,
     "profit_std": 0.0,
     "policy": "ExploreOnly",
     "planning_model": 3,
@@ -40,33 +40,33 @@
     "emissions_std": 0.0
   },
   {
-    "discounted_reward": 1.872521594558893e8,
-    "profit_std": 8.785927909570707e6,
+    "discounted_reward": 3.901619375243582e7,
+    "profit_std": 8.476420717322122e6,
     "policy": "Random",
     "planning_model": 3,
     "eval_model": 1,
-    "profit": 6.281469933036117e7,
-    "emissions": 4.99345778651379e7,
-    "emissions_std": 934056.2460434218
+    "profit": 6.285132463137647e7,
+    "emissions": -4.994984509142137e7,
+    "emissions_std": 838344.7393368877
   },
   {
-    "discounted_reward": 1.0235853041722944e8,
-    "profit_std": 2.069891880718756e7,
+    "discounted_reward": 3.6304156866131574e7,
+    "profit_std": 2.0888480762937e6,
     "policy": "DynamicProfitMaximizer",
     "planning_model": 3,
     "eval_model": 1,
-    "profit": 5.983795927023482e7,
-    "emissions": 4.077148960868259e7,
-    "emissions_std": 5.895147065672902e6
+    "profit": 4.87261461263444e7,
+    "emissions": -3.543083431538917e7,
+    "emissions_std": 564752.2441351048
   },
   {
-    "discounted_reward": 1.8928070317215812e8,
-    "profit_std": 3.0960833446766143e6,
+    "discounted_reward": 3.407588840755052e7,
+    "profit_std": 3.1790393480334263e6,
     "policy": "DynamicEmissionMinimizer",
     "planning_model": 3,
     "eval_model": 1,
-    "profit": 5.363981536261975e7,
-    "emissions": 4.984640624847579e7,
-    "emissions_std": 721969.040915447
+    "profit": 5.357112122298743e7,
+    "emissions": -4.995974079638178e7,
+    "emissions_std": 801344.9560866983
   }
 ]

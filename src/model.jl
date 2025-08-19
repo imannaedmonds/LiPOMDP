@@ -42,6 +42,9 @@ end
     time_horizon::Int64 = 29 #time horizon
     n_deposits::Int64 = 4 # number of deposits
     alpha::Float64 = 0.5 # Parameter to control tradeoff between emissions and volume
+    
+    # FIXED: Add emission scaling factor to balance scales between emissions and profit
+    emission_scale_factor::Float64 = 5.0 # Scale emissions up to balance with profit scale (increased from 3.0)
 
     # Add market parameters
     market_share_target::Float64 = 0.05  # Target 0.5% of global market

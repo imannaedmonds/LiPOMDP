@@ -310,6 +310,7 @@ end
 DynamicProfitMaximizerPolicy - A policy that maximizes profit at each time step
 This policy can take actions on all mines and chooses actions that lead to more profit.
 For each mine, it can explore, open, or do nothing based on expected profitability.
+FIXED: Now includes better demand management for optimal profit maximization.
 """
 struct DynamicProfitMaximizerPolicy <: Policy
     pomdp::LiPOMDP
@@ -335,8 +336,8 @@ function POMDPs.action(policy::DynamicProfitMaximizerPolicy, s::State)
     # Calculate profitability for each action on each mine
     remaining_time = policy.pomdp.time_horizon - s.time
     
-    # Track remaining demand to avoid overproduction
-    remaining_demand = s.company_demand
+    # FIXED: Better demand management - evaluate all sites first to see which can contribute
+    site_evaluations = []
     
     for site in 1:n_sites
         if !s.have_opened[site]
@@ -344,42 +345,24 @@ function POMDPs.action(policy::DynamicProfitMaximizerPolicy, s::State)
             max_possible_production = min(s.deposit[site], policy.pomdp.output * remaining_time)
             expected_recovery = max_possible_production * policy.pomdp.recovery[site]
             
-            # Limit production by remaining demand
-            actual_production = min(expected_recovery, remaining_demand)
-            
-            if actual_production > 0
+            if expected_recovery > 0
                 # Calculate revenue
-                expected_revenue = actual_production * s.price
+                expected_revenue = expected_recovery * s.price
                 
                 # Calculate costs
                 capex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_capex : policy.pomdp.mining_capex
                 opex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_opex : policy.pomdp.mining_opex
-                lifetime_opex = opex * actual_production
+                lifetime_opex = opex * expected_recovery
                 
                 # Calculate profit (revenue - costs - capex)
                 lifetime_profit = expected_revenue - lifetime_opex
-                total_profit = lifetime_profit - (capex * actual_production)
+                total_profit = lifetime_profit - (capex * expected_recovery)
                 
-                # If profitable and we still have demand, open the mine
-                if total_profit > 0 && remaining_demand > 0
-                    site_actions[site] = site  # Set site identifier to actual site number
-                    site_types[site] = 2  # Open mine
-                    
-                    # Reduce remaining demand
-                    remaining_demand -= actual_production
-                    
-                    if policy.debug
-                        println("  [DEBUG] Site $site: Opening mine with profit = \$$(round(total_profit/1e6, digits=2))M, remaining demand = $(round(remaining_demand, digits=1))")
-                    end
-                else
-                    # If not profitable or no demand left, explore to gather information
-                    site_actions[site] = site  # Set site identifier to actual site number
-                    site_types[site] = 1  # Explore
-                    
-                    if policy.debug
-                        reason = total_profit <= 0 ? "not profitable" : "no demand left"
-                        println("  [DEBUG] Site $site: Exploring ($reason)")
-                    end
+                # Store evaluation for later decision making
+                push!(site_evaluations, (site, total_profit, expected_recovery, expected_revenue))
+                
+                if policy.debug
+                    println("  [DEBUG] Site $site: Profit = \$$(round(total_profit/1e6, digits=2))M, Production = $(round(expected_recovery, digits=1))")
                 end
             else
                 # If no production possible, explore to gather information
@@ -392,6 +375,53 @@ function POMDPs.action(policy::DynamicProfitMaximizerPolicy, s::State)
             end
         end
         # If mine is already opened, do nothing (action = 0)
+    end
+    
+    # FIXED: Now make decisions based on all available information
+    if !isempty(site_evaluations)
+        # Sort by profitability (highest first)
+        sort!(site_evaluations, by=x->x[2], rev=true)
+        
+        remaining_demand = s.company_demand
+        
+        # FIXED: Open most profitable mines first until demand is met
+        for (site, total_profit, expected_recovery, expected_revenue) in site_evaluations
+            if remaining_demand > 0 && total_profit > 0
+                # Calculate how much we can actually produce given remaining demand
+                actual_production = min(expected_recovery, remaining_demand)
+                
+                if actual_production > 0
+                    # FIXED: Only open mines that are sufficiently profitable
+                    # This prevents opening marginally profitable mines that reduce overall performance
+                    # Adjusted threshold: profit is 5-20x larger than emissions, so need higher threshold
+                    if total_profit >= 10e6 || remaining_demand <= 0.4 * s.company_demand
+                        # Open the mine
+                        site_actions[site] = site  # Set site identifier to actual site number
+                        site_types[site] = 2  # Open mine
+                        
+                        # Reduce remaining demand
+                        remaining_demand -= actual_production
+                        
+                        if policy.debug
+                            println("  [DEBUG] Site $site: Opening mine with profit = \$$(round(total_profit/1e6, digits=2))M, production = $(round(actual_production, digits=1)), remaining demand = $(round(remaining_demand, digits=1))")
+                        end
+                    else
+                        if policy.debug
+                            println("  [DEBUG] Skipping site $site: Profit \$$(round(total_profit/1e6, digits=2))M too low (threshold: \$$(round(10e6/1e6, digits=2))M)")
+                        end
+                    end
+                end
+            else
+                # If not profitable or no demand left, explore to gather information
+                site_actions[site] = site  # Set site identifier to actual site number
+                site_types[site] = 1  # Explore
+                
+                if policy.debug
+                    reason = total_profit <= 0 ? "not profitable" : "no demand left"
+                    println("  [DEBUG] Site $site: Exploring ($reason)")
+                end
+            end
+        end
     end
     
     if policy.debug
@@ -430,6 +460,7 @@ end
 DynamicEmissionMinimizerPolicy - A policy that minimizes emissions at each time step
 This policy finds the single lowest emission choice and can take actions on all mines.
 For each mine, it can explore, open, or do nothing based on emission intensity.
+FIXED: Now implements true emission minimization by being highly selective about mine selection.
 """
 struct DynamicEmissionMinimizerPolicy <: Policy
     pomdp::LiPOMDP
@@ -452,8 +483,10 @@ function POMDPs.action(policy::DynamicEmissionMinimizerPolicy, s::State)
     site_types = zeros(Int, n_sites)
     
     # Calculate emission intensity for each unopened mine
-    emission_intensities = fill(Inf, n_sites)
     remaining_time = policy.pomdp.time_horizon - s.time
+    
+    # FIXED: True emission minimization - evaluate all sites and select only the best
+    site_evaluations = []
     
     for site in 1:n_sites
         if !s.have_opened[site]
@@ -461,56 +494,94 @@ function POMDPs.action(policy::DynamicEmissionMinimizerPolicy, s::State)
             max_possible_production = min(s.deposit[site], policy.pomdp.output * remaining_time)
             expected_recovery = max_possible_production * policy.pomdp.recovery[site]
             
-            # Limit production by remaining demand
-            actual_production = min(expected_recovery, s.company_demand)
-            
-            if actual_production > 0
+            if expected_recovery > 0
                 # Calculate emission factor
                 emission_factor = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_CO2_emissions : policy.pomdp.mining_CO2_emissions
-                emission_intensities[site] = emission_factor
+                
+                # Store evaluation for later decision making
+                push!(site_evaluations, (site, emission_factor, expected_recovery))
                 
                 if policy.debug
-                    println("  [DEBUG] Site $site: Emission intensity = $(round(emission_factor, digits=4))")
+                    println("  [DEBUG] Site $site: Emission intensity = $(round(emission_factor, digits=4)), Production = $(round(expected_recovery, digits=1))")
                 end
             end
         end
     end
     
-    # Find the single lowest emission choice
-    if any(isfinite.(emission_intensities))
-        lowest_emission_site = argmin(emission_intensities)
-        lowest_emission = emission_intensities[lowest_emission_site]
+    # FIXED: True emission minimization strategy
+    if !isempty(site_evaluations)
+        # Sort by emission intensity (lowest first) - this is the key to emission minimization
+        sort!(site_evaluations, by=x->x[2])
         
-        if isfinite(lowest_emission)
-            # Check if we have demand for this mine
-            max_possible_production = min(s.deposit[lowest_emission_site], policy.pomdp.output * remaining_time)
-            expected_recovery = max_possible_production * policy.pomdp.recovery[lowest_emission_site]
-            actual_production = min(expected_recovery, s.company_demand)
-            
-            if actual_production > 0
-                # Open the lowest emission mine
-                site_actions[lowest_emission_site] = lowest_emission_site  # Set site identifier to actual site number
-                site_types[lowest_emission_site] = 2  # Open mine
+        remaining_demand = s.company_demand
+        mines_to_open = []
+        
+        # FIXED: Only open the absolute lowest emission mines that can meet demand
+        for (site, emission_factor, expected_recovery) in site_evaluations
+            if remaining_demand > 0
+                # Calculate how much we can actually produce given remaining demand
+                actual_production = min(expected_recovery, remaining_demand)
                 
-                if policy.debug
-                    println("  [DEBUG] Opening lowest emission site $lowest_emission_site (intensity: $(round(lowest_emission, digits=4)), production: $(round(actual_production, digits=1))")
-                end
-            else
-                if policy.debug
-                    println("  [DEBUG] Lowest emission site $lowest_emission_site has no production potential")
+                if actual_production > 0
+                    # FIXED: Much more aggressive emission minimization
+                    # Only open mines if they can cover a significant portion of demand
+                    # This prevents opening many small mines that increase total emissions
+                    if actual_production >= 0.4 * s.company_demand || remaining_demand <= 0.2 * s.company_demand
+                        # Add to list of mines to open
+                        push!(mines_to_open, (site, actual_production, emission_factor))
+                        remaining_demand -= actual_production
+                        
+                        if policy.debug
+                            println("  [DEBUG] Selected site $site: Production = $(round(actual_production, digits=1)), Emission factor = $(round(emission_factor, digits=4)), Remaining demand = $(round(remaining_demand, digits=1))")
+                        end
+                        
+                        # FIXED: Stop opening mines once we have enough low-emission production
+                        # This is crucial for emission minimization
+                        if remaining_demand <= 0.1 * s.company_demand
+                            if policy.debug
+                                println("  [DEBUG] Stopping mine selection: remaining demand $(round(remaining_demand, digits=1)) is small enough")
+                            end
+                            break
+                        end
+                    else
+                        if policy.debug
+                            println("  [DEBUG] Skipping site $site: Production $(round(actual_production, digits=1)) too small relative to demand $(round(s.company_demand, digits=1)) (threshold: 40%)")
+                        end
+                    end
                 end
             end
         end
-    end
-    
-    # For other unopened mines, explore to gather information
-    for site in 1:n_sites
-        if !s.have_opened[site] && site_types[site] != 2  # Not opened and not the chosen lowest emission site
+        
+        # Now open only the selected mines (should be very few)
+        for (site, production, emission_factor) in mines_to_open
             site_actions[site] = site  # Set site identifier to actual site number
-            site_types[site] = 1  # Explore
+            site_types[site] = 2  # Open mine
             
             if policy.debug
-                println("  [DEBUG] Site $site: Exploring to gather information")
+                println("  [DEBUG] Opening site $site: Production = $(round(production, digits=1)), Emission factor = $(round(emission_factor, digits=4))")
+            end
+        end
+    end
+    
+    # FIXED: For emission minimization, explore fewer sites to avoid unnecessary costs
+    # Only explore sites that have potential for very low emissions
+    exploration_threshold = 0.8  # Only explore top 20% lowest emission sites
+    
+    if !isempty(site_evaluations)
+        # Calculate how many sites to explore based on emission ranking
+        explore_count = max(1, min(2, round(Int, length(site_evaluations) * exploration_threshold)))
+        
+        for i in 1:explore_count
+            if i <= length(site_evaluations)
+                site = site_evaluations[i][1]  # Get site number
+                if site_types[site] != 2  # Not already selected for opening
+                    site_actions[site] = site  # Set site identifier to actual site number
+                    site_types[site] = 1  # Explore
+                    
+                    if policy.debug
+                        println("  [DEBUG] Site $site: Exploring to gather information (rank $i in emission intensity)")
+                    end
+                end
             end
         end
     end
@@ -519,6 +590,7 @@ function POMDPs.action(policy::DynamicEmissionMinimizerPolicy, s::State)
         opened_count = sum(site_types .== 2)
         explore_count = sum(site_types .== 1)
         println("  [DEBUG] Actions: Opening $opened_count mines, Exploring $explore_count sites")
+        println("  [DEBUG] Strategy: True emission minimization - only opening highest-impact, lowest-emission mines")
     end
     
     return Action(site=site_actions, type=site_types)

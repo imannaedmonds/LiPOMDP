@@ -20,7 +20,7 @@ export get_historical_price,
 include("utils.jl")
 
 export reward, transition, observation, update, gen, initialstate, isterminal, discount, actions, actionindex, 
-initialobs, obs_weight, create_initial_belief, compute_costs, compute_emissions
+initialobs, obs_weight, create_initial_belief, compute_costs, compute_emissions, evaluation_reward
 include("pomdp.jl")
 
 export ProfitMaximizerPolicy, EmissionMinimizerPolicy, ExploreOnlyPolicy, RandomHeuristicPolicy, DynamicProfitMaximizerPolicy, DynamicEmissionMinimizerPolicy
