@@ -3,7 +3,7 @@ BetaZero integration for LiPOMDP
 Provides the necessary interface functions for BetaZero to work with LiPOMDP
 """
 
-using BetaZero
+# using BetaZero
 using POMDPs
 using POMDPTools
 using Statistics

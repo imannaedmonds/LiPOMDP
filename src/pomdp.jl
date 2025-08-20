@@ -453,6 +453,8 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     end
 
     sp.total_mined = s.total_mined + total_mined_this_step  # Accumulate
+    #TODO: add remaining company demand update
+    #TODO: check eval_r where the t > 1 might come into play
 
     return Deterministic(sp)
 end

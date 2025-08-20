@@ -31,10 +31,10 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
         return solve(solver, pomdp)
         
     elseif policy_type == "ProfitMaximizer"
-        return ProfitMaximizerPolicy(pomdp, top_k=1, times=[1, 3, 5])
+        return ProfitMaximizerPolicy(pomdp, top_k=4, times=[1])
         
     elseif policy_type == "EmissionMinimizer"
-        return EmissionMinimizerPolicy(pomdp, top_k=1, times=[1, 3, 5])
+        return EmissionMinimizerPolicy(pomdp, top_k=1, times=[1])
         
     elseif policy_type == "ExploreOnly"
         return ExploreOnlyPolicy(pomdp)
@@ -64,6 +64,7 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
     total_profits = Float64[]
     total_demands = Float64[]
     total_productions = Float64[]
+    all_histories = []
     
     for i in 1:n_sims
         total_reward = 0.0
@@ -72,6 +73,7 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
         total_profit = 0.0
         total_demand = 0.0
         total_production = 0.0
+        history = []
         
         # Use planning POMDP for initial state and belief
         s0, b0 = create_initial_belief(planning_pomdp)
@@ -84,110 +86,81 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
             
             # Use evaluation POMDP for state transitions and rewards
             sp, o, r = gen(evaluation_pomdp, s, a, rng)
+
+            exploration_cost = 0.0 #TODO: add exploration cost
+            costs = compute_costs(evaluation_pomdp, s, a)  
+            emissions = compute_emissions(evaluation_pomdp, s, a)    
+            profit = (r - (1-evaluation_pomdp.alpha) * (emissions * evaluation_pomdp.emission_scale_factor)) / evaluation_pomdp.alpha 
+            revenue = profit + costs + exploration_cost
+            current_production = revenue / s.price
             
-            # Calculate metrics using evaluation POMDP functions
-            if t > 1  # Skip first step as it's initial state
-                # Use the reward function to get proper revenue, costs, and emissions
-                # The reward function already handles production, revenue, and costs correctly
-                reward_components = calculate_reward_components(evaluation_pomdp, s, a)
-                
-                # Extract components from reward calculation
-                revenue = reward_components["revenue"]
-                costs = reward_components["costs"]
-                emissions = reward_components["emissions"]
-                exploration_cost = reward_components["exploration_cost"]
-                
-                # Calculate profit (revenue - costs - exploration_cost)
-                profit = revenue - costs - exploration_cost
-                total_profit += profit
-                
-                # FIXED: Call evaluation_reward AFTER we have the correct state and components
-                # This ensures the function uses the same values as our manual calculation
-                eval_r = evaluation_reward(evaluation_pomdp, s, a)
-                
-            #     # DEBUG: Show what's happening with emissions and rewards
+            eval_r = evaluation_reward(evaluation_pomdp, s, a)
+            total_demand += s.company_demand
+            total_production += current_production
+            total_profit += profit
+            total_emission_cost += emissions
+
             
-            #    if i == 1 && t <= 3
-            #         # Get emissions value for debugging
-            #         emissions_debug = reward_components["emissions"]
-                    
-            #         # Calculate what the reward should be manually
-            #         manual_reward = evaluation_pomdp.alpha * profit + (1 - evaluation_pomdp.alpha) * (emissions_debug * evaluation_pomdp.emission_scale_factor)
-                    
-            #         println("  [DEBUG] t=$t: eval_r = $(round(eval_r/1e6, digits=2))M, alpha = $(evaluation_pomdp.alpha), profit = $(round(profit/1e6, digits=2))M, emissions = $(round(emissions_debug/1e6, digits=2))M")
-            #         println("  [DEBUG] t=$t: Manual calc: alpha*profit + (1-alpha)*emissions*scale = $(evaluation_pomdp.alpha)*$(round(profit/1e6, digits=2))M + $(1-evaluation_pomdp.alpha)*$(round(emissions_debug/1e6, digits=2))M*$(evaluation_pomdp.emission_scale_factor) = $(round(manual_reward/1e6, digits=2))M")
-            #         println("  [DEBUG] t=$t: Function call: evaluation_reward(evaluation_pomdp, s, a) with alpha=$(evaluation_pomdp.alpha), emission_scale_factor=$(evaluation_pomdp.emission_scale_factor)")
-                    
-            #         # ADDITIONAL DEBUG: Show the exact values being passed to the function
-            #         println("  [DEBUG] t=$t: Function inputs - s.company_demand=$(s.company_demand), s.price=$(round(s.price, digits=2))")
-            #         println("  [DEBUG] t=$t: Function inputs - a.type=$(a.type), s.have_opened=$(s.have_opened)")
-                    
-            #         # Check if there's a mismatch
-            #         if abs(eval_r - manual_reward) > 1e-6
-            #             println("  [ERROR] eval_r ($(round(eval_r/1e6, digits=2))M) != manual_reward ($(round(manual_reward/1e6, digits=2))M)")
-            #             println("  [ERROR] DIFFERENCE: $(round((eval_r - manual_reward)/1e6, digits=2))M")
-                        
-            #             # DIRECT TEST: Call evaluation_reward again to see if it's consistent
-            #             test_eval_r = evaluation_reward(evaluation_pomdp, s, a)
-            #             println("  [DEBUG] t=$t: DIRECT TEST - evaluation_reward(s, a) = $(round(test_eval_r/1e6, digits=2))M")
-            #             if abs(test_eval_r - eval_r) > 1e-6
-            #                 println("  [ERROR] Function is inconsistent! First call: $(round(eval_r/1e6, digits=2))M, Second call: $(round(test_eval_r/1e6, digits=2))M)")
-            #             end
-                        
-            #             # SIMPLE TEST: Check if the issue is with the function or the values
-            #             println("  [DEBUG] t=$t: SIMPLE TEST - eval_r/manual_reward ratio = $(round(eval_r/manual_reward, digits=3))")
-            #             if abs(eval_r/manual_reward + 1.0) < 0.01
-            #                 println("  [DEBUG] t=$t: PATTERN FOUND: eval_r = -manual_reward (sign flip detected!)")
-            #             end
-                        
-            #             # COMPREHENSIVE TEST: Call the function step by step to see where the issue is
-            #             println("  [DEBUG] t=$t: COMPREHENSIVE TEST:")
-            #             println("  [DEBUG] t=$t:   - Calling evaluation_reward with EXACT same parameters")
-            #             println("  [DEBUG] t=$t:   - evaluation_pomdp.alpha = $(evaluation_pomdp.alpha)")
-            #             println("  [DEBUG] t=$t:   - evaluation_pomdp.emission_scale_factor = $(evaluation_pomdp.emission_scale_factor)")
-            #             println("  [DEBUG] t=$t:   - s.company_demand = $(s.company_demand)")
-            #             println("  [DEBUG] t=$t:   - s.price = $(round(s.price, digits=2))")
-            #             println("  [DEBUG] t=$t:   - a.type = $(a.type)")
-            #             println("  [DEBUG] t=$t:   - s.have_opened = $(s.have_opened)")
-                        
-            #             # Test the function call again
-            #             final_test_eval_r = evaluation_reward(evaluation_pomdp, s, a)
-            #             println("  [DEBUG] t=$t:   - FINAL TEST RESULT: $(round(final_test_eval_r/1e6, digits=2))M")
-            #             println("  [DEBUG] t=$t:   - COMPARISON: eval_r=$(round(eval_r/1e6, digits=2))M, final_test=$(round(final_test_eval_r/1e6, digits=2))M, manual=$(round(manual_reward/1e6, digits=2))M")
-            #         end
-            #     end    
-                    
+            # # Calculate metrics using evaluation POMDP functions
+            # if t > 1  # Skip first step as it's initial state
+            #     # Use the reward function to get proper revenue, costs, and emissions
+            #     # The reward function already handles production, revenue, and costs correctly
+            #     reward_components = calculate_reward_components(evaluation_pomdp, s, a)
                 
+            #     # Extract components from reward calculation
+            #     revenue = reward_components["revenue"]
+            #     costs = reward_components["costs"]
+            #     emissions = reward_components["emissions"]
+            #     exploration_cost = reward_components["exploration_cost"]
                 
-                # Calculate emission cost (convert from negative penalty to positive cost)
-                # emission_cost = -emissions 
-                emission_cost = emissions 
-                total_emission_cost += emission_cost
+            #     # Calculate profit (revenue - costs - exploration_cost)
+            #     profit = revenue - costs - exploration_cost
+            #     total_profit += profit
                 
-                # Calculate production from the reward components
-                current_production = reward_components["production"]
-                total_production += current_production
+            #     # FIXED: Call evaluation_reward AFTER we have the correct state and components
+            #     # This ensures the function uses the same values as our manual calculation
+            #     eval_r = evaluation_reward(evaluation_pomdp, s, a)
                 
-                # Track demand
-                total_demand += s.company_demand
-            else
-                # For t=1, we need to define eval_r but we don't have profit data yet
-                # Use a simple evaluation reward call for the initial state
-                eval_r = evaluation_reward(evaluation_pomdp, s, a)
-            end
+            #     # Calculate emission cost (convert from negative penalty to positive cost)
+            #     # emission_cost = -emissions 
+            #     emission_cost = emissions 
+            #     total_emission_cost += emission_cost
+                
+            #     # Calculate production from the reward components
+            #     # current_production = reward_components["production"]
+            #     # total_production += current_production
+                
+            #     # Track demand
+            #     total_demand += s.company_demand
+            # else
+            #     # For t=1, we need to define eval_r but we don't have profit data yet
+            #     # Use a simple evaluation reward call for the initial state
+            #     eval_r = evaluation_reward(evaluation_pomdp, s, a)
+            # end
             
             # Track rewards
             total_reward += r  # Keep original reward for comparison
-
             total_discounted_reward += evaluation_pomdp.γ^(t-1) * eval_r
             
             if isterminal(evaluation_pomdp, sp)
                 break
             end
+
+            dict_step_result = Dict(
+                "s" => s,
+                "a" => a,
+                "o" => o,
+                "r" => r,
+                "b" => b,
+                "eval_r" => eval_r
+            )
+
+            push!(history, dict_step_result)
             
             # Update belief using planning POMDP's updater
-            b = update(updater, b, a, o)
+            b = update(updater, b, a, o)            
             s = sp
+
         end
         
         # Store results
@@ -197,6 +170,7 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
         push!(total_profits, total_profit)
         push!(total_demands, total_demand)
         push!(total_productions, total_production)
+        push!(all_histories, history)
     end
     
     return Dict(
@@ -205,7 +179,8 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
         "total_emission_cost" => total_emission_costs,
         "total_profit" => total_profits,
         "total_demand" => total_demands,
-        "total_production" => total_productions
+        "total_production" => total_productions,
+        "history" => all_histories
     )
 end
 
@@ -216,7 +191,7 @@ function calculate_reward_components(P::LiPOMDP, s::State, a::Action)
     exploration_cost = 0.0
     for site in 1:P.n_deposits
         if a.type[site] == 1  # Exploring
-            exploration_cost += 1000.0
+            exploration_cost += 1000.0 #TODO: change this to a variable within POMDP struct
         end
     end
 
@@ -508,7 +483,8 @@ function run_simple_policy_test(
                             "std_profit" => std_profit,
                             "mean_discounted_reward" => mean_disc_reward,
                             "mean_emission_cost" => mean_emission_cost,
-                            "std_emission_cost" => std_emission_cost
+                            "std_emission_cost" => std_emission_cost,
+                            "history" => results["history"]
                         ))
                         
                         # Add to Pareto data
@@ -572,7 +548,8 @@ function run_simple_policy_test(
                         "std_profit" => std_profit,
                         "mean_discounted_reward" => mean_disc_reward,
                         "mean_emission_cost" => mean_emission_cost,
-                        "std_emission_cost" => std_emission_cost
+                        "std_emission_cost" => std_emission_cost,
+                        "history" => results["history"]
                     ))
                     
                     # Add to Pareto data
@@ -695,6 +672,7 @@ results, pareto_data = run_simple_policy_test(
     policies, planning_price_models, evaluation_price_models, alphas,
     time_horizon=time_horizon, n_sims=n_sims, output_file=output_file, use_alpha=true)
 
+
 # Print Pareto frontier summary
 println("\n" * "="^80)
 println("PARETO FRONTIER SUMMARY")
@@ -718,4 +696,25 @@ println("results, pareto_data = run_simple_policy_test(")
 println("    policies, planning_price_models, evaluation_price_models, alphas,")
 println("    use_alpha=false)")
 println("="^80)
+
+
+# TODO: check the min demand, production, annual output logic
+# TODO: discounted reward metric
+# CONCLUDE: s.total_mined seems correct
+
+# results["ProfitMaximizer_P3_E1_A1.0"]
+#results["EmissionMinimizer_P3_E1_A1.0"]["history"][1] #looking at history for rep num. 1
+#results["EmissionMinimizer_P3_E1_A1.0"]["history"][1][10]["a"] #looking at history for rep num. 1, timestep num. 10 action
+
+
+
+
+
+
+
+
+
+
+
+
 
