@@ -24,7 +24,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
             enable_action_pw = true,
             k_observation = 4.0,
             alpha_observation = 1/15,
-            estimate_value = FORollout(RandomPolicy(pomdp)),
+            estimate_value = FORollout(EmissionMinimizerPolicy(pomdp)), #TODO do it with emissionminimization policy
             tree_in_info = false,
             rng = MersenneTwister(1234)
         )
@@ -89,7 +89,7 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
 
             costs = compute_costs(evaluation_pomdp, s, a)  
             emissions = compute_emissions(evaluation_pomdp, s, a)  
-            current_production, _ = calculate_total_production(evaluation_pomdp, s)
+            current_production, remaining_demand = calculate_total_production(evaluation_pomdp, s) 
             revenue = current_production * s.price
             profit = revenue - costs    
             

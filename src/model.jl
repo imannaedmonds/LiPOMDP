@@ -8,6 +8,7 @@ using POMDPTools
     price::Float64 = 1_000.0  # Price per thousand
     company_demand::Float64 = 0.0  # Company's target demand (market share * global)
     total_mined::Float64  # track how much has been mined so far
+    production_this_step::Float64 = 0.0  # track production for current time step
     have_opened::Vector{Bool}  # Boolean value to represent whether or not we have opened a mine
 end
 
@@ -29,6 +30,7 @@ end
     price_distribution::T  # Price per thousand
     demand_distribution::T  # Demand distribution
     total_mined::Float64  # track how much has been mined so far
+    production_this_step::Float64 = 0.0  # track production for current time step
     have_opened::Vector{Bool}  # Boolean value to represent whether or not we have opened a mine
 end
     
@@ -42,11 +44,11 @@ end
     time_horizon::Int64 = 29 #time horizon
     n_deposits::Int64 = 4 # number of deposits
     alpha::Float64 = 0.5 # Parameter to control tradeoff between emissions and volume
-    exploration_cost::Float64 = 1000.0
-
+    
     # FIXED: Add emission scaling factor to balance scales between emissions and profit
     emission_scale_factor::Float64 = 5.0 # Scale emissions up to balance with profit scale (increased from 3.0)
-
+    exploration_cost::Float64 = 1000.0 # Fixed exploration cost per site
+    
     # Add market parameters
     market_share_target::Float64 = 0.05  # Target 0.5% of global market
     demand_uncertainty::Float64 = 0.15    # 15% std dev in demand forecasts
@@ -88,6 +90,7 @@ end
     σ_obs_demand::Float64 = 2.0  # Standard deviation for demand observation noise
     demand_growth_rate::Float64 = 0.05  # Annual demand growth rate
     demand_volatility::Float64 = 0.1  # Volatility in demand changes
+
 end
 
 @with_kw mutable struct LiBeliefUpdater <: Updater #TODO understand this
