@@ -3,7 +3,7 @@ BetaZero integration for LiPOMDP
 Provides the necessary interface functions for BetaZero to work with LiPOMDP
 """
 
-# using BetaZero
+using BetaZero
 using POMDPs
 using POMDPTools
 using Statistics
@@ -25,7 +25,7 @@ function BetaZero.input_representation(b::LiBelief)
     demand_std = std(b.demand_distribution)
     
     # 3. Binary features for opened mines
-    opened_binary = [b.have_opened[i] ? 1.0 : 0.0 for i in 1:4]
+    opened_binary = [b.have_opened[i] ? 1.0 : 1.0 for i in 1:4]
     
     # 4. Time and total mined
     time_normalized = b.time / 30.0  # Normalize to [0,1]
@@ -51,24 +51,7 @@ end
 # Handle other belief types that BetaZero might use
 function BetaZero.input_representation(b::POMDPTools.POMDPDistributions.Deterministic{State})
     # Convert deterministic state to belief representation
-    # Try different ways to access the state
-    s = try
-        b.point
-    catch
-        try
-            b.distribution
-        catch
-            # Fallback: create a default state
-            State(
-                deposit=zeros(4),
-                time=1.0,
-                price=1000.0,
-                company_demand=1000.0,
-                total_mined=0.0,
-                have_opened=[false, false, false, false]
-            )
-        end
-    end
+    s = b.val
     
     # Create a simple representation from the state
     features = vcat(
@@ -86,7 +69,7 @@ function BetaZero.input_representation(b::POMDPTools.POMDPDistributions.Determin
     return Float32.(features)
 end
 
-# Handle particle collections if they're used (using more specific types to avoid conflicts)
+# Handle particle collections if they're used
 function BetaZero.input_representation(b::Union{Vector, Tuple, AbstractArray})
     # Try to handle any other belief type by converting to a basic representation
     try
@@ -230,13 +213,13 @@ function BetaZero.accuracy(pomdp::LiPOMDP, b0, s0, states, actions, returns)
 end
 
 """
-Create a BetaZero solver for LiPOMDP
+Create a BetaZero solver for LiPOMDP following the class pattern
 """
 function create_betazero_solver(pomdp::LiPOMDP; 
                                n_iterations::Int=50,
                                n_data_gen::Int=50,
-                               training_epochs::Int=100,
-                               n_samples::Int=50_000,
+                               training_epochs::Int=50,
+                               n_samples::Int=100_000,
                                batchsize::Int=1024,
                                learning_rate::Float64=1e-4,
                                verbose::Bool=true)
@@ -244,7 +227,7 @@ function create_betazero_solver(pomdp::LiPOMDP;
     # Create belief updater
     updater = LiBeliefUpdater(P=pomdp)
     
-    # Create solver
+    # Create solver following the class pattern
     solver = BetaZeroSolver(
         pomdp=pomdp,
         updater=updater,
@@ -261,13 +244,10 @@ function create_betazero_solver(pomdp::LiPOMDP;
             λ_regularization=1e-5,
             use_dropout=true,
             p_dropout=0.2,
-            layer_size=128,  # Larger network for complex POMDP
-            use_cnn=false,   # Use fully connected network
-            optimizer=Flux.Adam,  # Explicitly specify Flux.Adam
         ),
         verbose=verbose,
         collect_metrics=true,
-        plot_incremental_data_gen=false
+        plot_incremental_data_gen=true
     )
     
     return solver
@@ -362,7 +342,7 @@ function print_betazero_comparison(all_results::Dict{String, Dict{String, Any}})
         
         # Best by emission (lowest)
         best_emission_idx = argmin([r["mean_emission_cost"] for r in values(all_results)])
-        best_emission_name = collect(keys(all_results))[best_profit_idx]
+        best_emission_name = collect(keys(all_results))[best_emission_idx]
         best_emission_value = all_results[best_emission_name]["mean_emission_cost"]
         println("Lowest Emissions: $(all_results[best_emission_name]["policy_type"]) (\$$(round(best_emission_value/1e6, digits=2))M)")
         
