@@ -14,13 +14,13 @@ Compares belief evolution between POMCPOW, ProfitMaximizerPolicy, and ExploreOnl
 """
 
 # Include necessary files
-include("../src/historical_data.jl")
-include("../src/model.jl")
-include("../src/utils.jl") 
-include("../src/pomdp.jl")
+include("../../src/historical_data.jl")
+include("../../src/model.jl")
+include("../../src/utils.jl") 
+include("../../src/pomdp.jl")
 # Policies are now in policies_advanced.jl
-include("../src/policies_advanced.jl")
-include("../src/eval.jl")
+include("../../src/policies_advanced.jl")
+include("../../src/eval.jl")
 
 function track_belief_evolution(pomdp::LiPOMDP, policy, updater::LiBeliefUpdater, n_sims::Int=20; rng::AbstractRNG=Random.GLOBAL_RNG, policy_name::String="Unknown")
     """Track belief evolution over time for a specific policy."""

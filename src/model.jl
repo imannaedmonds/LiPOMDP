@@ -42,7 +42,8 @@ end
     time_horizon::Int64 = 29 #time horizon
     n_deposits::Int64 = 4 # number of deposits
     alpha::Float64 = 0.5 # Parameter to control tradeoff between emissions and volume
-    
+    exploration_cost::Float64 = 1000.0
+
     # FIXED: Add emission scaling factor to balance scales between emissions and profit
     emission_scale_factor::Float64 = 5.0 # Scale emissions up to balance with profit scale (increased from 3.0)
 
@@ -87,7 +88,6 @@ end
     σ_obs_demand::Float64 = 2.0  # Standard deviation for demand observation noise
     demand_growth_rate::Float64 = 0.05  # Annual demand growth rate
     demand_volatility::Float64 = 0.1  # Volatility in demand changes
-
 end
 
 @with_kw mutable struct LiBeliefUpdater <: Updater #TODO understand this

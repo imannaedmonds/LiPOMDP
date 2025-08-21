@@ -136,7 +136,6 @@ plt.savefig('../outputs/pareto_frontier_comparison.pdf', bbox_inches='tight')
 print("✅ Pareto frontier graph created successfully!")
 print("📁 Files saved:")
 print("  • ../outputs/pareto_frontier_comparison.png (high-res PNG)")
-print("  • ../outputs/pareto_frontier_comparison.pdf (vector PDF)")
 
 # Show the plot
 plt.show()

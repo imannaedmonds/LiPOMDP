@@ -87,60 +87,20 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
             # Use evaluation POMDP for state transitions and rewards
             sp, o, r = gen(evaluation_pomdp, s, a, rng)
 
-            exploration_cost = 0.0 #TODO: add exploration cost
             costs = compute_costs(evaluation_pomdp, s, a)  
-            emissions = compute_emissions(evaluation_pomdp, s, a)    
-            profit = (r - (1-evaluation_pomdp.alpha) * (emissions * evaluation_pomdp.emission_scale_factor)) / evaluation_pomdp.alpha 
-            revenue = profit + costs + exploration_cost
-            current_production = revenue / s.price
+            emissions = compute_emissions(evaluation_pomdp, s, a)  
+            current_production, _ = calculate_total_production(evaluation_pomdp, s)
+            revenue = current_production * s.price
+            profit = revenue - costs    
             
-            eval_r = evaluation_reward(evaluation_pomdp, s, a)
             total_demand += s.company_demand
             total_production += current_production
             total_profit += profit
             total_emission_cost += emissions
-
-            
-            # # Calculate metrics using evaluation POMDP functions
-            # if t > 1  # Skip first step as it's initial state
-            #     # Use the reward function to get proper revenue, costs, and emissions
-            #     # The reward function already handles production, revenue, and costs correctly
-            #     reward_components = calculate_reward_components(evaluation_pomdp, s, a)
-                
-            #     # Extract components from reward calculation
-            #     revenue = reward_components["revenue"]
-            #     costs = reward_components["costs"]
-            #     emissions = reward_components["emissions"]
-            #     exploration_cost = reward_components["exploration_cost"]
-                
-            #     # Calculate profit (revenue - costs - exploration_cost)
-            #     profit = revenue - costs - exploration_cost
-            #     total_profit += profit
-                
-            #     # FIXED: Call evaluation_reward AFTER we have the correct state and components
-            #     # This ensures the function uses the same values as our manual calculation
-            #     eval_r = evaluation_reward(evaluation_pomdp, s, a)
-                
-            #     # Calculate emission cost (convert from negative penalty to positive cost)
-            #     # emission_cost = -emissions 
-            #     emission_cost = emissions 
-            #     total_emission_cost += emission_cost
-                
-            #     # Calculate production from the reward components
-            #     # current_production = reward_components["production"]
-            #     # total_production += current_production
-                
-            #     # Track demand
-            #     total_demand += s.company_demand
-            # else
-            #     # For t=1, we need to define eval_r but we don't have profit data yet
-            #     # Use a simple evaluation reward call for the initial state
-            #     eval_r = evaluation_reward(evaluation_pomdp, s, a)
-            # end
             
             # Track rewards
             total_reward += r  # Keep original reward for comparison
-            total_discounted_reward += evaluation_pomdp.γ^(t-1) * eval_r
+            total_discounted_reward += evaluation_pomdp.γ^(t-1) * r
             
             if isterminal(evaluation_pomdp, sp)
                 break
@@ -152,7 +112,6 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
                 "o" => o,
                 "r" => r,
                 "b" => b,
-                "eval_r" => eval_r
             )
 
             push!(history, dict_step_result)
@@ -181,49 +140,6 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
         "total_demand" => total_demands,
         "total_production" => total_productions,
         "history" => all_histories
-    )
-end
-
-function calculate_reward_components(P::LiPOMDP, s::State, a::Action)
-    """Calculate individual components of the reward function."""
-    
-    # Exploration cost
-    exploration_cost = 0.0
-    for site in 1:P.n_deposits
-        if a.type[site] == 1  # Exploring
-            exploration_cost += 1000.0 #TODO: change this to a variable within POMDP struct
-        end
-    end
-
-    # Calculate automatic production from all open mines (limited by demand)
-    current_production = 0.0
-    remaining_demand = s.company_demand  # Track remaining demand
-    
-    for site in 1:P.n_deposits
-        if s.have_opened[site] && s.deposit[site] > 0
-            # Produce only what can be sold (limited by remaining demand)
-            in_situ = min(P.output, s.deposit[site], remaining_demand)
-            site_production = in_situ * P.recovery[site]
-            current_production += site_production
-            
-            # Reduce remaining demand by what this site produced
-            remaining_demand -= site_production
-        end
-    end
-    
-    # Market-based revenue (production equals sales since we limit by demand)
-    revenue = current_production * s.price
-    
-    # Operating costs and emissions
-    costs = compute_costs(P, s, a)
-    emissions = compute_emissions(P, s, a)
-    
-    return Dict(
-        "revenue" => revenue,
-        "costs" => costs,
-        "emissions" => emissions,
-        "exploration_cost" => exploration_cost,
-        "production" => current_production
     )
 end
 
