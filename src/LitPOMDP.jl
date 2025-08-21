@@ -7,7 +7,7 @@ using POMDPTools
 using Distributions
 using Random
 using Base: rand
-using BetaZero
+# using BetaZero
 
 include("historical_data.jl")
 
@@ -31,7 +31,7 @@ export compare_policies, evaluate_policy_comprehensive, calculate_belief_uncerta
 include("eval.jl")
 
 # BetaZero integration
-export create_betazero_solver, evaluate_betazero_policy, print_betazero_comparison
-include("betazero_integration.jl")
+# export create_betazero_solver, evaluate_betazero_policy, print_betazero_comparison
+# include("betazero_integration.jl")
 
 end
