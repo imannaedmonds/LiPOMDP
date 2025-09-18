@@ -6,11 +6,10 @@ using Statistics
 using Distributions
 using LitPOMDP
 using JSON
+using D3Trees
 
 """
-Simple Policy Testing Script
-Compares POMCPOW against ProfitMaximizer, EmissionMinimizer, and ExploreOnly policies
-with different price models for planning vs evaluation.
+Simple Policy Testing Script with different price models for planning vs evaluation.
 """
 
 function create_policy(policy_type::String, pomdp::LiPOMDP)
@@ -18,20 +17,20 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
     
     if policy_type == "POMCPOW"
         solver = POMCPOWSolver(
-            tree_queries = 300,
-            max_depth = 10,
-            criterion = MaxUCB(20.0),
+            tree_queries = 1000, #give it time to plan
+            max_depth = 29, #max time step you can get, planning over POMDP in the future
+            criterion = MaxUCB(20.0),#exploration constant (could be over exploring?) -- number of visits over exploting? thick line
             enable_action_pw = true,
             k_observation = 4.0,
             alpha_observation = 1/15,
-            estimate_value = FORollout(RandomPolicy(pomdp)),
+            estimate_value = FORollout(EmissionMinimizerPolicy(pomdp)),
             tree_in_info = false,
             rng = MersenneTwister(1234)
         )
         return solve(solver, pomdp)
         
     elseif policy_type == "ProfitMaximizer"
-        return ProfitMaximizerPolicy(pomdp, top_k=4, times=[1])
+        return ProfitMaximizerPolicy(pomdp, top_k=1, times=[1])
         
     elseif policy_type == "EmissionMinimizer"
         return EmissionMinimizerPolicy(pomdp, top_k=1, times=[1])
@@ -82,7 +81,9 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
         
         for t in 1:planning_pomdp.time_horizon
             # Use planning POMDP for action selection
-            a = action(policy, b)
+            #a = action(policy, b)
+            a, info = action_info(policy, b;tree_in_info=true) #for D3Trees
+            D3Tree(info[:tree]) # will open a interactive tree
             
             # Use evaluation POMDP for state transitions and rewards
             sp, o, r = gen(evaluation_pomdp, s, a, rng)
@@ -369,7 +370,7 @@ function run_simple_policy_test(
                         else
                             # Heuristic policies: fixed alpha for planning, varying alpha for evaluation
                             # This ensures consistent behavior but proper alpha-based evaluation
-                            planning_pomdp = LiPOMDP(price_model_type=planning_model, time_horizon=time_horizon, alpha=0.5)
+                            planning_pomdp = LiPOMDP(price_model_type=planning_model, time_horizon=time_horizon, alpha=alpha)
                             evaluation_pomdp = LiPOMDP(price_model_type=eval_model, time_horizon=time_horizon, alpha=alpha)
                         end
                         

@@ -47,28 +47,41 @@ function calculate_total_production(P::LiPOMDP, s::State)
 end
 
 function compute_emissions(P::LiPOMDP, s::State, a::Action)
-    emissions = 0.0
-    # Calculate emissions from all operating mines using centralized production calculation
-    total_production, _ = calculate_total_production(P, s)
-    
-    # Distribute emissions proportionally across sites based on their production
+    # Return NEGATIVE $ penalty (to keep your current reward code unchanged)
+    total_CO2_tons = 0.0
+
+    # 1) Variable emissions on *in-situ* production (more realistic basis)
     for site in 1:P.n_deposits
         if s.have_opened[site] && s.deposit[site] > 0
-            _, site_production = calculate_site_production(P, s, site, s.company_demand)
-            if total_production > 0
-                # Use appropriate emission factor based on deposit type
-                emission_factor = P.deposit_types[site] ? P.dle_CO2_emissions : P.mining_CO2_emissions
-                emissions += site_production * emission_factor * P.CO2_cost
+            in_situ, _sellable = calculate_site_production(P, s, site, s.company_demand)
+            if in_situ > 0
+                ef = P.deposit_types[site] ? P.dle_CO2_emissions : P.mining_CO2_emissions  # tCO2 per in-situ ton
+                total_CO2_tons += in_situ * ef
             end
         end
     end
-    
-    # Ensure emissions is finite (not NaN or Inf)
-    if !isfinite(emissions)
-        emissions = 0.0
+
+    # 2) Fixed (idle) emissions for every open site this period
+    for site in 1:P.n_deposits
+        if s.have_opened[site]
+            fixed_ef = P.deposit_types[site] ? P.dle_fixed_CO2 : P.mining_fixed_CO2  # tCO2/period
+            total_CO2_tons += fixed_ef
+        end
     end
-    return -emissions  # negative = penalty
+
+    # 3) Startup emissions for newly opened sites this action
+    for site in 1:P.n_deposits
+        if a.type[site] == 2 && !s.have_opened[site]
+            start_ef = P.deposit_types[site] ? P.dle_startup_CO2 : P.mining_startup_CO2
+            total_CO2_tons += start_ef
+        end
+    end
+
+    # Convert to negative $ penalty (your model convention), ensure finite
+    penalty = - total_CO2_tons * P.CO2_cost
+    return isfinite(penalty) ? penalty : 0.0
 end
+
 
 function compute_costs(P::LiPOMDP, s::State, a::Action)
     costs = 0.0
@@ -95,7 +108,8 @@ function compute_costs(P::LiPOMDP, s::State, a::Action)
         if a.type[site] == 2 && !s.have_opened[site]  # Open new mine
             capex = P.deposit_types[site] ? P.dle_capex : P.mining_capex
             amt = min(P.output, s.deposit[site], s.company_demand) 
-            costs += capex * amt  # Capital cost based on capacity
+           # costs += capex * amt  # Capital cost based on capacity
+            costs += capex
         end
     end
 

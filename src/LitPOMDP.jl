@@ -27,6 +27,9 @@ include("pomdp.jl")
 export ProfitMaximizerPolicy, EmissionMinimizerPolicy, ExploreOnlyPolicy, RandomHeuristicPolicy, DynamicProfitMaximizerPolicy, DynamicEmissionMinimizerPolicy
 include("policies_advanced.jl")
 
+export ProfitMaximizerPolicy2, EmissionMinimizerPolicy2, ExploreOnlyPolicy2, RandomHeuristicPolicy2
+include("policies.jl")
+
 export compare_policies, evaluate_policy_comprehensive, calculate_belief_uncertainty
 include("eval.jl")
 

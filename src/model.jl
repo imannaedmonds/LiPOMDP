@@ -45,7 +45,7 @@ end
     exploration_cost::Float64 = 1000.0
 
     # FIXED: Add emission scaling factor to balance scales between emissions and profit
-    emission_scale_factor::Float64 = 5.0 # Scale emissions up to balance with profit scale (increased from 3.0)
+    emission_scale_factor::Float64 = 1.00 # Scale emissions up to balance with profit scale (increased from 3.0)
 
     # Add market parameters
     market_share_target::Float64 = 0.05  # Target 0.5% of global market
@@ -65,12 +65,16 @@ end
 
     # Hard Rock mining parameters
     mining_CO2_emissions::Int64 = 15
+    mining_fixed_CO2::Int64 = 5  # Fixed emissions per mine opened
+    mining_startup_CO2::Int64 = 20  # Emissions spike when mine first opens
     mining_capex::Int64 = 3_000    # $3000 per ton of capacity
     mining_opex::Int64 = 2_000     # $4500 per ton operating cost
 
     # DLE parameters
     dle_CO2_emissions::Int64 = 5   # Lower emissions
-    dle_capex::Int64 = 9_000       # Higher initial investment ($5000 per ton)
+    dle_fixed_CO2::Int64 = 2  # Lower fixed emissions per mine opened
+    dle_startup_CO2::Int64 = 10  # Lower emissions spike when mine first opens
+    dle_capex::Int64 = 10_000       # Higher initial investment ($5000 per ton)
     dle_opex::Int64 = 1_500        # Lower operating costs ($3500 per ton)
 
     #pricing model parameters
