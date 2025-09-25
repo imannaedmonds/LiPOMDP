@@ -24,11 +24,8 @@ export reward, transition, observation, update, gen, initialstate, isterminal, d
 initialobs, obs_weight, create_initial_belief, compute_costs, compute_emissions, evaluation_reward, calculate_total_production
 include("pomdp.jl")
 
-export ProfitMaximizerPolicy, EmissionMinimizerPolicy, ExploreOnlyPolicy, RandomHeuristicPolicy, DynamicProfitMaximizerPolicy, DynamicEmissionMinimizerPolicy
+export ProfitMaximizerPolicy, EmissionMinimizerPolicy, ExploreOnlyPolicy, RandomHeuristicPolicy, DynamicProfitMaximizerPolicy, DynamicEmissionMinimizerPolicy, calculate_average_expected_price
 include("policies_advanced.jl")
-
-export ProfitMaximizerPolicy2, EmissionMinimizerPolicy2, ExploreOnlyPolicy2, RandomHeuristicPolicy2
-include("policies.jl")
 
 export compare_policies, evaluate_policy_comprehensive, calculate_belief_uncertainty
 include("eval.jl")

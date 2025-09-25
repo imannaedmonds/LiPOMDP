@@ -1,6 +1,42 @@
 """ Select top k sites to open at period times based on profit maximization
 """
 
+"""
+Calculate expected average price over a mine's lifetime using the exact same logic as update_price.
+This accounts for price appreciation over time and includes the same noise model.
+"""
+function calculate_lifetime_average_price(P::LiPOMDP, current_time::Float64, lifetime_years::Int)
+    p₀ = get_p₀(P)
+    total_price = 0.0
+    
+    for year in 1:lifetime_years
+        t = current_time + year - 1
+        
+        if P.price_model_type == 1  # Static
+            base_price = p₀
+            noise_std = p₀ * 0.05  # 5% noise relative to base price
+        elseif P.price_model_type == 2  # Linear
+            base_price = p₀ + P.α_slope * t
+            noise_std = abs(base_price) * 0.1  # 10% noise
+        elseif P.price_model_type == 3  # Exponential
+            base_price = p₀ * exp(P.λ_exp * t)
+            noise_std = base_price * 0.1  # 10% of base price
+        else
+            base_price = p₀  # Fallback
+            noise_std = p₀ * 0.05
+        end
+        
+        # Add noise exactly as in update_price function
+        noise = rand(Normal(0, noise_std))
+        year_price = base_price + noise
+        year_price = max(year_price, 1000.0)  # Ensure minimum price (same as update_price)
+        total_price += year_price
+    end
+    
+    return total_price / lifetime_years  # Average base price over lifetime
+end
+
+
 @with_kw struct ProfitMaximizerPolicy <: Policy
     pomdp::LiPOMDP
     debug::Bool
@@ -26,22 +62,41 @@ function POMDPs.action(policy::ProfitMaximizerPolicy, s::State)
     
     if s.time in policy.times
         for site in 1:policy.pomdp.n_deposits
-            if !s.have_opened[site]
-                # Simple current-year profit calculation
-                expected_production = min(s.deposit[site], policy.pomdp.output * remaining_time) 
-                expected_recovery = expected_production * policy.pomdp.recovery[site]
-                expected_revenue = expected_recovery * s.price
+            if !s.have_opened[site] && s.deposit[site] > 0
+                # Calculate realistic lifetime profit for opening this site now
+                # Consider both deposit size AND demand constraints
+                max_possible_in_situ = min(s.deposit[site], policy.pomdp.output * remaining_time)
+                max_possible_sellable = max_possible_in_situ * policy.pomdp.recovery[site]
                 
-                # Calculate costs (ignore emissions)
+                # But production is also limited by demand - calculate realistic production
+                # Assume we can capture a reasonable share of demand over time
+                avg_demand_per_period = s.company_demand  # Current period demand
+                realistic_lifetime_demand = avg_demand_per_period * remaining_time
+                realistic_sellable = min(max_possible_sellable, realistic_lifetime_demand)
+                
+                # Calculate lifetime revenue using dynamic price forecasting
+                # Account for price appreciation over the mine's lifetime
+                lifetime_years = Int(remaining_time)  # Mine operates for remaining time horizon
+                
+                # Calculate average expected price over mine lifetime
+                avg_lifetime_price = calculate_lifetime_average_price(policy.pomdp, s.time, Int(lifetime_years))
+                
+                # Use the exact price model without discount factor
+                lifetime_revenue = realistic_sellable * avg_lifetime_price
+                
+                # Calculate lifetime costs to match actual cost structure
                 capex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_capex : policy.pomdp.mining_capex
                 opex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_opex : policy.pomdp.mining_opex
-                lifetime_opex = opex * expected_production
+                lifetime_opex = opex * realistic_sellable  # OPEX on realistic sellable production
                 
-                # Simple profit calculation (revenue - costs - capex)
-                lifetime_profit = expected_revenue - lifetime_opex
-                total_profit = lifetime_profit - (capex * expected_production)
+                # Calculate lifetime profit
+                total_profit = lifetime_revenue - lifetime_opex - capex
                 
                 profits[site] = total_profit
+                
+                if policy.debug
+                    println("  [DEBUG] Site $site: current_price=$(round(s.price, digits=2)), avg_lifetime_price=$(round(avg_lifetime_price, digits=2)), lifetime_years=$lifetime_years, realistic_sellable=$(round(realistic_sellable, digits=1)), revenue=$(round(lifetime_revenue/1e6, digits=2))M, opex=$(round(lifetime_opex/1e6, digits=2))M, capex=$(round(capex/1e6, digits=2))M, profit=$(round(total_profit/1e6, digits=2))M")
+                end
             end
         end
     
@@ -79,17 +134,17 @@ function POMDPs.action(policy::ProfitMaximizerPolicy, b::LiBelief)
         println("\n[DEBUG] ProfitMaximizerPolicy evaluating belief")
     end
     
-    # Use mean values from belief for stable decisions
-    mean_deposits = [mean(d) for d in b.deposits_distribution] #using the mean of the belief 
-    mean_price = mean(b.price_distribution)
-    mean_demand = mean(b.demand_distribution)
+    # Sample from belief distributions like POMCPOW does for consistency
+    sampled_deposits = [rand(d) for d in b.deposits_distribution]  # Sample from deposit beliefs
+    sampled_price = rand(b.price_distribution)  # Sample from price belief
+    sampled_demand = rand(b.demand_distribution)  # Sample from demand belief
     
     # Create a representative state
     s = State(
-        deposit = mean_deposits,
+        deposit = sampled_deposits,
         time = b.time,
-        price = mean_price,
-        company_demand = mean_demand,
+        price = sampled_price,
+        company_demand = sampled_demand,
         total_mined = b.total_mined,
         have_opened = copy(b.have_opened)
     )
@@ -125,11 +180,34 @@ function POMDPs.action(policy::EmissionMinimizerPolicy, s::State)
     
     if s.time in policy.times
         for site in 1:policy.pomdp.n_deposits
-            if !s.have_opened[site]
-                # Simple current-year emission calculation
-                expected_production = min(s.deposit[site], policy.pomdp.output * remaining_time) 
-                emission_factor = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_CO2_emissions : policy.pomdp.mining_CO2_emissions
-                emissions[site] = expected_production * emission_factor
+            if !s.have_opened[site] && s.deposit[site] > 0
+                # Calculate lifetime emissions for opening this site now
+                remaining_time = max(policy.pomdp.time_horizon - s.time, 0)
+                max_in_situ = min(s.deposit[site], policy.pomdp.output * remaining_time)
+                max_sellable = max_in_situ * policy.pomdp.recovery[site]
+                
+                # Note: Emissions don't depend on price, so we don't need price forecasting here
+                # But we could add price-dependent emission factors in the future if needed
+                
+                # Variable emissions (per in-situ ton produced over lifetime)
+                var_emissions_per_ton = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_CO2_emissions : policy.pomdp.mining_CO2_emissions
+                lifetime_var_emissions = max_in_situ * var_emissions_per_ton
+                
+                # Fixed emissions (per period for remaining time)
+                fixed_emissions_per_period = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_fixed_CO2 : policy.pomdp.mining_fixed_CO2
+                lifetime_fixed_emissions = fixed_emissions_per_period * remaining_time
+                
+                # Startup emissions (one-time when opening)
+                startup_emissions = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_startup_CO2 : policy.pomdp.mining_startup_CO2
+                
+                # Total lifetime emissions
+                total_lifetime_emissions = lifetime_var_emissions + lifetime_fixed_emissions + startup_emissions
+                
+                emissions[site] = total_lifetime_emissions
+                
+                if policy.debug
+                    println("  [DEBUG] Site $site: lifetime emissions=$(round(total_lifetime_emissions, digits=2)) tCO2 (var=$(round(lifetime_var_emissions, digits=2)), fixed=$(round(lifetime_fixed_emissions, digits=2)), startup=$(round(startup_emissions, digits=2)))")
+                end
             end
         end
 
@@ -140,14 +218,14 @@ function POMDPs.action(policy::EmissionMinimizerPolicy, s::State)
         ranked_sites = sortperm(emissions)
         
         for i in 1:policy.top_k
-            opened_sites[ranked_sites[i]] = 1
+            opened_sites[ranked_sites[i]] = ranked_sites[i]  # Set to actual site number
             opened_types[ranked_sites[i]] = 2
         end
 
         if policy.debug
             for i in 1:policy.pomdp.n_deposits
-                if opened_sites[i] == 1
-                    println("  [DEBUG] Opening site $i with type $(opened_types[i])")
+                if opened_types[i] == 2
+                    println("  [DEBUG] Opening site $i with emissions $(round(emissions[i], digits=2)) tCO2")
                 end
             end
         end
@@ -157,7 +235,7 @@ function POMDPs.action(policy::EmissionMinimizerPolicy, s::State)
         if policy.debug
             println("  [DEBUG] EmissionMinimizerPolicy not activated at time $(s.time), opening no mines")
         end
-        return Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0])
+        return Action(site=zeros(Int, policy.pomdp.n_deposits), type=zeros(Int, policy.pomdp.n_deposits))
     end
 end
 
@@ -167,16 +245,17 @@ function POMDPs.action(policy::EmissionMinimizerPolicy, b::LiBelief)
     end
     
     # Use mean values from belief for stable decisions
-    mean_deposits = [mean(d) for d in b.deposits_distribution] #using the mean of the belief 
-    mean_price = mean(b.price_distribution)
-    mean_demand = mean(b.demand_distribution)
+    # Sample from belief distributions like POMCPOW does for consistency
+    sampled_deposits = [rand(d) for d in b.deposits_distribution]  # Sample from deposit beliefs
+    sampled_price = rand(b.price_distribution)  # Sample from price belief
+    sampled_demand = rand(b.demand_distribution)  # Sample from demand belief
     
     # Create a representative state
     s = State(
-        deposit = mean_deposits,
+        deposit = sampled_deposits,
         time = b.time,
-        price = mean_price,
-        company_demand = mean_demand,
+        price = sampled_price,
+        company_demand = sampled_demand,
         total_mined = b.total_mined,
         have_opened = copy(b.have_opened)
     )
@@ -346,23 +425,49 @@ function POMDPs.action(policy::DynamicProfitMaximizerPolicy, s::State)
             expected_recovery = max_possible_production * policy.pomdp.recovery[site]
             
             if expected_recovery > 0
-                # Calculate revenue
-                expected_revenue = expected_recovery * s.price
+                # Calculate revenue using dynamic price forecasting over mine lifetime
+                lifetime_years = Int(remaining_time)  # Mine operates for remaining time horizon
+                avg_lifetime_price = calculate_lifetime_average_price(policy.pomdp, s.time, lifetime_years)
+                # FIXED: Use POMDP's sequential demand allocation logic
+                # The POMDP processes mines sequentially within each time step
+                # Each mine gets whatever demand remains after previous mines produce
+                
+                # Calculate how much demand this mine can capture per period
+                # This depends on the order mines are processed and remaining demand
+                mine_capacity_per_period = policy.pomdp.output  # 2,500 tonnes per mine
+                
+                # For lifetime calculation, assume this mine gets its full capacity
+                # unless demand is very low (conservative assumption)
+                avg_demand_per_period = s.company_demand
+                
+                # If demand is high enough, this mine can capture its full capacity
+                if avg_demand_per_period >= mine_capacity_per_period
+                    realistic_sellable_per_period = mine_capacity_per_period
+                else
+                    # If demand is low, this mine only gets remaining demand
+                    realistic_sellable_per_period = avg_demand_per_period
+                end
+                
+                # Calculate realistic lifetime production
+                realistic_lifetime_demand = realistic_sellable_per_period * remaining_time
+                realistic_sellable = min(expected_recovery, realistic_lifetime_demand)
+                
+                expected_revenue = realistic_sellable * avg_lifetime_price
                 
                 # Calculate costs
                 capex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_capex : policy.pomdp.mining_capex
                 opex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_opex : policy.pomdp.mining_opex
-                lifetime_opex = opex * expected_recovery
+                lifetime_opex = opex * realistic_sellable  # OPEX on realistic sellable production
                 
                 # Calculate profit (revenue - costs - capex)
                 lifetime_profit = expected_revenue - lifetime_opex
-                total_profit = lifetime_profit - (capex * expected_recovery)
+                total_profit = lifetime_profit - capex  # Fixed capex, not scaled by production
                 
                 # Store evaluation for later decision making
                 push!(site_evaluations, (site, total_profit, expected_recovery, expected_revenue))
                 
                 if policy.debug
-                    println("  [DEBUG] Site $site: Profit = \$$(round(total_profit/1e6, digits=2))M, Production = $(round(expected_recovery, digits=1))")
+                    println("  [DEBUG] Site $site: current_price=$(round(s.price, digits=2)), avg_lifetime_price=$(round(avg_lifetime_price, digits=2)), realistic_sellable=$(round(realistic_sellable, digits=1)), Profit = \$$(round(total_profit/1e6, digits=2))M, Max Production = $(round(expected_recovery, digits=1))")
                 end
             else
                 # If no production possible, explore to gather information
@@ -391,7 +496,7 @@ function POMDPs.action(policy::DynamicProfitMaximizerPolicy, s::State)
                 actual_production = min(expected_recovery, remaining_demand)
                 
                 if actual_production > 0
-                    # FIXED: Only open mines that are sufficiently profitable
+                    # Only open mines that are sufficiently profitable
                     # This prevents opening marginally profitable mines that reduce overall performance
                     # Adjusted threshold: profit is 5-20x larger than emissions, so need higher threshold
                     if total_profit >= 10e6 || remaining_demand <= 0.4 * s.company_demand
@@ -438,17 +543,16 @@ function POMDPs.action(policy::DynamicProfitMaximizerPolicy, b::LiBelief)
         println("\n[DEBUG] DynamicProfitMaximizerPolicy evaluating belief")
     end
     
-    # Use mean values from belief for stable decisions
-    mean_deposits = [mean(d) for d in b.deposits_distribution]
-    mean_price = mean(b.price_distribution)
-    mean_demand = mean(b.demand_distribution)
+    sampled_deposits = [rand(d) for d in b.deposits_distribution]  # Sample from deposit beliefs
+    sampled_price = rand(b.price_distribution)  # Sample from price belief
+    sampled_demand = rand(b.demand_distribution)  # Sample from demand belief
     
     # Create a representative state
     s = State(
-        deposit = mean_deposits,
+        deposit = sampled_deposits,
         time = b.time,
-        price = mean_price,
-        company_demand = mean_demand,
+        price = sampled_price,
+        company_demand = sampled_demand,
         total_mined = b.total_mined,
         have_opened = copy(b.have_opened)
     )
@@ -488,21 +592,44 @@ function POMDPs.action(policy::DynamicEmissionMinimizerPolicy, s::State)
     # FIXED: True emission minimization - evaluate all sites and select only the best
     site_evaluations = []
     
-    for site in 1:n_sites
+        for site in 1:n_sites
         if !s.have_opened[site]
             # Calculate expected production if we open this mine
             max_possible_production = min(s.deposit[site], policy.pomdp.output * remaining_time)
             expected_recovery = max_possible_production * policy.pomdp.recovery[site]
             
-            if expected_recovery > 0
+            # FIXED: Use POMDP's sequential demand allocation logic
+            # The POMDP processes mines sequentially within each time step
+            # Each mine gets whatever demand remains after previous mines produce
+            
+            # Calculate how much demand this mine can capture per period
+            mine_capacity_per_period = policy.pomdp.output  # 2,500 tonnes per mine
+            
+            # For lifetime calculation, assume this mine gets its full capacity
+            # unless demand is very low (conservative assumption)
+            avg_demand_per_period = s.company_demand
+            
+            # If demand is high enough, this mine can capture its full capacity
+            if avg_demand_per_period >= mine_capacity_per_period
+                realistic_sellable_per_period = mine_capacity_per_period
+            else
+                # If demand is low, this mine only gets remaining demand
+                realistic_sellable_per_period = avg_demand_per_period
+            end
+            
+            # Calculate realistic lifetime production
+            realistic_lifetime_demand = realistic_sellable_per_period * remaining_time
+            realistic_sellable = min(expected_recovery, realistic_lifetime_demand)
+            
+            if realistic_sellable > 0
                 # Calculate emission factor
                 emission_factor = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_CO2_emissions : policy.pomdp.mining_CO2_emissions
                 
                 # Store evaluation for later decision making
-                push!(site_evaluations, (site, emission_factor, expected_recovery))
+                push!(site_evaluations, (site, emission_factor, realistic_sellable))
                 
                 if policy.debug
-                    println("  [DEBUG] Site $site: Emission intensity = $(round(emission_factor, digits=4)), Production = $(round(expected_recovery, digits=1))")
+                    println("  [DEBUG] Site $site: Emission intensity = $(round(emission_factor, digits=4)), Realistic production = $(round(realistic_sellable, digits=1))")
                 end
             end
         end
@@ -517,10 +644,10 @@ function POMDPs.action(policy::DynamicEmissionMinimizerPolicy, s::State)
         mines_to_open = []
         
         # FIXED: Only open the absolute lowest emission mines that can meet demand
-        for (site, emission_factor, expected_recovery) in site_evaluations
+        for (site, emission_factor, realistic_sellable) in site_evaluations
             if remaining_demand > 0
                 # Calculate how much we can actually produce given remaining demand
-                actual_production = min(expected_recovery, remaining_demand)
+                actual_production = min(realistic_sellable, remaining_demand)
                 
                 if actual_production > 0
                     # FIXED: Much more aggressive emission minimization
@@ -602,16 +729,16 @@ function POMDPs.action(policy::DynamicEmissionMinimizerPolicy, b::LiBelief)
     end
     
     # Use mean values from belief for stable decisions
-    mean_deposits = [mean(d) for d in b.deposits_distribution]
-    mean_price = mean(b.price_distribution)
-    mean_demand = mean(b.demand_distribution)
+    sampled_deposits = [rand(d) for d in b.deposits_distribution]  # Sample from deposit beliefs
+    sampled_price = rand(b.price_distribution)  # Sample from price belief
+    sampled_demand = rand(b.demand_distribution)  # Sample from demand belief
     
     # Create a representative state
     s = State(
-        deposit = mean_deposits,
+        deposit = sampled_deposits,
         time = b.time,
-        price = mean_price,
-        company_demand = mean_demand,
+        price = sampled_price,
+        company_demand = sampled_demand,
         total_mined = b.total_mined,
         have_opened = copy(b.have_opened)
     )

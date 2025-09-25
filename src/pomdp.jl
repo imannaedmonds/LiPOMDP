@@ -1,6 +1,13 @@
 #MAIN functions
 
 """
+Return (in_situ_li, sellable_lce) for a site, limited by:
+- site nameplate capacity (P.output in LCE),
+- remaining deposit (in-situ Li),
+- remaining demand (LCE),
+- and recovery.
+Assumes deposits are in Li, price/opex/emissions per LCE.
+
 Centralized production calculation function to ensure consistency across all POMDP functions.
 This function calculates how much can be produced from each site considering:
 - Site capacity (P.output)
@@ -10,19 +17,26 @@ This function calculates how much can be produced from each site considering:
 
 Note: Demand resets every year, so this is per-time-step production.
 """
-function calculate_site_production(P::LiPOMDP, s::State, site::Int, current_demand::Float64)
-    if !s.have_opened[site] || s.deposit[site] <= 0
-        return 0.0, 0.0  # in_situ, sellable
+function calculate_site_production(P::LiPOMDP, s::State, site::Int, current_demand_lce::Float64)
+    if !s.have_opened[site] || s.deposit[site] <= 0.0
+        return 0.0, 0.0
     end
-    
-    # Calculate in-situ amount (limited by capacity, deposit, and current year's demand)
-    # Demand resets every year, so no need to track "remaining demand" within a time step
-    in_situ = min(P.output, s.deposit[site], current_demand)
-    
-    # Calculate sellable amount (recovery rate applied)
-    sellable = in_situ * P.recovery[site]
-    
-    return in_situ, sellable
+    # capacity (in-situ Li) implied by LCE nameplate:
+    # LCE = in_situ_Li * recovery * LCE_per_lithium
+    cap_in_situ_li = P.output / (P.recovery[site] * P.LCE_per_lithium)
+
+    # in-situ Li we can actually take this period:
+    max_in_situ_li = min(cap_in_situ_li, s.deposit[site])
+
+    # sellable LCE from that in-situ Li:
+    max_sellable_lce = max_in_situ_li * P.recovery[site] * P.LCE_per_lithium
+
+    sellable_lce = min(max_sellable_lce, current_demand_lce)
+
+    # recompute the in-situ actually needed for the sellable chosen
+    in_situ_li = sellable_lce / (P.recovery[site] * P.LCE_per_lithium)
+
+    return in_situ_li, sellable_lce
 end
 
 """
@@ -34,72 +48,69 @@ Demand resets every year between time steps, but within a time step,
 we need to track remaining demand to make decisions about opening new mines.
 """
 function calculate_total_production(P::LiPOMDP, s::State)
-    total_production = 0.0
-    remaining_demand = s.company_demand  # Start with this year's demand
-    
+    total_production_lce = 0.0
+    remaining_demand_lce = s.company_demand
     for site in 1:P.n_deposits
-        in_situ, sellable = calculate_site_production(P, s, site, remaining_demand)
-        total_production += sellable
-        remaining_demand -= sellable  # Track remaining demand for next mine
+        in_situ_li, sellable_lce = calculate_site_production(P, s, site, remaining_demand_lce)
+        total_production_lce += sellable_lce
+        remaining_demand_lce -= sellable_lce
     end
-    
-    return total_production, remaining_demand
+    return total_production_lce, remaining_demand_lce
 end
 
 function compute_emissions(P::LiPOMDP, s::State, a::Action)
-    # Return NEGATIVE $ penalty (to keep your current reward code unchanged)
     total_CO2_tons = 0.0
+    remaining_demand_lce = s.company_demand
 
-    # 1) Variable emissions on *in-situ* production (more realistic basis)
+    # variable emissions proportional to SOLD LCE
     for site in 1:P.n_deposits
         if s.have_opened[site] && s.deposit[site] > 0
-            in_situ, _sellable = calculate_site_production(P, s, site, s.company_demand)
-            if in_situ > 0
-                ef = P.deposit_types[site] ? P.dle_CO2_emissions : P.mining_CO2_emissions  # tCO2 per in-situ ton
-                total_CO2_tons += in_situ * ef
+            in_situ_li, sellable_lce = calculate_site_production(P, s, site, remaining_demand_lce)
+            remaining_demand_lce -= sellable_lce
+            if sellable_lce > 0
+                ef_lce = P.deposit_types[site] ? P.dle_CO2_emissions : P.mining_CO2_emissions  # tCO2 per t LCE
+                total_CO2_tons += sellable_lce * ef_lce
             end
         end
     end
 
-    # 2) Fixed (idle) emissions for every open site this period
+    # fixed emissions per open site this period
     for site in 1:P.n_deposits
         if s.have_opened[site]
-            fixed_ef = P.deposit_types[site] ? P.dle_fixed_CO2 : P.mining_fixed_CO2  # tCO2/period
-            total_CO2_tons += fixed_ef
+            total_CO2_tons += (P.deposit_types[site] ? P.dle_fixed_CO2 : P.mining_fixed_CO2)
         end
     end
 
-    # 3) Startup emissions for newly opened sites this action
+    # startup emissions for newly opened sites
     for site in 1:P.n_deposits
         if a.type[site] == 2 && !s.have_opened[site]
-            start_ef = P.deposit_types[site] ? P.dle_startup_CO2 : P.mining_startup_CO2
-            total_CO2_tons += start_ef
+            total_CO2_tons += (P.deposit_types[site] ? P.dle_startup_CO2 : P.mining_startup_CO2)
         end
     end
 
-    # Convert to negative $ penalty (your model convention), ensure finite
-    penalty = - total_CO2_tons * P.CO2_cost
-    return isfinite(penalty) ? penalty : 0.0
+    return - total_CO2_tons * P.CO2_cost  # negative penalty
 end
 
 
 function compute_costs(P::LiPOMDP, s::State, a::Action)
     costs = 0.0
+    remaining_demand_lce = s.company_demand  # Track remaining demand across sites
     
-    # Exploration cost for sites being explored
-    exploration_cost = P.exploration_cost #make higher eexplore costs # Fixed exploration cost per site
+    # Exploration cost for sites being explored - FIXED: start with 0
+    exploration_cost = 0.0  # Start with zero, don't add base cost
     for site in 1:P.n_deposits
         if a.type[site] == 1  # Exploring
-            exploration_cost += P.exploration_cost #make higher eexplore costs # Fixed exploration cost per site
+            exploration_cost += P.exploration_cost  # Add cost only when exploring
         end
     end
     
     # Operating costs for all open mines (automatic production)
     for site in 1:P.n_deposits
         if s.have_opened[site] && s.deposit[site] > 0
-            _, site_production = calculate_site_production(P, s, site, s.company_demand)
+            in_situ_li, site_production_lce = calculate_site_production(P, s, site, remaining_demand_lce)
+            remaining_demand_lce -= site_production_lce  # Update remaining demand for next site
             opex = P.deposit_types[site] ? P.dle_opex : P.mining_opex
-            costs += opex * site_production
+            costs += opex * site_production_lce
         end
     end
     
@@ -107,9 +118,10 @@ function compute_costs(P::LiPOMDP, s::State, a::Action)
     for site in 1:P.n_deposits
         if a.type[site] == 2 && !s.have_opened[site]  # Open new mine
             capex = P.deposit_types[site] ? P.dle_capex : P.mining_capex
-            amt = min(P.output, s.deposit[site], s.company_demand) 
-           # costs += capex * amt  # Capital cost based on capacity
-            costs += capex
+            # Note: You had this calculation but commented it out - you might want to use it
+            #amt = min(P.output, s.deposit[site], s.company_demand) 
+            #costs += capex * s.deposit[site]  # Capital cost based on capacity
+            costs += capex  # Fixed capital cost regardless of size
         end
     end
 
@@ -139,28 +151,25 @@ function POMDPs.reward(P::LiPOMDP, s::State, a::Action)
     # Note: compute_emissions returns negative values, so we need to make lower emissions give higher rewards
     # We do this by using emissions directly (which are negative) and then scaling
     # Lower emissions (less negative) will give higher rewards
-    total_reward = P.alpha * profit + (1 - P.alpha) * (emissions * P.emission_scale_factor)
+    # choose a scale so typical |reward| ~ 1 (tune once); e.g. 1e6
+    R_scale = P.reward_scale
+
+    raw = P.alpha*profit + (1-P.alpha)*(emissions * P.emission_scale_factor)
+
+    total_reward = raw / R_scale
     
-    # Ensure reward is finite (not NaN or Inf)
-    if !isfinite(total_reward)
-        total_reward = 0.0
-    end
-    
-    return total_reward
+    return isfinite(total_reward) ? total_reward : 0.0
 end
 
 
 function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
     t = s.time
     Δt = 1.0  # step size -- is 1 year for simplicity
-    p₀ = P.p₀
-
-    # 0. Historical Data
-    #TODO check the year and then return the price of that year
-
+    # Get the appropriate starting price based on model type
+    p₀ = get_p₀(P)
+    
     # 1. Static Pricing
     if P.price_model_type == 1
-        p₀ = 10_355.33
         # Use proportional noise for static pricing
         noise = rand(Normal(0, p₀ * 0.05))  # 5% noise relative to base price
         new_price = p₀ + noise
@@ -169,8 +178,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
 
     # 2. Linear Pricing
     if P.price_model_type == 2
-        p₀ = 2_381.38  # Made positive to avoid negative base
-        base_price = p₀ + P.α_slope * t
+        base_price = p₀ + P.α_slope * t  # Start from p₀ and add slope * time
         # Use proportional noise relative to current price level
         noise = rand(Normal(0, abs(base_price) * 0.1))  # 10% noise
         new_price = base_price + noise
@@ -179,8 +187,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
 
     # 3. Exponential Pricing
     if P.price_model_type == 3
-        p₀ = 917.36          
-        base_price = p₀ * exp(P.λ_exp * t)
+        base_price = p₀ * exp(P.λ_exp * t)  # Start from p₀ and grow exponentially
         
         # Make noise proportional to the base price (e.g., 10% standard deviation)
         noise_std = base_price * 0.1  # 10% of base price
@@ -189,29 +196,29 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         new_price = base_price + noise
         return max(new_price, 1000.0)  # Ensure minimum price
     end
-    # 4. Dynamic (Market Maker, action-dependent)
-    if P.price_model_type == 4
-        β = P.β_action
-        if a === nothing
-            a_val = 0.0
-        else
-            a_val = a.type
-        end
-        # For exponential models, noise should be in the exponent for log-normal behavior
-        noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
-        new_price = p₀ * exp(P.μ_drift * Δt + β * a_val + noise)
-        return max(new_price, 1000.0)  # Ensure minimum price
-    end
+    # # 4. Dynamic (Market Maker, action-dependent)
+    # if P.price_model_type == 4
+    #     β = P.β_action
+    #     if a === nothing
+    #         a_val = 0.0
+    #     else
+    #         a_val = a.type
+    #     end
+    #     # For exponential models, noise should be in the exponent for log-normal behavior
+    #     noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
+    #     new_price = p₀ * exp(P.μ_drift * Δt + β * a_val + noise)
+    #     return max(new_price, 1000.0)  # Ensure minimum price
+    # end
 
     # 5. Dynamic Pricing (Market Maker) -- State-Dependent
-    if P.price_model_type == 5
-        γ = P.γ_state
-        scarcity = sum(s.deposit)   # Example: total remaining deposits
-        # For exponential models, noise should be in the exponent
-        noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
-        new_price = p₀ * exp(P.μ_drift * Δt + γ * scarcity + noise)
-        return max(new_price, 1000.0)  # Ensure minimum price
-    end
+    # if P.price_model_type == 5
+    #     γ = P.γ_state
+    #     scarcity = sum(s.deposit)   # Example: total remaining deposits
+    #     # For exponential models, noise should be in the exponent
+    #     noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
+    #     new_price = p₀ * exp(P.μ_drift * Δt + γ * scarcity + noise)
+    #     return max(new_price, 1000.0)  # Ensure minimum price
+    # end
     
     # Fallback case
     return max(p₀, 1000.0)
@@ -248,7 +255,7 @@ function POMDPs.observation(P::LiPOMDP, s::State,  a::Action, sp::State)
         
         if is_exploring
             # Generate meaningful observation for explored sites
-            noise = P.σ_obs_d * 0.2  # 20% of regular noise for exploration
+            noise = P.σ_obs_d * 2.0  # 200% of regular noise for exploration (more realistic)
             push!(deposit_estimate_dist, Normal(sp.deposit[i], noise))
         else
             # For unexplored sites, provide essentially no information
@@ -258,7 +265,9 @@ function POMDPs.observation(P::LiPOMDP, s::State,  a::Action, sp::State)
         end
     end
 
-    price_estimate_dist = Normal(sp.price, P.σ_obs_p)
+    # Make observation noise proportional to price level (like model noise)
+    price_obs_noise = max(sp.price * 0.05, P.σ_obs_p)  # 5% of price, minimum 100
+    price_estimate_dist = Normal(sp.price, price_obs_noise)
     demand_estimate_dist = Normal(sp.company_demand, P.σ_obs_demand)
     
     # Combine all distributions
@@ -292,13 +301,13 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
             z = o.deposits[i]                        # observed noisy deposit value for site i
 
             # Use lower noise for exploration observations
-            σ_obs2 = max((P.σ_obs_d * 0.2)^2, 1e-10)  # 20% of regular noise for exploration, prevent division by zero
+            σ_obs2 = max((P.σ_obs_d * 2.0)^2, 1e-10)  # 200% of regular noise for exploration, prevent division by zero
             σ_prior2 = max(σ_prior^2, 1e-10)  # Prevent division by zero
             σ_post2 = 1 / (1/σ_prior2 + 1/σ_obs2)     # updated variance
             μ_post = σ_post2 * (μ_prior/σ_prior2 + z/σ_obs2)  # updated mean (weighted avg)
 
-            # Store the updated Normal distribution
-            updated_deposits[i] = Normal(μ_post, sqrt(σ_post2))
+            # Store the updated Normal distribution with truncation to prevent negatives
+            updated_deposits[i] = truncated(Normal(μ_post, sqrt(σ_post2)), 0.0, Inf)
         else
             # Keep prior belief unchanged for unexplored sites
             updated_deposits[i] = b.deposits_distribution[i]
@@ -338,29 +347,44 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
         end
     end
 
+ # FIXED: Use centralized production calculation with proper demand tracking
+    # Create a temporary state-like object for production calculation
+    temp_deposits = [mean(updated_deposits[i]) for i in 1:P.n_deposits]
+    expected_demand = mean(updated_demand)
+    remaining_demand = expected_demand
+    
     expected_production_this_step = 0.0
+    
+    # Process each site in order (same as calculate_total_production)
     for site in 1:P.n_deposits
-        if updated_have_opened[site]
+        if updated_have_opened[site] && temp_deposits[site] > 0
             # Use PRIOR deposit belief (before observation update) for production calculation
-            prior_deposit_mean = mean(b.deposits_distribution[site]) 
-            if prior_deposit_mean > 0
-                # Use centralized production calculation for consistency
-                expected_in_situ = min(P.output, prior_deposit_mean)
-                expected_saleable = expected_in_situ * P.recovery[site]
-                expected_production_this_step += expected_saleable
-                   
-                # Update the deposit belief to account for mining depletion
-                # Reduce the mean by the amount mined
-                current_mean = mean(updated_deposits[site])
-                current_std = std(updated_deposits[site])
-                depleted_mean = max(0.0, current_mean - expected_in_situ)
-                updated_deposits[site] = Normal(depleted_mean, current_std)
-            end
+            prior_deposit_mean = mean(b.deposits_distribution[site])
+            
+            # Create temporary state for this site
+            temp_state = (
+                deposit = temp_deposits,
+                have_opened = updated_have_opened
+            )
+            
+            # Use the centralized production calculation
+            in_situ, sellable = calculate_site_production_for_belief(
+                P, temp_state, site, remaining_demand, prior_deposit_mean
+            )
+            
+            expected_production_this_step += sellable
+            remaining_demand -= sellable  # Track remaining demand
+               
+            # Update the deposit belief to account for mining depletion
+            # Reduce the mean by the amount mined (in_situ, not sellable)
+            current_mean = mean(updated_deposits[site])
+            current_std = std(updated_deposits[site])
+            depleted_mean = max(0.0, current_mean - in_situ)  # FIXED: subtract in_situ
+            updated_deposits[site] = Normal(depleted_mean, current_std)
         end
     end
 
     updated_total_mined = b.total_mined + expected_production_this_step
-
 
     # Construct and return the updated belief 
     return LiBelief(
@@ -373,6 +397,28 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
     )
 end
 
+# Helper function for belief updates - avoids creating full State objects
+function calculate_site_production_for_belief(P::LiPOMDP, temp_state, site::Int, current_demand_lce::Float64, prior_deposit_li::Float64)
+    if !temp_state.have_opened[site] || temp_state.deposit[site] <= 0 || prior_deposit_li <= 0
+        return 0.0, 0.0
+    end
+    
+    # capacity (in-situ Li) implied by LCE nameplate:
+    cap_in_situ_li = P.output / (P.recovery[site] * P.LCE_per_lithium)
+
+    # in-situ Li we can actually take this period:
+    max_in_situ_li = min(cap_in_situ_li, prior_deposit_li)
+
+    # sellable LCE from that in-situ Li:
+    max_sellable_lce = max_in_situ_li * P.recovery[site] * P.LCE_per_lithium
+
+    sellable_lce = min(max_sellable_lce, current_demand_lce)
+
+    # recompute the in-situ actually needed for the sellable chosen
+    in_situ_li = sellable_lce / (P.recovery[site] * P.LCE_per_lithium)
+    
+    return in_situ_li, sellable_lce
+end
 
 # Completing Initial State
 function POMDPs.initialstate(P::LiPOMDP)
@@ -390,10 +436,13 @@ function POMDPs.initialstate(P::LiPOMDP)
     global_production = get_historical_production(P, P.start_year)
     company_demand = update_demand(P, global_production)
     
+    # Set initial price based on pricing model
+    initial_price = get_p₀(P)
+    
     return Deterministic(State(
         deposit = init_deposits,
         time = 1.0,
-        price = P.p₀,
+        price = initial_price,
         company_demand = company_demand,
         total_mined = 0.0,  # Start with no mining done
         have_opened = have_opened
@@ -450,7 +499,6 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     
     # Update demands with uncertainty
     sp.company_demand = update_demand(P, global_production)
-    total_mined_this_step = 0.0
 
     # Process each site's action
     for site in 1:P.n_deposits
@@ -469,12 +517,17 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     end
 
     # Automatic production from all open mines using centralized calculation
+    # Use the same remaining demand logic as calculate_total_production
+    # IMPORTANT: Use the OLD demand (s.company_demand) for production, not the new demand
     total_mined_this_step = 0.0
+    remaining_demand_lce = s.company_demand  # Use OLD demand for production calculation
+    
     for site in 1:P.n_deposits
         if sp.have_opened[site] && sp.deposit[site] > 0
-            in_situ, sellable = calculate_site_production(P, sp, site, sp.company_demand)
-            sp.deposit[site] -= sellable
-            total_mined_this_step += sellable  # Track what was actually recovered
+            in_situ_li, sellable_lce = calculate_site_production(P, sp, site, remaining_demand_lce)
+            remaining_demand_lce -= sellable_lce  # Update remaining demand for next site
+            sp.deposit[site] -= in_situ_li                # Li depletion
+            total_mined_this_step += sellable_lce         # track SOLD LCE
         end
     end
 
@@ -634,108 +687,4 @@ function POMDPTools.obs_weight(P::LiPOMDP, s::State, a::Action, sp::State, o::Ob
     
     # Calculate pdf
     return pdf(o_dist, o_vec)
-end
-
-# Handle Deterministic{State} for BetaZero compatibility
-function POMDPs.update(up::LiBeliefUpdater, b::POMDPTools.POMDPDistributions.Deterministic{State}, a::Action, o::Observation)
-    P = up.P  # Access the POMDP parameters
-    s = b.val  # Get the current state
-    
-    # Initialize updated deposits (only update if explored)
-    updated_deposits = copy(s.deposit)
-    
-    # Loop through each deposit site to update its belief
-    for i in 1:length(o.deposits)
-        # Check if this site was explored in the action
-        was_explored = false
-        for j in 1:length(a.site)
-            if a.type[j] == 1 && a.site[j] == i
-                was_explored = true
-                break
-            end
-        end
-        
-        if was_explored
-            # Update belief for explored sites using Kalman filter
-            # For deterministic state, we treat the current value as mean with small uncertainty
-            μ_prior = s.deposit[i]
-            σ_prior = 100.0  # Small uncertainty for deterministic state
-            z = o.deposits[i]  # observed noisy deposit value for site i
-
-            # Use lower noise for exploration observations
-            σ_obs2 = max((P.σ_obs_d * 0.2)^2, 1e-10)  # 20% of regular noise for exploration, prevent division by zero
-            σ_prior2 = max(σ_prior^2, 1e-10)  # Prevent division by zero
-            σ_post2 = 1 / (1/σ_prior2 + 1/σ_obs2)     # updated variance
-            μ_post = σ_post2 * (μ_prior/σ_prior2 + z/σ_obs2)  # updated mean (weighted avg)
-
-            # Store the updated value (mean of posterior)
-            updated_deposits[i] = μ_post
-        end
-        # If not explored, keep the prior value unchanged
-    end
-
-    # Update price belief (always updated)
-    μp_prior = s.price
-    σp_prior = 50.0  # Small uncertainty for deterministic state
-    zp = o.observed_price
-
-    # Prevent division by zero in price belief update
-    σp_prior2 = max(σp_prior^2, 1e-10)
-    σ_obs_p2 = max(P.σ_obs_p^2, 1e-10)
-    σp_post2 = 1 / (1/σp_prior2 + 1/σ_obs_p2)         # updated variance
-    μp_post = σp_post2 * (μp_prior/σp_prior2 + zp/σ_obs_p2) # updated mean
-    updated_price = μp_post
-
-    # Update demand belief (always updated)
-    μd_prior = s.company_demand
-    σd_prior = 100.0  # Small uncertainty for deterministic state
-    zd = o.observed_demand
-
-    # Prevent division by zero in demand belief update
-    σd_prior2 = max(σd_prior^2, 1e-10)
-    σ_obs_demand2 = max(P.σ_obs_demand^2, 1e-10)
-    σd_post2 = 1 / (1/σd_prior2 + 1/σ_obs_demand2)  # updated variance
-    μd_post = σd_post2 * (μd_prior/σd_prior2 + zd/σd_post2) # updated mean
-    updated_demand = μd_post
-
-    # Update have_opened status based on action
-    updated_have_opened = copy(s.have_opened)
-    for site in 1:P.n_deposits
-        if a.type[site] == 2 && !s.have_opened[site]
-            updated_have_opened[site] = true
-        end
-    end
-
-    # Calculate production and update deposits for mining
-    expected_production_this_step = 0.0
-    for site in 1:P.n_deposits
-        if updated_have_opened[site]
-            # Use PRIOR deposit value for production calculation
-            prior_deposit = s.deposit[site]
-            if prior_deposit > 0
-                expected_in_situ = min(P.output, prior_deposit)
-                expected_saleable = expected_in_situ * P.recovery[site]
-                expected_production_this_step += expected_saleable
-                   
-                # Update the deposit to account for mining depletion
-                # Reduce by the amount mined
-                depleted_deposit = max(0.0, updated_deposits[site] - expected_in_situ)
-                updated_deposits[site] = depleted_deposit
-            end
-        end
-    end
-
-    updated_total_mined = s.total_mined + expected_production_this_step
-
-    # Construct and return the updated deterministic state
-    updated_state = State(
-        deposit = updated_deposits,
-        time = s.time + 1,
-        price = updated_price,
-        company_demand = updated_demand,
-        total_mined = updated_total_mined,
-        have_opened = updated_have_opened
-    )
-    
-    return POMDPTools.POMDPDistributions.Deterministic(updated_state)
 end
