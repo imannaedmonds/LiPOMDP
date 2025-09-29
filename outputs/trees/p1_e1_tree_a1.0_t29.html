@@ -1,0 +1,467 @@
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>POMCPOW Tree</title>
+    </head>
+    <body>
+    <div id="treevisSaaCE5yH">
+    <style>
+        
+:root {
+  --background-color: white;
+  --text-color: black;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: black;
+    --text-color: white;
+  }
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.node {
+    cursor: pointer;
+}
+
+.node circle {
+	  fill: #fff;
+	  stroke: steelblue;
+	  stroke-width: 3px;
+      r: 10;
+}
+
+.node rect {
+	  fill: #fff;
+	  stroke: steelblue;
+	  stroke-width: 3px;
+      x: -10;
+      y: -10;
+      width: 20;
+      height: 20;
+}
+
+.node path {
+    fill: #ffffff;
+    /* stroke: steelblue; */
+    stroke-width: 2px;
+}
+.node text {
+    font-family: Arial, Helvetica, sans-serif;
+    font-style: normal;
+    font-size: 12px;
+}
+.link /* path */ {
+    fill: none;
+    stroke: #cccccc;
+    stroke-width: 2px;
+}
+.link text {
+    font-family: Arial, Helvetica, sans-serif;
+    font-style: normal;
+    font-size: 12px;
+}
+.hover text{
+    font-family: Arial, Helvetica, sans-serif;
+    font-style: normal;
+    font-size: 12px;
+}
+
+/*
+.svg-container {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    vertical-align: top;
+    overflow: hidden;
+}
+.svg-content-responsive {
+    display: inline-block;
+    position: absolute;
+    top: 10px;
+    left: 0;
+}
+*/
+
+    </style>
+    <script>
+    (function(){
+        var treeData = {"children":[[133,134,135,136,137,138,139,140],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[1,10,20,36,44,47,61,73,86,98,116],[2,9,21,37,45,48,60,72,85,99,117],[3,4,15,24,28,41,51,56,63,69,76,82,91,96,103,109,113,121,126,132],[5,6,14,25,30,42,52,57,65,71,78,83,90,95,104,110,115,120,125,131],[7,8,16,26,35,43,53,58,66,74,80,87,93,100,106,111,123,128],[11,12,13,23,29,40,50,55,64,70,77,84,89,97,102,108,114,122,127,130],[17,18,19,22,27,39,49,54,62,68,75,81,88,94,101,107,112,119,124,129],[31,32,33,34,38,46,59,67,79,92,105,118]],"tooltip":["o: <root>\nN: 2500\n8 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [2705.755349224541, 64307.41776059847, 8090.743981245727, 79530.99794643451]\n  observed_price: Float64 10099.808102052328\n  observed_demand: Float64 64725.94398652593\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 28442.25442487204, 70157.18597805919, 130537.65578029893]\n  observed_price: Float64 11575.73738244674\n  observed_demand: Float64 67170.77039856657\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3093.6937513008843, 135188.74053471853, 105689.33729322157, 89630.8981709715]\n  observed_price: Float64 9908.3671630532\n  observed_demand: Float64 67158.17316989784\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [7648.5901433135, 0.0, 117079.11415735843, 85238.31501460737]\n  observed_price: Float64 10017.390647214628\n  observed_demand: Float64 69151.42981584957\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 31843.787048805174, 76239.35741316676, 17419.813391312695]\n  observed_price: Float64 9401.649777744531\n  observed_demand: Float64 63537.30583320986\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [4193.636851388126, 0.0, 75126.14527690198, 158270.45917166054]\n  observed_price: Float64 11640.867464768216\n  observed_demand: Float64 68759.90889995545\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 19835.41113760801, 74239.95647877884, 160332.66320014757]\n  observed_price: Float64 9580.64071059274\n  observed_demand: Float64 63852.472470964654\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [6072.082547033986, 0.0, 51319.21076213894, 127453.10119073295]\n  observed_price: Float64 10843.980980771252\n  observed_demand: Float64 61312.41174424958\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [1009.2863824065283, 34408.3683590623, 78874.27829201917, 67522.76397998194]\n  observed_price: Float64 11460.065754669195\n  observed_demand: Float64 66879.33651609953\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 24108.26263775661, 64002.61679356183, 81585.1795346696]\n  observed_price: Float64 10932.604691582608\n  observed_demand: Float64 65672.37620201212\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [7552.435845906379, 18675.55725669702, 118739.29545740547, 120946.13723129706]\n  observed_price: Float64 10558.799304749808\n  observed_demand: Float64 68421.21576911895\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [2.75234786745093, 20897.000821969046, 76634.33987316514, 127617.43925956075]\n  observed_price: Float64 9837.52190450816\n  observed_demand: Float64 64925.7256058598\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3654.1999486083528, 15400.57923358837, 138951.80289405535, 136124.93040532508]\n  observed_price: Float64 11572.443141996258\n  observed_demand: Float64 62705.31141151731\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 79050.16950129057, 77521.48661902771]\n  observed_price: Float64 11314.023174222497\n  observed_demand: Float64 59947.36510826261\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [10159.364531790747, 30754.833397022936, 156809.14488773837, 88728.02750247442]\n  observed_price: Float64 10030.712912518695\n  observed_demand: Float64 54738.18905210701\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [1729.3986929886912, 4301.744741937399, 0.0, 80019.11894890272]\n  observed_price: Float64 10028.417217333566\n  observed_demand: Float64 64429.81337575462\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [4080.8174801646787, 79787.24859938661, 0.0, 128705.49378760192]\n  observed_price: Float64 9087.397311883888\n  observed_demand: Float64 65493.38227883696\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [4505.9041016268175, 0.0, 67578.95897506118, 105747.75071033396]\n  observed_price: Float64 10301.388153027434\n  observed_demand: Float64 62296.31108687031\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 137289.8017537855, 82887.3089433785]\n  observed_price: Float64 10381.39617158411\n  observed_demand: Float64 66324.7518350285\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [1468.7031189549252, 28159.091397979686, 80840.11060791272, 81576.52052068234]\n  observed_price: Float64 9997.759850294384\n  observed_demand: Float64 58675.59705419109\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 72496.96152895619, 91946.29142413483]\n  observed_price: Float64 11464.666770601358\n  observed_demand: Float64 66502.77078194216\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [14442.032168287713, 57643.42963495091, 65104.55209792937, 55358.15073948127]\n  observed_price: Float64 10176.051229265582\n  observed_demand: Float64 65548.01579230817\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3944.0015687188275, 17584.514066926724, 124808.67093297893, 91038.41560203451]\n  observed_price: Float64 9422.93460551274\n  observed_demand: Float64 59657.158795072595\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 36182.938903690476, 51109.989593816994, 88500.38005675969]\n  observed_price: Float64 9228.009590710413\n  observed_demand: Float64 59062.7104478897\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 75264.24119059149, 104682.46940175291]\n  observed_price: Float64 9242.207010481388\n  observed_demand: Float64 63132.316563441724\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 65699.93137359763, 41174.10621234373, 153803.5756038264]\n  observed_price: Float64 9808.314827863607\n  observed_demand: Float64 66548.3105052153\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 78629.233923164, 89197.16081094863, 90830.84333336761]\n  observed_price: Float64 10065.570916008246\n  observed_demand: Float64 63235.8135016227\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 161855.4777499214, 88340.06126452553]\n  observed_price: Float64 9651.142612321119\n  observed_demand: Float64 63648.912974193736\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [2368.4668782667586, 20318.35404343755, 174522.40618450975, 115234.65132520886]\n  observed_price: Float64 9069.15041921484\n  observed_demand: Float64 67328.13980442895\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [4367.084261438459, 0.0, 80846.45763212464, 104337.707467767]\n  observed_price: Float64 10435.937658799\n  observed_demand: Float64 59576.417355010744\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [9015.461189153344, 16209.351648626456, 75282.82528143197, 85811.4899986646]\n  observed_price: Float64 8286.26151164312\n  observed_demand: Float64 63886.69493086507\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 18890.59959542176, 75997.85158703665, 103890.84802740873]\n  observed_price: Float64 10196.517008624658\n  observed_demand: Float64 63046.18672028364\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 18406.08584274495, 149259.87947064525, 146018.1540128198]\n  observed_price: Float64 9981.692931361436\n  observed_demand: Float64 65402.665111492934\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 25855.36543065626, 79689.9070363551, 77968.13939173552]\n  observed_price: Float64 10501.828777457504\n  observed_demand: Float64 64704.7485944778\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 115562.75672546266, 87619.6779064366]\n  observed_price: Float64 10300.466899499079\n  observed_demand: Float64 58523.44251323124\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 33821.93363035657, 38543.31012484156, 83660.68512779851]\n  observed_price: Float64 11074.949490875379\n  observed_demand: Float64 69163.1580011265\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 27227.637146883484, 68288.8641049216, 8644.49202396434]\n  observed_price: Float64 10240.920779875134\n  observed_demand: Float64 64292.078614947735\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 13539.742074642294, 162575.54735701584, 98253.72738437407]\n  observed_price: Float64 10171.386423660197\n  observed_demand: Float64 68040.76146292384\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [4753.764080144086, 26124.25502286138, 18232.56087722048, 98675.19289406219]\n  observed_price: Float64 8884.842778350514\n  observed_demand: Float64 67732.25818430034\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 21896.49700586638, 38376.45829309791, 63044.55055813298]\n  observed_price: Float64 10541.323016248707\n  observed_demand: Float64 64200.096845203356\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [7397.75532787843, 19025.27507537919, 34558.679125108814, 84461.2171873353]\n  observed_price: Float64 11051.491201299039\n  observed_demand: Float64 60141.14281504739\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [1006.592462417633, 88310.15899713564, 76456.11084365874, 29407.86660376368]\n  observed_price: Float64 9535.801021848507\n  observed_demand: Float64 63146.497226579464\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 55517.72996823605, 66651.22154278021, 25135.83949178393]\n  observed_price: Float64 11073.11889753675\n  observed_demand: Float64 59951.875643015424\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 74844.45517745899, 86370.43095618743]\n  observed_price: Float64 10432.42154045988\n  observed_demand: Float64 66674.4930745419\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3235.175825336305, 0.0, 74737.45704505507, 13188.721830749211]\n  observed_price: Float64 10043.602303579066\n  observed_demand: Float64 68698.05190208787\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [5519.748350682346, 14589.304040334213, 43273.245940489316, 0.0]\n  observed_price: Float64 8994.083377911527\n  observed_demand: Float64 67783.64091495787\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [9914.06442995755, 0.0, 97781.90362652323, 89554.140560289]\n  observed_price: Float64 10164.468950121322\n  observed_demand: Float64 63032.93812375789\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 2862.5323601963096, 82239.74365973467, 112560.27740971938]\n  observed_price: Float64 10976.902877922992\n  observed_demand: Float64 59196.993693973476\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [857.6584172869698, 54341.69742022858, 21160.20278125278, 135083.16546112386]\n  observed_price: Float64 10096.622250707425\n  observed_demand: Float64 62466.22188970597\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [4102.077623870524, 18227.00991304039, 64745.883060368426, 87455.08293116221]\n  observed_price: Float64 11655.022652381227\n  observed_demand: Float64 63641.09811480997\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3678.6408524332173, 0.0, 33072.205914927916, 86665.16651611909]\n  observed_price: Float64 11602.074199057355\n  observed_demand: Float64 66430.48900957186\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 34657.145013674104, 78900.80280387703, 74981.86378134624]\n  observed_price: Float64 9701.795892542892\n  observed_demand: Float64 61524.990315909534\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [6471.095537537779, 0.0, 121984.38682431553, 127653.05271418931]\n  observed_price: Float64 10536.242486424348\n  observed_demand: Float64 62136.93105508886\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 50815.1453511184, 100429.00875578272, 173935.53839480525]\n  observed_price: Float64 10857.013891603403\n  observed_demand: Float64 67151.99166892009\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 20824.101861147108, 87399.26397397023, 0.0]\n  observed_price: Float64 10903.871744614995\n  observed_demand: Float64 64972.68822754689\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 41754.889527065345, 0.0, 86800.27058505165]\n  observed_price: Float64 9921.176388432381\n  observed_demand: Float64 65089.79675362771\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3674.4556738704846, 40434.84172824923, 76963.88874112268, 158605.17983692526]\n  observed_price: Float64 9589.884685361336\n  observed_demand: Float64 63286.7581555806\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 9286.738489788691, 83395.70984960969, 65456.293085070894]\n  observed_price: Float64 10457.307707511109\n  observed_demand: Float64 64672.759520580774\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3908.181600769384, 22142.558439337205, 91101.33477220239, 94796.31258420965]\n  observed_price: Float64 10172.67423583153\n  observed_demand: Float64 66203.3854210224\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [380.179751521353, 0.0, 72413.73268188888, 59264.146689513684]\n  observed_price: Float64 11360.398786591139\n  observed_demand: Float64 68979.8227025131\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 0.0, 87049.65098824512]\n  observed_price: Float64 9784.257591215623\n  observed_demand: Float64 67663.33530214071\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [6522.801586156853, 46432.0835466717, 20444.54736750712, 114160.96591671306]\n  observed_price: Float64 12008.83051779572\n  observed_demand: Float64 62979.46895538524\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [853.3875612990354, 0.0, 90737.53927247843, 85620.35660898684]\n  observed_price: Float64 11498.28943076498\n  observed_demand: Float64 61032.71382438851\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 18505.808993757157, 96870.81577921039, 58726.47683609379]\n  observed_price: Float64 10706.832529541394\n  observed_demand: Float64 63665.98356231009\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [380.9304106192596, 76980.46980431965, 77842.80127477013, 223359.0703373303]\n  observed_price: Float64 9637.5756899918\n  observed_demand: Float64 55178.65807264795\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [4369.549827401129, 0.0, 120904.2346888171, 99478.28259619283]\n  observed_price: Float64 10590.113730230894\n  observed_demand: Float64 59502.017851802026\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 16474.78243456082, 77605.36452032631, 54304.61246437269]\n  observed_price: Float64 9981.265991846743\n  observed_demand: Float64 59958.50514473276\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3925.951103806497, 67579.72487067654, 65246.70377642854, 54914.35299482312]\n  observed_price: Float64 9376.879738530897\n  observed_demand: Float64 67741.14418928207\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [1209.8959892691603, 5142.095448591955, 102256.41352849861, 84215.69828625326]\n  observed_price: Float64 9446.948148990856\n  observed_demand: Float64 60696.21057841785\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [2629.5116763463516, 16777.80781629822, 34868.6100907438, 151740.95421393064]\n  observed_price: Float64 10465.012178156625\n  observed_demand: Float64 67357.51534654359\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [4852.531572985277, 0.0, 76104.17425658129, 61964.54039839526]\n  observed_price: Float64 10573.603913607638\n  observed_demand: Float64 64715.47944414997\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [5164.296774019027, 59913.93833662017, 68806.86021146375, 15177.860315180287]\n  observed_price: Float64 10230.618375742515\n  observed_demand: Float64 64639.11416980789\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [6122.493260618433, 0.0, 5140.548221526088, 87028.24850752261]\n  observed_price: Float64 10778.499874559695\n  observed_demand: Float64 60472.13481588047\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 69388.00511445939, 113580.60383615739]\n  observed_price: Float64 10239.573898331542\n  observed_demand: Float64 58766.8903396341\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [10031.749388650496, 0.0, 129427.99720381279, 97706.94287337763]\n  observed_price: Float64 9534.890797649825\n  observed_demand: Float64 66532.05905948946\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 12381.7396958835, 39901.01983938312, 85397.00523121333]\n  observed_price: Float64 10491.485878937969\n  observed_demand: Float64 62886.41573947087\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 20563.82807595983, 0.0, 75218.09936224441]\n  observed_price: Float64 11309.397933515467\n  observed_demand: Float64 68381.5917870104\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [1368.2860732388676, 0.0, 73981.69991827713, 49525.604159279006]\n  observed_price: Float64 10260.265333744284\n  observed_demand: Float64 59158.08603763263\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 16796.918265915636, 100087.66227572317, 70525.67295669709]\n  observed_price: Float64 11203.680607218108\n  observed_demand: Float64 62803.169258636524\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [1367.950959353558, 20834.253750557808, 68825.24436777199, 136773.0926560669]\n  observed_price: Float64 10047.524198581232\n  observed_demand: Float64 65790.84791891498\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [560.5605705802419, 8092.356670421106, 0.0, 53938.76078426026]\n  observed_price: Float64 10684.714487033682\n  observed_demand: Float64 66994.42321475018\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 89931.86383722285, 86098.44899620472]\n  observed_price: Float64 10492.151457167667\n  observed_demand: Float64 63394.83477106318\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 5116.402304203073, 77480.71134809307, 32415.683171400502]\n  observed_price: Float64 10410.482862364428\n  observed_demand: Float64 57479.83136712547\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 19036.62722998545, 0.0, 80400.65035848648]\n  observed_price: Float64 9133.951119528452\n  observed_demand: Float64 66070.40105158646\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 4630.109701343562, 78298.26140976502, 115405.88314495266]\n  observed_price: Float64 9401.062160920863\n  observed_demand: Float64 65796.40812200213\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 107523.0384645168, 153658.48557887043, 81779.52874053338]\n  observed_price: Float64 10047.26767592932\n  observed_demand: Float64 59871.32674355027\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 78713.8598951932, 116549.30127859782, 129509.13773484506]\n  observed_price: Float64 11470.011726175419\n  observed_demand: Float64 58667.84520045165\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 71488.10844287896, 0.0, 105156.48389549118]\n  observed_price: Float64 10534.473274121665\n  observed_demand: Float64 61707.25031788101\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 17252.51420903035, 37607.97909244421, 109155.02380903592]\n  observed_price: Float64 11095.486953545387\n  observed_demand: Float64 62410.51659725963\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3276.984867897733, 3128.3372542014663, 78036.40072404272, 31259.388118158833]\n  observed_price: Float64 10611.072550423021\n  observed_demand: Float64 62758.16383142312\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [6470.837945874875, 25398.95033945784, 132216.04327174858, 85519.25980634139]\n  observed_price: Float64 9573.5784263694\n  observed_demand: Float64 62254.164293901806\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 13966.976791407238, 79727.09955186625, 29414.574470633564]\n  observed_price: Float64 10170.541008655657\n  observed_demand: Float64 60277.20954448813\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 14442.21273293249, 95473.27856835628]\n  observed_price: Float64 10010.344565379446\n  observed_demand: Float64 65504.606390192814\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [347.91707019736896, 33112.46982871982, 79684.32351370824, 7331.215216702346]\n  observed_price: Float64 9873.9490905862\n  observed_demand: Float64 61475.38270146853\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 78616.89716225876, 0.0]\n  observed_price: Float64 10877.247640061136\n  observed_demand: Float64 59686.26143763527\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 91955.32663953943, 78062.1449081322, 88083.07146851304]\n  observed_price: Float64 11143.426519863164\n  observed_demand: Float64 62810.65469469786\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [6585.879228288144, 21259.49381017087, 7353.027562753612, 71141.29370572796]\n  observed_price: Float64 10507.018658814854\n  observed_demand: Float64 60387.43318149862\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3418.752578770224, 143125.76898927873, 104432.99357553155, 91182.40975011703]\n  observed_price: Float64 10175.243235117265\n  observed_demand: Float64 62927.993611819256\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3392.03780835221, 0.0, 80661.11647208886, 213909.90407002158]\n  observed_price: Float64 10739.362893225292\n  observed_demand: Float64 65872.04444835352\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 16031.647998535305, 73591.9884723542, 0.0]\n  observed_price: Float64 9595.160382800112\n  observed_demand: Float64 66176.09239393058\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 0.0, 96469.13236760159]\n  observed_price: Float64 10988.209207960384\n  observed_demand: Float64 57491.61124329444\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 20387.050289370734, 43885.96007767914, 44409.30197949542]\n  observed_price: Float64 10182.8906076902\n  observed_demand: Float64 64693.218630763324\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [168.5189419470939, 15478.52966089491, 66056.37768191448, 86005.0210627744]\n  observed_price: Float64 9897.892340234199\n  observed_demand: Float64 59743.17718503607\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [7096.311397194925, 0.0, 77679.8118343877, 48125.023046029266]\n  observed_price: Float64 9234.204874304012\n  observed_demand: Float64 63779.61207748184\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 17399.284178164777, 63105.84494418154, 137010.7088312138]\n  observed_price: Float64 9958.876235251753\n  observed_demand: Float64 62730.092387452445\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [311.29616794328615, 0.0, 136077.6591267898, 100848.16259622101]\n  observed_price: Float64 10347.878048998575\n  observed_demand: Float64 57937.59434342917\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [6682.25712657515, 0.0, 106814.90290042343, 25566.478070433473]\n  observed_price: Float64 11319.858915883176\n  observed_demand: Float64 58850.33483822117\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3442.5123980902267, 18612.50370971303, 61688.92082053175, 9363.015974276686]\n  observed_price: Float64 10026.924108628813\n  observed_demand: Float64 65445.824245438416\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [9035.384936719525, 32217.24207683581, 81109.20808046762, 84836.28418362375]\n  observed_price: Float64 9235.873941861579\n  observed_demand: Float64 62559.84582090807\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [1788.4184799766795, 18198.807802710144, 76310.28231848544, 71201.83717972059]\n  observed_price: Float64 10706.108364770555\n  observed_demand: Float64 59683.7553294646\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 65633.39574263249, 121700.64019867434]\n  observed_price: Float64 11059.674260165393\n  observed_demand: Float64 57578.05580132381\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 102729.401122576, 102043.84873212966]\n  observed_price: Float64 10342.263509531416\n  observed_demand: Float64 72521.40385899034\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 50989.359572178415, 75577.62364809141, 87987.84421150056]\n  observed_price: Float64 11923.370452658928\n  observed_demand: Float64 64148.532671889974\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [99.4807588435354, 18414.696862775436, 49421.6564965203, 105163.54363302652]\n  observed_price: Float64 10662.968110277396\n  observed_demand: Float64 65360.11572506113\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 18349.734352747586, 76195.53428198515, 10568.762119773333]\n  observed_price: Float64 10385.83406582379\n  observed_demand: Float64 63626.244386751125\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [4458.583357089992, 0.0, 102697.14647563458, 90550.44861722221]\n  observed_price: Float64 9500.057377514566\n  observed_demand: Float64 63555.76479132729\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [11265.215894624313, 0.0, 67874.33010943672, 46142.02954629785]\n  observed_price: Float64 10569.5693440494\n  observed_demand: Float64 58521.061723614344\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 18511.090404743416, 105171.93792635464, 182810.83952982986]\n  observed_price: Float64 9929.887863173137\n  observed_demand: Float64 64317.54812889185\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [2431.6184790897855, 7053.959757436295, 0.0, 27443.77386380329]\n  observed_price: Float64 11309.663904020832\n  observed_demand: Float64 64266.64560414922\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 81103.7381090194, 140582.1118539007]\n  observed_price: Float64 10260.611283163147\n  observed_demand: Float64 64763.59629252027\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3672.6181762099163, 0.0, 118976.40267362665, 83116.007766737]\n  observed_price: Float64 10702.905770385465\n  observed_demand: Float64 60061.40719379353\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 19488.169313743845, 106276.98882802734, 59644.40231559351]\n  observed_price: Float64 10108.511789598746\n  observed_demand: Float64 63956.96712122252\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3921.0839737025044, 40365.81449272738, 105150.81253430375, 112529.93000019468]\n  observed_price: Float64 9049.972567442695\n  observed_demand: Float64 61654.40793221199\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 39023.278839500505, 170465.5731360329, 118105.46520108913]\n  observed_price: Float64 11662.317831120525\n  observed_demand: Float64 60416.300171056486\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [1534.419619384425, 0.0, 77213.19499991376, 47655.598098761]\n  observed_price: Float64 11089.693226718196\n  observed_demand: Float64 63891.46851673968\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [838.862742166972, 25820.913989730263, 56708.59272114853, 89018.7106589986]\n  observed_price: Float64 9342.71348656405\n  observed_demand: Float64 65785.39685192237\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 22027.442841088374, 54627.17844165811, 84151.81946629973]\n  observed_price: Float64 10188.009591589773\n  observed_demand: Float64 64053.59334184596\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 72499.73104884544, 33952.75547409171, 57835.47746280234]\n  observed_price: Float64 11469.881893015761\n  observed_demand: Float64 67423.79890597836\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 30259.982342301253, 121166.9530578532, 86348.08171564751]\n  observed_price: Float64 10537.016699005599\n  observed_demand: Float64 64416.77665443381\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [5941.476356899538, 17684.559184402973, 30086.20993376814, 150731.56785927626]\n  observed_price: Float64 9757.23632216504\n  observed_demand: Float64 58695.31553125492\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 32209.367551504227, 77422.30695286242, 74448.97424107933]\n  observed_price: Float64 10014.492637801595\n  observed_demand: Float64 59205.7567320296\n\nN: 0\n0 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 15080.794978562972, 123100.12856139621, 85863.11732847948]\n  observed_price: Float64 9538.02079886791\n  observed_demand: Float64 63846.495730804694\n\nN: 0\n0 children\n","a: Action\n  site: Array{Int64}((4,)) [0, 0, 0, 4]\n  type: Array{Int64}((4,)) [0, 0, 0, 2]\n\nN: 73\nV: -6.0\n11 children\n","a: Action\n  site: Array{Int64}((4,)) [0, 0, 3, 0]\n  type: Array{Int64}((4,)) [0, 0, 2, 0]\n\nN: 73\nV: -6.0\n11 children\n","a: Action\n  site: Array{Int64}((4,)) [0, 0, 0, 4]\n  type: Array{Int64}((4,)) [0, 0, 0, 1]\n\nN: 472\nV: -0.00025\n20 children\n","a: Action\n  site: Array{Int64}((4,)) [0, 0, 3, 0]\n  type: Array{Int64}((4,)) [0, 0, 1, 0]\n\nN: 472\nV: -0.00025\n20 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 0, 0, 0]\n  type: Array{Int64}((4,)) [3, 0, 0, 0]\n\nN: 371\nV: -0.5\n18 children\n","a: Action\n  site: Array{Int64}((4,)) [0, 2, 0, 0]\n  type: Array{Int64}((4,)) [0, 1, 0, 0]\n\nN: 472\nV: -0.00025\n20 children\n","a: Action\n  site: Array{Int64}((4,)) [0, 0, 0, 0]\n  type: Array{Int64}((4,)) [0, 0, 0, 0]\n\nN: 472\nV: 0.0\n20 children\n","a: Action\n  site: Array{Int64}((4,)) [0, 2, 0, 0]\n  type: Array{Int64}((4,)) [0, 2, 0, 0]\n\nN: 95\nV: -4.75\n12 children\n"],"link_style":["stroke-width:20.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:1.0","stroke-width:3.4176014981270124","stroke-width:3.4176014981270124","stroke-width:8.690224392960173","stroke-width:8.690224392960173","stroke-width:7.704544113703289","stroke-width:8.690224392960173","stroke-width:8.690224392960173","stroke-width:3.8987177379235853"],"title":"POMCPOW Tree","unexpanded_children":[],"text":["o: <root>\nN: 2500      \n","o: Observation\n  deposits: Array{Float64}((4,)) [2705.755349224541, 64307.41776059847, 8090.743981245727, 79530.99794643451]\n  observed_price: Float64 10099.808102052328\n  observed_demand: Float64 64725.94398652593\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 28442.25442487204, 70157.18597805919, 130537.65578029893]\n  observed_price: Float64 11575.73738244674\n  observed_demand: Float64 67170.77039856657\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3093.6937513008843, 135188.74053471853, 105689.33729322157, 89630.8981709715]\n  observed_price: Float64 9908.3671630532\n  observed_demand: Float64 67158.17316989784\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [7648.5901433135, 0.0, 117079.11415735843, 85238.31501460737]\n  observed_price: Float64 10017.390647214628\n  observed_demand: Float64 69151.42981584957\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 31843.787048805174, 76239.35741316676, 17419.813391312695]\n  observed_price: Float64 9401.649777744531\n  observed_demand: Float64 63537.30583320986\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [4193.636851388126, 0.0, 75126.14527690198, 158270.45917166054]\n  observed_price: Float64 11640.867464768216\n  observed_demand: Float64 68759.90889995545\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 19835.41113760801, 74239.95647877884, 160332.66320014757]\n  observed_price: Float64 9580.64071059274\n  observed_demand: Float64 63852.472470964654\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [6072.082547033986, 0.0, 51319.21076213894, 127453.10119073295]\n  observed_price: Float64 10843.980980771252\n  observed_demand: Float64 61312.41174424958\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [1009.2863824065283, 34408.3683590623, 78874.27829201917, 67522.76397998194]\n  observed_price: Float64 11460.065754669195\n  observed_demand: Float64 66879.33651609953\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 24108.26263775661, 64002.61679356183, 81585.1795346696]\n  observed_price: Float64 10932.604691582608\n  observed_demand: Float64 65672.37620201212\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [7552.435845906379, 18675.55725669702, 118739.29545740547, 120946.13723129706]\n  observed_price: Float64 10558.799304749808\n  observed_demand: Float64 68421.21576911895\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [2.75234786745093, 20897.000821969046, 76634.33987316514, 127617.43925956075]\n  observed_price: Float64 9837.52190450816\n  observed_demand: Float64 64925.7256058598\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3654.1999486083528, 15400.57923358837, 138951.80289405535, 136124.93040532508]\n  observed_price: Float64 11572.443141996258\n  observed_demand: Float64 62705.31141151731\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 79050.16950129057, 77521.48661902771]\n  observed_price: Float64 11314.023174222497\n  observed_demand: Float64 59947.36510826261\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [10159.364531790747, 30754.833397022936, 156809.14488773837, 88728.02750247442]\n  observed_price: Float64 10030.712912518695\n  observed_demand: Float64 54738.18905210701\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [1729.3986929886912, 4301.744741937399, 0.0, 80019.11894890272]\n  observed_price: Float64 10028.417217333566\n  observed_demand: Float64 64429.81337575462\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [4080.8174801646787, 79787.24859938661, 0.0, 128705.49378760192]\n  observed_price: Float64 9087.397311883888\n  observed_demand: Float64 65493.38227883696\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [4505.9041016268175, 0.0, 67578.95897506118, 105747.75071033396]\n  observed_price: Float64 10301.388153027434\n  observed_demand: Float64 62296.31108687031\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 137289.8017537855, 82887.3089433785]\n  observed_price: Float64 10381.39617158411\n  observed_demand: Float64 66324.7518350285\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [1468.7031189549252, 28159.091397979686, 80840.11060791272, 81576.52052068234]\n  observed_price: Float64 9997.759850294384\n  observed_demand: Float64 58675.59705419109\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 72496.96152895619, 91946.29142413483]\n  observed_price: Float64 11464.666770601358\n  observed_demand: Float64 66502.77078194216\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [14442.032168287713, 57643.42963495091, 65104.55209792937, 55358.15073948127]\n  observed_price: Float64 10176.051229265582\n  observed_demand: Float64 65548.01579230817\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3944.0015687188275, 17584.514066926724, 124808.67093297893, 91038.41560203451]\n  observed_price: Float64 9422.93460551274\n  observed_demand: Float64 59657.158795072595\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 36182.938903690476, 51109.989593816994, 88500.38005675969]\n  observed_price: Float64 9228.009590710413\n  observed_demand: Float64 59062.7104478897\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 75264.24119059149, 104682.46940175291]\n  observed_price: Float64 9242.207010481388\n  observed_demand: Float64 63132.316563441724\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 65699.93137359763, 41174.10621234373, 153803.5756038264]\n  observed_price: Float64 9808.314827863607\n  observed_demand: Float64 66548.3105052153\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 78629.233923164, 89197.16081094863, 90830.84333336761]\n  observed_price: Float64 10065.570916008246\n  observed_demand: Float64 63235.8135016227\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 161855.4777499214, 88340.06126452553]\n  observed_price: Float64 9651.142612321119\n  observed_demand: Float64 63648.912974193736\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [2368.4668782667586, 20318.35404343755, 174522.40618450975, 115234.65132520886]\n  observed_price: Float64 9069.15041921484\n  observed_demand: Float64 67328.13980442895\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [4367.084261438459, 0.0, 80846.45763212464, 104337.707467767]\n  observed_price: Float64 10435.937658799\n  observed_demand: Float64 59576.417355010744\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [9015.461189153344, 16209.351648626456, 75282.82528143197, 85811.4899986646]\n  observed_price: Float64 8286.26151164312\n  observed_demand: Float64 63886.69493086507\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 18890.59959542176, 75997.85158703665, 103890.84802740873]\n  observed_price: Float64 10196.517008624658\n  observed_demand: Float64 63046.18672028364\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 18406.08584274495, 149259.87947064525, 146018.1540128198]\n  observed_price: Float64 9981.692931361436\n  observed_demand: Float64 65402.665111492934\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 25855.36543065626, 79689.9070363551, 77968.13939173552]\n  observed_price: Float64 10501.828777457504\n  observed_demand: Float64 64704.7485944778\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 115562.75672546266, 87619.6779064366]\n  observed_price: Float64 10300.466899499079\n  observed_demand: Float64 58523.44251323124\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 33821.93363035657, 38543.31012484156, 83660.68512779851]\n  observed_price: Float64 11074.949490875379\n  observed_demand: Float64 69163.1580011265\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 27227.637146883484, 68288.8641049216, 8644.49202396434]\n  observed_price: Float64 10240.920779875134\n  observed_demand: Float64 64292.078614947735\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 13539.742074642294, 162575.54735701584, 98253.72738437407]\n  observed_price: Float64 10171.386423660197\n  observed_demand: Float64 68040.76146292384\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [4753.764080144086, 26124.25502286138, 18232.56087722048, 98675.19289406219]\n  observed_price: Float64 8884.842778350514\n  observed_demand: Float64 67732.25818430034\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 21896.49700586638, 38376.45829309791, 63044.55055813298]\n  observed_price: Float64 10541.323016248707\n  observed_demand: Float64 64200.096845203356\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [7397.75532787843, 19025.27507537919, 34558.679125108814, 84461.2171873353]\n  observed_price: Float64 11051.491201299039\n  observed_demand: Float64 60141.14281504739\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [1006.592462417633, 88310.15899713564, 76456.11084365874, 29407.86660376368]\n  observed_price: Float64 9535.801021848507\n  observed_demand: Float64 63146.497226579464\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 55517.72996823605, 66651.22154278021, 25135.83949178393]\n  observed_price: Float64 11073.11889753675\n  observed_demand: Float64 59951.875643015424\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 74844.45517745899, 86370.43095618743]\n  observed_price: Float64 10432.42154045988\n  observed_demand: Float64 66674.4930745419\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3235.175825336305, 0.0, 74737.45704505507, 13188.721830749211]\n  observed_price: Float64 10043.602303579066\n  observed_demand: Float64 68698.05190208787\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [5519.748350682346, 14589.304040334213, 43273.245940489316, 0.0]\n  observed_price: Float64 8994.083377911527\n  observed_demand: Float64 67783.64091495787\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [9914.06442995755, 0.0, 97781.90362652323, 89554.140560289]\n  observed_price: Float64 10164.468950121322\n  observed_demand: Float64 63032.93812375789\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 2862.5323601963096, 82239.74365973467, 112560.27740971938]\n  observed_price: Float64 10976.902877922992\n  observed_demand: Float64 59196.993693973476\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [857.6584172869698, 54341.69742022858, 21160.20278125278, 135083.16546112386]\n  observed_price: Float64 10096.622250707425\n  observed_demand: Float64 62466.22188970597\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [4102.077623870524, 18227.00991304039, 64745.883060368426, 87455.08293116221]\n  observed_price: Float64 11655.022652381227\n  observed_demand: Float64 63641.09811480997\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3678.6408524332173, 0.0, 33072.205914927916, 86665.16651611909]\n  observed_price: Float64 11602.074199057355\n  observed_demand: Float64 66430.48900957186\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 34657.145013674104, 78900.80280387703, 74981.86378134624]\n  observed_price: Float64 9701.795892542892\n  observed_demand: Float64 61524.990315909534\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [6471.095537537779, 0.0, 121984.38682431553, 127653.05271418931]\n  observed_price: Float64 10536.242486424348\n  observed_demand: Float64 62136.93105508886\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 50815.1453511184, 100429.00875578272, 173935.53839480525]\n  observed_price: Float64 10857.013891603403\n  observed_demand: Float64 67151.99166892009\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 20824.101861147108, 87399.26397397023, 0.0]\n  observed_price: Float64 10903.871744614995\n  observed_demand: Float64 64972.68822754689\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 41754.889527065345, 0.0, 86800.27058505165]\n  observed_price: Float64 9921.176388432381\n  observed_demand: Float64 65089.79675362771\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3674.4556738704846, 40434.84172824923, 76963.88874112268, 158605.17983692526]\n  observed_price: Float64 9589.884685361336\n  observed_demand: Float64 63286.7581555806\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 9286.738489788691, 83395.70984960969, 65456.293085070894]\n  observed_price: Float64 10457.307707511109\n  observed_demand: Float64 64672.759520580774\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3908.181600769384, 22142.558439337205, 91101.33477220239, 94796.31258420965]\n  observed_price: Float64 10172.67423583153\n  observed_demand: Float64 66203.3854210224\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [380.179751521353, 0.0, 72413.73268188888, 59264.146689513684]\n  observed_price: Float64 11360.398786591139\n  observed_demand: Float64 68979.8227025131\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 0.0, 87049.65098824512]\n  observed_price: Float64 9784.257591215623\n  observed_demand: Float64 67663.33530214071\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [6522.801586156853, 46432.0835466717, 20444.54736750712, 114160.96591671306]\n  observed_price: Float64 12008.83051779572\n  observed_demand: Float64 62979.46895538524\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [853.3875612990354, 0.0, 90737.53927247843, 85620.35660898684]\n  observed_price: Float64 11498.28943076498\n  observed_demand: Float64 61032.71382438851\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 18505.808993757157, 96870.81577921039, 58726.47683609379]\n  observed_price: Float64 10706.832529541394\n  observed_demand: Float64 63665.98356231009\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [380.9304106192596, 76980.46980431965, 77842.80127477013, 223359.0703373303]\n  observed_price: Float64 9637.5756899918\n  observed_demand: Float64 55178.65807264795\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [4369.549827401129, 0.0, 120904.2346888171, 99478.28259619283]\n  observed_price: Float64 10590.113730230894\n  observed_demand: Float64 59502.017851802026\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 16474.78243456082, 77605.36452032631, 54304.61246437269]\n  observed_price: Float64 9981.265991846743\n  observed_demand: Float64 59958.50514473276\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3925.951103806497, 67579.72487067654, 65246.70377642854, 54914.35299482312]\n  observed_price: Float64 9376.879738530897\n  observed_demand: Float64 67741.14418928207\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [1209.8959892691603, 5142.095448591955, 102256.41352849861, 84215.69828625326]\n  observed_price: Float64 9446.948148990856\n  observed_demand: Float64 60696.21057841785\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [2629.5116763463516, 16777.80781629822, 34868.6100907438, 151740.95421393064]\n  observed_price: Float64 10465.012178156625\n  observed_demand: Float64 67357.51534654359\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [4852.531572985277, 0.0, 76104.17425658129, 61964.54039839526]\n  observed_price: Float64 10573.603913607638\n  observed_demand: Float64 64715.47944414997\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [5164.296774019027, 59913.93833662017, 68806.86021146375, 15177.860315180287]\n  observed_price: Float64 10230.618375742515\n  observed_demand: Float64 64639.11416980789\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [6122.493260618433, 0.0, 5140.548221526088, 87028.24850752261]\n  observed_price: Float64 10778.499874559695\n  observed_demand: Float64 60472.13481588047\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 69388.00511445939, 113580.60383615739]\n  observed_price: Float64 10239.573898331542\n  observed_demand: Float64 58766.8903396341\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [10031.749388650496, 0.0, 129427.99720381279, 97706.94287337763]\n  observed_price: Float64 9534.890797649825\n  observed_demand: Float64 66532.05905948946\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 12381.7396958835, 39901.01983938312, 85397.00523121333]\n  observed_price: Float64 10491.485878937969\n  observed_demand: Float64 62886.41573947087\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 20563.82807595983, 0.0, 75218.09936224441]\n  observed_price: Float64 11309.397933515467\n  observed_demand: Float64 68381.5917870104\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [1368.2860732388676, 0.0, 73981.69991827713, 49525.604159279006]\n  observed_price: Float64 10260.265333744284\n  observed_demand: Float64 59158.08603763263\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 16796.918265915636, 100087.66227572317, 70525.67295669709]\n  observed_price: Float64 11203.680607218108\n  observed_demand: Float64 62803.169258636524\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [1367.950959353558, 20834.253750557808, 68825.24436777199, 136773.0926560669]\n  observed_price: Float64 10047.524198581232\n  observed_demand: Float64 65790.84791891498\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [560.5605705802419, 8092.356670421106, 0.0, 53938.76078426026]\n  observed_price: Float64 10684.714487033682\n  observed_demand: Float64 66994.42321475018\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 89931.86383722285, 86098.44899620472]\n  observed_price: Float64 10492.151457167667\n  observed_demand: Float64 63394.83477106318\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 5116.402304203073, 77480.71134809307, 32415.683171400502]\n  observed_price: Float64 10410.482862364428\n  observed_demand: Float64 57479.83136712547\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 19036.62722998545, 0.0, 80400.65035848648]\n  observed_price: Float64 9133.951119528452\n  observed_demand: Float64 66070.40105158646\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 4630.109701343562, 78298.26140976502, 115405.88314495266]\n  observed_price: Float64 9401.062160920863\n  observed_demand: Float64 65796.40812200213\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 107523.0384645168, 153658.48557887043, 81779.52874053338]\n  observed_price: Float64 10047.26767592932\n  observed_demand: Float64 59871.32674355027\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 78713.8598951932, 116549.30127859782, 129509.13773484506]\n  observed_price: Float64 11470.011726175419\n  observed_demand: Float64 58667.84520045165\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 71488.10844287896, 0.0, 105156.48389549118]\n  observed_price: Float64 10534.473274121665\n  observed_demand: Float64 61707.25031788101\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 17252.51420903035, 37607.97909244421, 109155.02380903592]\n  observed_price: Float64 11095.486953545387\n  observed_demand: Float64 62410.51659725963\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3276.984867897733, 3128.3372542014663, 78036.40072404272, 31259.388118158833]\n  observed_price: Float64 10611.072550423021\n  observed_demand: Float64 62758.16383142312\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [6470.837945874875, 25398.95033945784, 132216.04327174858, 85519.25980634139]\n  observed_price: Float64 9573.5784263694\n  observed_demand: Float64 62254.164293901806\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 13966.976791407238, 79727.09955186625, 29414.574470633564]\n  observed_price: Float64 10170.541008655657\n  observed_demand: Float64 60277.20954448813\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 14442.21273293249, 95473.27856835628]\n  observed_price: Float64 10010.344565379446\n  observed_demand: Float64 65504.606390192814\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [347.91707019736896, 33112.46982871982, 79684.32351370824, 7331.215216702346]\n  observed_price: Float64 9873.9490905862\n  observed_demand: Float64 61475.38270146853\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 78616.89716225876, 0.0]\n  observed_price: Float64 10877.247640061136\n  observed_demand: Float64 59686.26143763527\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 91955.32663953943, 78062.1449081322, 88083.07146851304]\n  observed_price: Float64 11143.426519863164\n  observed_demand: Float64 62810.65469469786\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [6585.879228288144, 21259.49381017087, 7353.027562753612, 71141.29370572796]\n  observed_price: Float64 10507.018658814854\n  observed_demand: Float64 60387.43318149862\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3418.752578770224, 143125.76898927873, 104432.99357553155, 91182.40975011703]\n  observed_price: Float64 10175.243235117265\n  observed_demand: Float64 62927.993611819256\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3392.03780835221, 0.0, 80661.11647208886, 213909.90407002158]\n  observed_price: Float64 10739.362893225292\n  observed_demand: Float64 65872.04444835352\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 16031.647998535305, 73591.9884723542, 0.0]\n  observed_price: Float64 9595.160382800112\n  observed_demand: Float64 66176.09239393058\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 0.0, 96469.13236760159]\n  observed_price: Float64 10988.209207960384\n  observed_demand: Float64 57491.61124329444\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 20387.050289370734, 43885.96007767914, 44409.30197949542]\n  observed_price: Float64 10182.8906076902\n  observed_demand: Float64 64693.218630763324\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [168.5189419470939, 15478.52966089491, 66056.37768191448, 86005.0210627744]\n  observed_price: Float64 9897.892340234199\n  observed_demand: Float64 59743.17718503607\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [7096.311397194925, 0.0, 77679.8118343877, 48125.023046029266]\n  observed_price: Float64 9234.204874304012\n  observed_demand: Float64 63779.61207748184\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 17399.284178164777, 63105.84494418154, 137010.7088312138]\n  observed_price: Float64 9958.876235251753\n  observed_demand: Float64 62730.092387452445\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [311.29616794328615, 0.0, 136077.6591267898, 100848.16259622101]\n  observed_price: Float64 10347.878048998575\n  observed_demand: Float64 57937.59434342917\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [6682.25712657515, 0.0, 106814.90290042343, 25566.478070433473]\n  observed_price: Float64 11319.858915883176\n  observed_demand: Float64 58850.33483822117\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3442.5123980902267, 18612.50370971303, 61688.92082053175, 9363.015974276686]\n  observed_price: Float64 10026.924108628813\n  observed_demand: Float64 65445.824245438416\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [9035.384936719525, 32217.24207683581, 81109.20808046762, 84836.28418362375]\n  observed_price: Float64 9235.873941861579\n  observed_demand: Float64 62559.84582090807\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [1788.4184799766795, 18198.807802710144, 76310.28231848544, 71201.83717972059]\n  observed_price: Float64 10706.108364770555\n  observed_demand: Float64 59683.7553294646\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 65633.39574263249, 121700.64019867434]\n  observed_price: Float64 11059.674260165393\n  observed_demand: Float64 57578.05580132381\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 102729.401122576, 102043.84873212966]\n  observed_price: Float64 10342.263509531416\n  observed_demand: Float64 72521.40385899034\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 50989.359572178415, 75577.62364809141, 87987.84421150056]\n  observed_price: Float64 11923.370452658928\n  observed_demand: Float64 64148.532671889974\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [99.4807588435354, 18414.696862775436, 49421.6564965203, 105163.54363302652]\n  observed_price: Float64 10662.968110277396\n  observed_demand: Float64 65360.11572506113\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 18349.734352747586, 76195.53428198515, 10568.762119773333]\n  observed_price: Float64 10385.83406582379\n  observed_demand: Float64 63626.244386751125\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [4458.583357089992, 0.0, 102697.14647563458, 90550.44861722221]\n  observed_price: Float64 9500.057377514566\n  observed_demand: Float64 63555.76479132729\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [11265.215894624313, 0.0, 67874.33010943672, 46142.02954629785]\n  observed_price: Float64 10569.5693440494\n  observed_demand: Float64 58521.061723614344\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 18511.090404743416, 105171.93792635464, 182810.83952982986]\n  observed_price: Float64 9929.887863173137\n  observed_demand: Float64 64317.54812889185\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [2431.6184790897855, 7053.959757436295, 0.0, 27443.77386380329]\n  observed_price: Float64 11309.663904020832\n  observed_demand: Float64 64266.64560414922\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 81103.7381090194, 140582.1118539007]\n  observed_price: Float64 10260.611283163147\n  observed_demand: Float64 64763.59629252027\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3672.6181762099163, 0.0, 118976.40267362665, 83116.007766737]\n  observed_price: Float64 10702.905770385465\n  observed_demand: Float64 60061.40719379353\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 19488.169313743845, 106276.98882802734, 59644.40231559351]\n  observed_price: Float64 10108.511789598746\n  observed_demand: Float64 63956.96712122252\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [3921.0839737025044, 40365.81449272738, 105150.81253430375, 112529.93000019468]\n  observed_price: Float64 9049.972567442695\n  observed_demand: Float64 61654.40793221199\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 39023.278839500505, 170465.5731360329, 118105.46520108913]\n  observed_price: Float64 11662.317831120525\n  observed_demand: Float64 60416.300171056486\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [1534.419619384425, 0.0, 77213.19499991376, 47655.598098761]\n  observed_price: Float64 11089.693226718196\n  observed_demand: Float64 63891.46851673968\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [838.862742166972, 25820.913989730263, 56708.59272114853, 89018.7106589986]\n  observed_price: Float64 9342.71348656405\n  observed_demand: Float64 65785.39685192237\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 22027.442841088374, 54627.17844165811, 84151.81946629973]\n  observed_price: Float64 10188.009591589773\n  observed_demand: Float64 64053.59334184596\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 72499.73104884544, 33952.75547409171, 57835.47746280234]\n  observed_price: Float64 11469.881893015761\n  observed_demand: Float64 67423.79890597836\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 30259.982342301253, 121166.9530578532, 86348.08171564751]\n  observed_price: Float64 10537.016699005599\n  observed_demand: Float64 64416.77665443381\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [5941.476356899538, 17684.559184402973, 30086.20993376814, 150731.56785927626]\n  observed_price: Float64 9757.23632216504\n  observed_demand: Float64 58695.31553125492\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 32209.367551504227, 77422.30695286242, 74448.97424107933]\n  observed_price: Float64 10014.492637801595\n  observed_demand: Float64 59205.7567320296\n\nN: 0         \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 15080.794978562972, 123100.12856139621, 85863.11732847948]\n  observed_price: Float64 9538.02079886791\n  observed_demand: Float64 63846.495730804694\n\nN: 0         \n","a: Action\n  site: Array{Int64}((4,)) [0, 0, 0, 4]\n  type: Array{Int64}((4,)) [0, 0, 0, 2]\n\nN: 73      V: -6        ","a: Action\n  site: Array{Int64}((4,)) [0, 0, 3, 0]\n  type: Array{Int64}((4,)) [0, 0, 2, 0]\n\nN: 73      V: -6        ","a: Action\n  site: Array{Int64}((4,)) [0, 0, 0, 4]\n  type: Array{Int64}((4,)) [0, 0, 0, 1]\n\nN: 472     V: -0.00025  ","a: Action\n  site: Array{Int64}((4,)) [0, 0, 3, 0]\n  type: Array{Int64}((4,)) [0, 0, 1, 0]\n\nN: 472     V: -0.00025  ","a: Action\n  site: Array{Int64}((4,)) [1, 0, 0, 0]\n  type: Array{Int64}((4,)) [3, 0, 0, 0]\n\nN: 371     V: -0.5      ","a: Action\n  site: Array{Int64}((4,)) [0, 2, 0, 0]\n  type: Array{Int64}((4,)) [0, 1, 0, 0]\n\nN: 472     V: -0.00025  ","a: Action\n  site: Array{Int64}((4,)) [0, 0, 0, 0]\n  type: Array{Int64}((4,)) [0, 0, 0, 0]\n\nN: 472     V: 0         ","a: Action\n  site: Array{Int64}((4,)) [0, 2, 0, 0]\n  type: Array{Int64}((4,)) [0, 2, 0, 0]\n\nN: 95      V: -4.75     "],"style":["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","stroke:#FF0000","stroke:#FF0000","stroke:#008000","stroke:#008000","stroke:#157500","stroke:#008000","stroke:#008000","stroke:#CA1B00"]};
+        var rootID = 1-1;
+        var div = "treevisSaaCE5yH";
+        var initExpand = 0;
+        var initDuration = 750;
+        var svgHeight = 600;
+        var svgNodeSize = [60, 60];
+        var on_click_display_depth = 1;
+        var tree_url = "";
+        if (typeof $ === 'undefined') {
+    loadScript("https://code.jquery.com/jquery-3.1.1.min.js", run);
+} else {
+    run();
+}
+
+function run() {
+    if (typeof d3 === 'undefined') {
+        loadScript("https://d3js.org/d3.v3.js", showTree);
+    } else {
+        showTree();
+    }
+}
+
+function loadScript(url, callback)
+{
+    console.log("starting script load...")
+    // Adding the script tag to the head as suggested before
+    var head = document.getElementsByTagName('head')[0];
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = url;
+
+    // Then bind the event to the callback function.
+    // There are several events for cross browser compatibility.
+    script.onreadystatechange = callback;
+    script.onload = callback;
+
+    // Fire the loading
+    head.appendChild(script);
+}
+
+// ======== Fetching subtree data
+async function fetchSubtree(dataID){
+    console.log({msg:"Sending request to D3Trees.jl server", dataID:dataID});
+
+    return  fetch(tree_url+div+"/"+(dataID+1), {
+        method: 'GET',
+      }).then(function(response){
+        console.log({msg:"Got response from D3Trees.jl server", dataID:dataID, response:response})
+        return response
+       })
+      .then(response => response.json());
+}
+
+function addSubTreeData(subtree){
+    treeData.unexpanded_children.delete(subtree.root_id);
+
+    treeData.children[subtree.root_id]=subtree.root_children;
+    treeData.children.push(...(subtree.children));
+    treeData.unexpanded_children = new Set([...treeData.unexpanded_children, ...subtree.unexpanded_children]);
+    treeData.text.push(...subtree.text);
+    treeData.tooltip.push(...subtree.tooltip);
+    treeData.style.push(...subtree.style);
+    treeData.link_style.push(...subtree.link_style);
+}
+
+// ==== Showing trees ====
+function showTree() {
+    treeData.unexpanded_children = new Set(treeData.unexpanded_children);
+        
+    // var margin = {top: 20, right: 120, bottom: 20, left: 120},
+    var margin = {top: 20, right: 120, bottom: 80, left: 120},
+        width = $("#"+div).width() - margin.right - margin.left,
+        height = svgHeight - margin.top - margin.bottom;
+        // TODO make height a parameter of TreeVisualizer
+
+    var i = 0,
+        root;
+
+    var tree = d3.layout.tree()
+        .nodeSize(svgNodeSize); // For fixed spacing between nodes, see https://stackoverflow.com/questions/17558649/d3-tree-layout-separation-between-nodes-using-nodesize
+        // .size([width, height]); // For dynamic spacing between nodes. Using this option adjusts the length of the edges to fit pre-fixed svg area.
+
+    var diagonal = d3.svg.diagonal();
+        //.projection(function(d) { return [d.y, d.x]; });
+        // uncomment above to make the tree go horizontally
+
+    // see http://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js
+    if (d3.select("#"+div+"_svg").empty()) {
+        $(".d3twarn").remove();
+        d3.select("#"+div).append("svg")
+            .attr("id", div+"_svg")
+            .attr("width", width + margin.right + margin.left)
+            .attr("height", height + margin.top + margin.bottom);
+    }
+
+    d3.select("#"+div+"_svg").selectAll("*").remove();
+
+    let root_position = [(width+margin.left+margin.right)/2,margin.top] // where in the drawarea to show root
+
+    var svg = d3.select("#"+div+"_svg")
+        // .append("svg:svg")
+        // .attr("class", "svg_container")
+        // .attr("width", width)
+        // .attr("height", height)
+        // .style("overflow", "scroll")
+        .append("svg:g")
+        .attr("class", "drawarea")
+        // .append("svg:g")
+        .attr("transform", "translate(" + root_position + ")");
+
+    // Enables zoom and pan
+    d3.select("#"+div+"_svg")
+        .call(d3.behavior.zoom()
+            .translate(root_position) // initial pan from the position of the root
+        // .scaleExtent([0.5, 5])
+        .on("zoom", zoom))
+        .on("dblclick.zoom", null) 
+
+    // console.log("tree data:");
+    // console.log(treeData[rootID]);
+    root = createDisplayNode(rootID, initExpand);
+    root.x0 = width / 2;
+    root.y0 = 0;
+
+    update(root, initDuration);
+    console.log("tree should appear");
+
+    function createDisplayNode(id, expandLevel) {
+      var dnode = {"dataID":id,
+                   "children": null,
+                   "_children":null};
+      if (expandLevel > 0) {
+        initializeChildren(dnode, expandLevel);
+      }
+      return dnode;
+    }
+
+    function initializeChildren(d, expandLevel) {
+      // create children
+      var children = treeData.children[d.dataID];
+      d.children = [];
+      if (children) {
+        for (var i = 0; i < children.length; i++) {
+          var cid = children[i];
+          d.children.push(createDisplayNode(cid, expandLevel-1));
+        }
+      }
+    }
+
+    /**
+     * Recursively called to update each node in the tree.
+     * 
+     * source is a d3 node that has position, etc.
+    */
+    function update(source, duration) {
+
+    //   width = $("#"+div).width() - margin.right - margin.left,
+    //   height = $("#"+div).height() - margin.top - margin.bottom;
+
+    // //   tree.size([width,height]);
+    //   d3.select("#"+div).attr("width", width + margin.right + margin.left)
+    //         .attr("height", height + margin.top + margin.bottom);
+    //   d3.select("#"+div+"_svg").attr("width", width + margin.right + margin.left)
+    //          .attr("height", height + margin.top + margin.bottom);
+
+
+      // Compute the new tree layout.
+      var nodes = tree.nodes(root).reverse(),
+          links = tree.links(nodes);
+
+
+      // Update the nodes…
+      var node = svg.selectAll("g.node")
+          .data(nodes, function(d) { return d.id || (d.id = ++i); });
+
+      // Enter any new nodes at the parent's previous position.
+      var timeout = null;
+      var double_click_timeout=300
+      var nodeEnter = node.enter().append("g")
+          .attr("class", "node")
+          .attr("transform", function(d) { return "translate(" + source.x0 + "," + source.y0 + ")"; })
+          .on("click", function(d){ 
+            clearTimeout(timeout);
+            timeout = setTimeout(function(d) {
+                click(d);}, double_click_timeout, d)
+            })
+          .on("dblclick", function(d){ 
+            clearTimeout(timeout);
+            dblclick(d);
+            })
+
+      nodeEnter.append("circle")
+          .attr("r", "10px")
+          .attr("style", function(d) { return treeData.style[d.dataID]; } )
+
+      var tbox = nodeEnter.append("text")
+          .attr("y", 25)
+          .attr("text-anchor", "middle")
+          //.text( function(d) { return treeData.text[d.dataID]; } )
+          .style("fill-opacity", 1e-6);
+
+      tbox.each( function(d) {
+          var el = d3.select(this)
+          var text = treeData.text[d.dataID];
+          //=== Debug helper - display visualization data ID as part of message
+          //   text = '=' + d.dataID + '= ' + text;
+          //===
+          var lines = text.split('\n');
+          for (var i = 0; i < lines.length; i++) {
+              var tspan = el.append("tspan").text(lines[i]);
+              if (i > 0) {
+                  tspan.attr("x", 0).attr("dy", "1.2em");
+              }
+          }
+      });
+
+      //tooltip
+      nodeEnter.append("title").text( function(d) { return treeData.tooltip[d.dataID];} );
+
+      // Transition nodes to their new position.
+      var nodeUpdate = node.transition()
+          .duration(duration)
+          .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+      nodeUpdate.select("text")
+          .style("fill-opacity", 1);
+
+      // Transition exiting nodes to the parent's new position.
+      var nodeExit = node.exit().transition()
+          .duration(duration)
+          .attr("transform", function(d) { return "translate(" + source.x + "," + source.y + ")"; })
+          .remove();
+
+      nodeExit.select("text")
+          .style("fill-opacity", 1e-6);
+
+      // Update the links…
+      var link = svg.selectAll("path.link")
+          .data(links, function(d) { return d.target.id; });
+
+      // Enter any new links at the parent's previous position.
+      // XXX link width should be based on transition data, not node data
+      link.enter().insert("path", "g")
+          .attr("class", "link")
+          .attr("style", function(d) {
+              var ls = treeData.link_style[d.target.dataID];
+              return ls;
+          } )
+          .attr("d", function(d) {
+            var o = {x: source.x0, y: source.y0};
+            return diagonal({source: o, target: o});
+          });
+
+      // Transition links to their new position.
+      link.transition()
+          .duration(duration)
+          .attr("d", diagonal);
+
+      // Transition exiting nodes to the parent's new position.
+      link.exit().transition()
+          .duration(duration)
+          .attr("d", function(d) {
+            var o = {x: source.x, y: source.y};
+            return diagonal({source: o, target: o});
+          })
+          .remove();
+
+      // Stash the old positions for transition.
+      nodes.forEach(function(d) {
+        d.x0 = d.x;
+        d.y0 = d.y;
+      });
+    }
+
+    function hide_children(d){
+        d._children = d.children;
+        d.children = null;
+        update(d, 750);
+    }
+
+    async function display_children(d){
+        if (d._children) {
+            d.children = d._children;
+            d._children = null;
+            update(d, 750);
+        } else if(treeData.unexpanded_children.has(d.dataID)) {
+            console.log("Fetching subtrees!")
+            await fetchSubtree(d.dataID)
+            .then(subtree => addSubTreeData(subtree))
+            .then(() => initializeChildren(d, 1));
+            update(d, 750);
+        } else {
+            initializeChildren(d, 1);
+            update(d, 750);
+        }
+    }
+
+    async function display_nested_children(d, display_depth){
+        let depth = 1;
+        let expanding=null;
+        let to_expand=[d];
+        while(depth<=display_depth){
+            expanding=to_expand;
+            to_expand=[];
+            while(expanding.length>0){
+                let n = expanding.pop();
+                await display_children(n)
+                if(n.children && n.children.length>0){
+                    to_expand.push(...n.children);
+                }
+            }
+            depth++;
+        }
+    }
+
+    async function click(d) {
+        if (d.children) {
+            hide_children(d)
+        } else {
+            if(on_click_display_depth==1){
+                display_children(d)
+            } else{
+                await display_nested_children(d, on_click_display_depth)
+            }
+        }
+    }
+
+    async function dblclick(d){
+        if (d.children) {
+            hide_children(d)
+        } else {
+            if(on_click_display_depth==1){
+                await display_nested_children(d, 2)
+            } else{
+                display_children(d)
+            }
+        }
+    }
+
+    // Allows zoom and pan, see https://stackoverflow.com/questions/17405638/d3-js-zooming-and-panning-a-collapsible-tree-diagram
+    function zoom() {
+        console.log("zoom")
+        var scale = d3.event.scale,
+          translation = d3.event.translate,
+          tbound = -height * scale,
+          bbound = height * scale,
+          lbound = -(width - margin.left) * scale,
+          rbound = (width - margin.right) * scale;
+        // limit translation to thresholds
+        // translation = [
+        //   Math.max(Math.min(translation[0], rbound), lbound),
+        //   Math.max(Math.min(translation[1], bbound), tbound)
+        // ];
+        d3.select("#"+div+"_svg").select(".drawarea")
+          .attr("transform", "translate(" + translation + ")" +
+            " scale(" + scale + ")");
+      }
+
+}
+
+        })();
+    </script>
+    <p class="d3twarn">
+    Attempting to display the tree. If the tree is large, this may take some time.
+    </p>
+    <p class="d3twarn">
+    Note: D3Trees.jl requires an internet connection. If no tree appears, please check your connection. To help fix this, please see <a href="https://github.com/sisl/D3Trees.jl/issues/10">this issue</a>. You may also diagnose errors with the javascript console (Ctrl-Shift-J in chrome).
+    </p>
+    </div>
+    </body>
+    </html>
+

@@ -25,10 +25,9 @@ initialobs, obs_weight, create_initial_belief, compute_costs, compute_emissions,
 include("pomdp.jl")
 
 export ProfitMaximizerPolicy, EmissionMinimizerPolicy, ExploreOnlyPolicy, RandomHeuristicPolicy, DynamicProfitMaximizerPolicy, DynamicEmissionMinimizerPolicy, calculate_average_expected_price
-include("policies_advanced.jl")
+include("policies.jl")
 
-export compare_policies, evaluate_policy_comprehensive, calculate_belief_uncertainty
-include("eval.jl")
+# Removed eval.jl include - file doesn't exist
 
 # BetaZero integration
 # export create_betazero_solver, evaluate_betazero_policy, print_betazero_comparison

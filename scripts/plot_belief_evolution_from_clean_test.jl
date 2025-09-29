@@ -23,28 +23,34 @@ function extract_belief_data_from_results(results_file::String)
     for (policy_name, policy_data) in results_data
         println("Processing policy: $policy_name")
         
-        # Extract history data
-        histories = policy_data["history"]
+        # Extract belief evolution data
+        if !haskey(policy_data, "belief_evolution")
+            continue
+        end
+        
+        belief_evolution = policy_data["belief_evolution"]
+        if !haskey(belief_evolution, "deposits")
+            continue
+        end
+        
+        deposits = belief_evolution["deposits"]
         
         # Initialize belief tracking
         belief_means = Vector{Vector{Vector{Float64}}}()
         belief_stds = Vector{Vector{Vector{Float64}}}()
         
-        # Process each simulation
-        for (sim_idx, history) in enumerate(histories)
-            sim_means = Vector{Float64}[]
-            sim_stds = Vector{Float64}[]
+        # Process the deposits data (single simulation)
+        sim_means = Vector{Float64}[]
+        sim_stds = Vector{Float64}[]
+        
+        for t in 1:length(deposits)
+            # Extract deposit belief means and stds
+            deposit_means = Float64[]
+            deposit_stds = Float64[]
             
-            for step in history
-                belief = step["b"]
-                
-                # Extract deposit belief means and stds
-                deposit_means = Float64[]
-                deposit_stds = Float64[]
-                
-                for i in 1:4  # 4 deposits
-                    if haskey(belief, "deposits_distribution") && length(belief["deposits_distribution"]) >= i
-                        deposit_dist = belief["deposits_distribution"][i]
+            for i in 1:4  # 4 deposits
+                if length(deposits[t]) >= i
+                    deposit_dist = deposits[t][i]
                         
                         # Handle different belief structures
                         if haskey(deposit_dist, "μ") && haskey(deposit_dist, "σ")
@@ -52,8 +58,12 @@ function extract_belief_data_from_results(results_file::String)
                             μ_val = deposit_dist["μ"]
                             σ_val = deposit_dist["σ"]
                             
+                            # Check for Nothing values
+                            if μ_val === nothing || σ_val === nothing
+                                μ_real = 15000.0
+                                σ_real = 1000.0
                             # Check if these are log-normal parameters (small values) or real values (large values)
-                            if μ_val < 20.0  # Likely log-normal parameters
+                            elseif μ_val < 20.0  # Likely log-normal parameters
                                 # Convert from log-normal parameters to real numbers
                                 if isfinite(μ_val) && isfinite(σ_val) && σ_val < 10.0
                                     μ_real = exp(μ_val + σ_val^2/2)  # Mean of log-normal distribution
@@ -116,13 +126,12 @@ function extract_belief_data_from_results(results_file::String)
                     end
                 end
                 
-                push!(sim_means, deposit_means)
-                push!(sim_stds, deposit_stds)
-            end
-            
-            push!(belief_means, sim_means)
-            push!(belief_stds, sim_stds)
+            push!(sim_means, deposit_means)
+            push!(sim_stds, deposit_stds)
         end
+        
+        push!(belief_means, sim_means)
+        push!(belief_stds, sim_stds)
         
         belief_data[policy_name] = Dict(
             "belief_means" => belief_means,
@@ -164,7 +173,7 @@ function plot_belief_evolution_from_clean_test(results_file::String; output_file
                         xlabel="Time Step", ylabel="Estimated Deposit Size",
                         legend=:topright, size=(400, 300),
                         yformatter=:plain,  # Remove scientific notation from y-axis
-                        ylims=(10000, 20000))   # Set y-axis range around actual values
+                        ylims=(1000, 25000))   # Set y-axis range to accommodate all data
         
         # Plot each policy - only selected ones
         for (policy_name, data) in belief_data
@@ -204,7 +213,8 @@ function plot_belief_evolution_from_clean_test(results_file::String; output_file
                           label=base_policy_name, 
                           color=color, 
                           linewidth=3,
-                          alpha=0.8)
+                          alpha=0.8,
+                          ylims=(1000, 27000))
                 end
             end
         end
