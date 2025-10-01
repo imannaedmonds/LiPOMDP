@@ -43,7 +43,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
     """Create a policy of the specified type."""
     if policy_type == "POMCPOW"
         solver = POMCPOWSolver(
-            tree_queries = 50000,
+            tree_queries = 2500,
             max_depth = 25,
             criterion = MaxUCB(15.0),
             enable_action_pw = true,
@@ -450,7 +450,7 @@ println("="^60)
 policies = ["POMCPOW", "DynamicProfitMaximizer", "ExploreOnly", "ProfitMaximizer", "EmissionMinimizer", "DynamicEmissionMinimizer"]
 planning_price_models = [1]  # Static, Linear, Exponential, Historical
 evaluation_price_models = [6]  # Historical price model for evaluation
-alphas = [0.25, 0.5, 0.75, 1.0]
+alphas = [0.0, 0.25, 0.5, 0.75, 1.0]
 time_horizon = 29  # Full time horizon
 n_train_sims = 25  # Training simulations
 n_test_sims = 25   # Testing simulations
@@ -466,7 +466,7 @@ println()
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/train_test_results_p$(planning_str)_e$(evaluation_str)_50,000TQ.txt"
+output_file = "outputs/train_test_results_p$(planning_str)_e$(evaluation_str)_single-action.txt"
 
 # Run the evaluation
 results = run_train_test_evaluation(

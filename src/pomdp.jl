@@ -715,176 +715,59 @@ function POMDPs.discount(P::LiPOMDP)
     return P.γ
 end
 
-# Define action space - now returns all possible combinations of actions
-function POMDPs.actions(P::LiPOMDP)
-    acts = Action[]
-
-    possible_actions = [0, 1, 2, 3]
-
-    for action_site_1 in possible_actions
-        for action_site_2 in possible_actions
-            for action_site_3 in possible_actions
-                for action_site_4 in possible_actions
-                    push!(acts, Action(site=[1, 2, 3, 4], type=[action_site_1, action_site_2, action_site_3, action_site_4]))
-                end
-            end
-        end
-    end
-
-    # No need for special global do-nothing action - [1,2,3,4] with type=[0,0,0,0] already covers it
-    return acts
-end
-
-
-
-# Helper function to check if an action is valid for a given state
-function is_action_valid(action::Action, s::State, n_deposits::Int)
-    for site in 1:n_deposits
-        action_type = action.type[site]
-        
-        if action_type == 1 || action_type == 2  # explore or open
-            if s.have_opened[site]  # Can't explore or open an already opened mine
-                return false
-            end
-        elseif action_type == 3  # restore
-            if !s.have_opened[site] || !s.is_depleted[site] || s.restored_mines[site]
-                return false
-            end
-        end
-    end
-    return true
-end
-
-function POMDPs.actions(P::LiPOMDP, s::State)
-    acts = actions(P)  # Start with all possible actions
-    
-    # Filter out invalid actions based on state
-    valid_acts = Action[]
-    
-    for action in acts
-        if is_action_valid(action, s, P.n_deposits)
-            push!(valid_acts, action)
-        end
-    end
-    
-    return valid_acts
-end
-
-
-# Actions for beliefs (same logic as states)
-function POMDPs.actions(P::LiPOMDP, b::LiBelief)
-    s = rand(b)  # Sample a representative state from the belief
-    actions = POMDPs.actions(P, s)  
-
-    return actions
-end
-    
-
-
-function POMDPs.actionindex(P::LiPOMDP, a::Action)
-    # For the new action space with all combinations
-    # Each site can have action 0, 1, 2, or 3
-    # Total combinations: 4^4 = 256 actions
-    
-    # Convert action combination to index using base-4 representation
-    # action.type = [type1, type2, type3, type4] where each type is 0, 1, 2, or 3
-    # Index = type1 * 4^3 + type2 * 4^2 + type3 * 4^1 + type4 * 4^0 + 1
-    
-    index = 1  # Start at 1 (Julia uses 1-based indexing)
-    
-    for i in 1:4
-        index += a.type[i] * (4^(4-i))
-    end
-    
-    return index
-end
-
-#SINGLE STEP ACTIONS
 # # Define action space - now returns all possible combinations of actions
 # function POMDPs.actions(P::LiPOMDP)
-#     # For now, return a simplified action space with single actions
-#     # This can be expanded to include multiple simultaneous actions
 #     acts = Action[]
-    
-#     # Do nothing action
-#     push!(acts, Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0]))
 
-#     # Single site actions
-#     for site in 1:P.n_deposits
-#         # Explore
-#         site_vec = zeros(Int, 4)
-#         type_vec = zeros(Int, 4)
-#         # site_vec[1] = site
-#         # type_vec[1] = 1
-#         site_vec[site] = site
-#         type_vec[site] = 1
-#         push!(acts, Action(site=site_vec, type=type_vec))
-        
-#         # Open mine
-#         site_vec = zeros(Int, 4)
-#         type_vec = zeros(Int, 4)
-#         # site_vec[1] = site
-#         # type_vec[1] = 2
-#         site_vec[site] = site
-#         type_vec[site] = 2
-#         push!(acts, Action(site=site_vec, type=type_vec))
-        
-#         # Restore mine
-#         site_vec = zeros(Int, 4)
-#         type_vec = zeros(Int, 4)
-#         site_vec[site] = site
-#         type_vec[site] = 3
-#         push!(acts, Action(site=site_vec, type=type_vec))
+#     possible_actions = [0, 1, 2, 3]
+
+#     for action_site_1 in possible_actions
+#         for action_site_2 in possible_actions
+#             for action_site_3 in possible_actions
+#                 for action_site_4 in possible_actions
+#                     push!(acts, Action(site=[1, 2, 3, 4], type=[action_site_1, action_site_2, action_site_3, action_site_4]))
+#                 end
+#             end
+#         end
 #     end
-    
-#     # Could add combined actions here if needed
+
+#     # No need for special global do-nothing action - [1,2,3,4] with type=[0,0,0,0] already covers it
 #     return acts
 # end
 
 
 
-# # Stateful action generator
-# function POMDPs.actions(P::LiPOMDP, s::State)
-
-#     acts = Action[]
-    
-#     # Do nothing action
-#     push!(acts, Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0]))
-    
-#     # Single site actions based on state
-#     for site in 1:P.n_deposits
-#         if !s.have_opened[site]
-#            # println("DEBUG: Site $site not opened, adding explore/open actions")
-
-#             # Can explore unopened sites
-#             site_vec = zeros(Int, 4)
-#             type_vec = zeros(Int, 4)
-#             # site_vec[1] = site
-#             # type_vec[1] = 1
-#             site_vec[site] = site
-#             type_vec[site] = 1
-#             push!(acts, Action(site=site_vec, type=type_vec))
-            
-#             # Can open unopened sites
-#             site_vec = zeros(Int, 4)
-#             type_vec = zeros(Int, 4)
-#             # site_vec[1] = site
-#             # type_vec[1] = 2
-#             site_vec[site] = site
-#             type_vec[site] = 2
-#             push!(acts, Action(site=site_vec, type=type_vec))
-#         elseif s.have_opened[site] && s.is_depleted[site] && !s.restored_mines[site]
-#             # Can restore depleted mines that haven't been restored yet
-#             site_vec = zeros(Int, 4)
-#             type_vec = zeros(Int, 4)
-#             site_vec[site] = site
-#             type_vec[site] = 3  # Restore action
-#             push!(acts, Action(site=site_vec, type=type_vec))
+# # Helper function to check if an action is valid for a given state
+# function is_action_valid(action::Action, s::State, n_deposits::Int)
+#     for site in 1:n_deposits
+#         action_type = action.type[site]
+        
+#         if action_type == 1 || action_type == 2  # explore or open
+#             if s.have_opened[site]  # Can't explore or open an already opened mine
+#                 return false
+#             end
+#         elseif action_type == 3  # restore
+#             if !s.have_opened[site] || !s.is_depleted[site] || s.restored_mines[site]
+#                 return false
+#             end
 #         end
-#         # No operate action needed - mines operate automatically
 #     end
-#     #println("DEBUG: Generated $(length(acts)) total actions")
-#     return acts
+#     return true
+# end
+
+# function POMDPs.actions(P::LiPOMDP, s::State)
+#     acts = actions(P)  # Start with all possible actions
+    
+#     # Filter out invalid actions based on state
+#     valid_acts = Action[]
+    
+#     for action in acts
+#         if is_action_valid(action, s, P.n_deposits)
+#             push!(valid_acts, action)
+#         end
+#     end
+    
+#     return valid_acts
 # end
 
 
@@ -899,24 +782,136 @@ end
 
 
 # function POMDPs.actionindex(P::LiPOMDP, a::Action)
-#     # Simple indexing for single-action vectors
-#     # Do nothing action
-#     if all(a.site .== 0) && all(a.type .== 0)
-#         return 1
+#     # For the new action space with all combinations
+#     # Each site can have action 0, 1, 2, or 3
+#     # Total combinations: 4^4 = 256 actions
+    
+#     # Convert action combination to index using base-4 representation
+#     # action.type = [type1, type2, type3, type4] where each type is 0, 1, 2, or 3
+#     # Index = type1 * 4^3 + type2 * 4^2 + type3 * 4^1 + type4 * 4^0 + 1
+    
+#     index = 1  # Start at 1 (Julia uses 1-based indexing)
+    
+#     for i in 1:4
+#         index += a.type[i] * (4^(4-i))
 #     end
     
-#     # Find first non-zero action
-#     for i in 1:length(a.site)
-#         if a.site[i] > 0 && a.type[i] > 0
-#             site = a.site[i]
-#             type = a.type[i]
-#             # 2 actions per site (explore, open)
-#             return 1 + (site - 1) * 2 + type
-#         end
-#     end
-    
-#     return 1  # Default to do nothing
+#     return index
 # end
+
+"""SINGLE STEP ACTIONS"""
+# Define action space - now returns all possible combinations of actions
+function POMDPs.actions(P::LiPOMDP)
+    # For now, return a simplified action space with single actions
+    # This can be expanded to include multiple simultaneous actions
+    acts = Action[]
+    
+    # Do nothing action (no site=0, just all zeros)
+    push!(acts, Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0]))
+
+    # Single site actions
+    for site in 1:P.n_deposits
+        # Explore
+        site_vec = zeros(Int, 4)
+        type_vec = zeros(Int, 4)
+        site_vec[site] = site
+        type_vec[site] = 1
+        push!(acts, Action(site=site_vec, type=type_vec))
+        
+        # Open mine
+        site_vec = zeros(Int, 4)
+        type_vec = zeros(Int, 4)
+        site_vec[site] = site
+        type_vec[site] = 2
+        push!(acts, Action(site=site_vec, type=type_vec))
+        
+        # Restore mine
+        site_vec = zeros(Int, 4)
+        type_vec = zeros(Int, 4)
+        site_vec[site] = site
+        type_vec[site] = 3
+        push!(acts, Action(site=site_vec, type=type_vec))
+    end
+    
+    # Could add combined actions here if needed
+    return acts
+end
+
+
+
+# Stateful action generator
+function POMDPs.actions(P::LiPOMDP, s::State)
+    acts = Action[]
+    
+    # Do nothing action (no site=0, just all zeros)
+    push!(acts, Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0]))
+    
+    # Single site actions based on state
+    for site in 1:P.n_deposits
+        if !s.have_opened[site] && !s.is_depleted[site] && !s.restored_mines[site]
+            # Site is unopened and not depleted - can explore or open
+            site_vec = zeros(Int, 4)
+            type_vec = zeros(Int, 4)
+            site_vec[site] = site
+            type_vec[site] = 1  # Explore
+            push!(acts, Action(site=site_vec, type=type_vec))
+            
+            site_vec = zeros(Int, 4)
+            type_vec = zeros(Int, 4)
+            site_vec[site] = site
+            type_vec[site] = 2  # Open
+            push!(acts, Action(site=site_vec, type=type_vec))
+            
+        elseif s.have_opened[site] && !s.is_depleted[site] && !s.restored_mines[site]
+            # Site is opened but not depleted - no actions available (mines operate automatically)
+            # Do nothing - mines produce automatically
+            
+        elseif s.have_opened[site] && s.is_depleted[site] && !s.restored_mines[site]
+            # Site is opened and depleted - MUST restore
+            site_vec = zeros(Int, 4)
+            type_vec = zeros(Int, 4)
+            site_vec[site] = site
+            type_vec[site] = 3  # Restore
+            push!(acts, Action(site=site_vec, type=type_vec))
+            
+        elseif s.restored_mines[site]
+            # Site has been restored - no further actions available
+            # Do nothing - restored mines cannot be reopened
+        end
+    end
+    
+    return acts
+end
+
+
+# Actions for beliefs (same logic as states)
+function POMDPs.actions(P::LiPOMDP, b::LiBelief)
+    s = rand(b)  # Sample a representative state from the belief
+    actions = POMDPs.actions(P, s)  
+
+    return actions
+end
+    
+
+function POMDPs.actionindex(P::LiPOMDP, a::Action)
+    # Simple indexing for single-action vectors
+    # Do nothing action
+    if all(a.site .== 0) && all(a.type .== 0)
+        return 1
+    end
+    
+    # Find first non-zero action
+    for i in 1:length(a.site)
+        if a.site[i] > 0 && a.type[i] > 0
+            site = a.site[i]
+            type = a.type[i]
+            # 2 actions per site (explore, open)
+            return 1 + (site - 1) * 2 + type
+        end
+    end
+    
+    return 1  # Default to do nothing
+end
 
 # Helper functions for AlphaHeuristic policy
 """

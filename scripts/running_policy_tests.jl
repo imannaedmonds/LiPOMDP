@@ -8,7 +8,7 @@ using Statistics
 using Distributions
 using JSON
 using D3Trees
-using POMCPOW: POMCPOWPlanner  # so `isa POMCPOWPlanner` works
+using POMCPOW: POMCPOWPlanner, FORollout  # Import both POMCPOWPlanner and FORollout
 using POMDPTools
 
 
@@ -56,7 +56,7 @@ global POMCPOW_CONFIG = nothing
 function print_pomcpow_config()
     """Print current POMCPOW configuration dynamically."""
     if POMCPOW_CONFIG === nothing
-        println("\n🔧 POMCPOW CONFIGURATION: Not available")
+        println("\n🔧 POMCPOW CONFIGURATION: Will be available when POMCPOW policy is created")
         return
     end
     
@@ -111,7 +111,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
             # k_observation = 0.5,     # Even less observation exploration
             # alpha_observation = 0.1, # Much less observation progressive wideningng
             
-            estimate_value = 0, 
+            estimate_value = FORollout(ExploreOnlyPolicy(pomdp)),
             #estimate_value = 0,
             tree_in_info = true,
            # rng = MersenneTwister(1234)
@@ -183,7 +183,7 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
 
         for t in 1:planning_pomdp.time_horizon
              # --- choose action (+ optional tree dump for POMCPOW only) ---
-            if policy isa POMCPOWPlanner
+            if policy isa POMCPOW.POMCPOWPlanner
                 a, info = action_info(policy, b; tree_in_info=true)
 
                 # if haskey(info, :tree)
@@ -403,10 +403,7 @@ function run_simple_policy_test(
     
     # Print POMCPOW configuration if POMCPOW is in the policies
     if "POMCPOW" in policies
-        # Create a temporary POMDP and policy to initialize the configuration
-        temp_pomdp = LiPOMDP(price_model_type=planning_price_models[1], time_horizon=time_horizon, alpha=alphas[1])
-        temp_policy = create_policy("POMCPOW", temp_pomdp, alpha=alphas[1])
-        print_pomcpow_config()  # Commented out to reduce output
+        print_pomcpow_config()  # Print POMCPOW configuration
     end
     
     # Store all results
@@ -453,6 +450,11 @@ function run_simple_policy_test(
                     
                     # Create policy
                     policy = create_policy(policy_type, planning_pomdp, alpha=alpha)
+                    
+                    # Print POMCPOW configuration after first POMCPOW policy is created
+                    if policy_type == "POMCPOW" && config_count == 1
+                        print_pomcpow_config()
+                    end
                     
                     # Evaluate policy
                     results = evaluate_policy_simple(planning_pomdp, evaluation_pomdp, policy, updater, n_sims)
@@ -528,7 +530,7 @@ function run_simple_policy_test(
     
     # Print POMCPOW configuration again at the end for reference
     if "POMCPOW" in policies
-        print_pomcpow_config()  # Commented out to reduce output
+        print_pomcpow_config()  # Print POMCPOW configuration
     end
     
     return all_results, pareto_data
@@ -544,7 +546,7 @@ alphas = Float64[0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pur
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/policy_test_results_p$(planning_str)_e$(evaluation_str).txt"
+output_file = "outputs/policy_test_results_p$(planning_str)_e$(evaluation_str)_single-action-exploreonly.txt"
 
 
 results, pareto_data = run_simple_policy_test(
