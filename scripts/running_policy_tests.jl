@@ -83,8 +83,8 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
         # rollout_policy = AlphaHeuristic(pomdp, alpha, λe, top_k, debug=false)
         
         solver = POMCPOWSolver(
-            #tree_queries = 2500, #give it time to plan
-            tree_queries = 9000,
+            #tree_queries = 9000, #give it time to plan
+            tree_queries = 2500,
             max_depth = 25, #max time step you can get, planning over POMDP in the future
             criterion = MaxUCB(15.0),#increased exploration constant for high uncertainty deposits
             # Progressive widening (actions) - ENABLED for large action space
@@ -537,7 +537,7 @@ end
 # Configuration
 time_horizon = 29
 n_sims = 30
-planning_price_models = Int64[6]  # Exponential model for planning
+planning_price_models = Int64[1]  # Exponential model for planning
 evaluation_price_models = Int64[6]  # Static model for evaluation
 policies = String["DynamicProfitMaximizer", "ExploreOnly", "ProfitMaximizer", "EmissionMinimizer", "DynamicEmissionMinimizer", "POMCPOW"]
 alphas = Float64[0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pure emission minimization (1)
@@ -554,7 +554,7 @@ results, pareto_data = run_simple_policy_test(
 
 # Function to show POMCPOW actions for different alpha values
 function show_all_policies_actions_by_alpha(planning_models=[1], evaluation_models=[1], alpha_values=[0.5], policy_names=["POMCPOW"], time_horizon_val=29)
-    println("\n🎯 ALL POLICIES ACTIONS BY ALPHA VALUES")
+    println("\nALL POLICIES ACTIONS BY ALPHA VALUES")
     println("=" ^ 80)
     
     # Set random seed for reproducibility

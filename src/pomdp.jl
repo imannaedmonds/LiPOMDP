@@ -208,6 +208,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         new_price = base_price + noise
         return max(new_price, 1000.0)  # Ensure minimum price
     end
+    
     # # 4. Dynamic (Market Maker, action-dependent)
     # if P.price_model_type == 4
     #     β = P.β_action

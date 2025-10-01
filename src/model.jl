@@ -67,7 +67,7 @@ end
     LCE_per_lithium = 5.323  # 1 t Li ≈ 5.323 t LCE
 
     # FIXED: Add emission scaling factor to balance scales between emissions and profit
-    emission_scale_factor::Float64 = 6 # Scale emissions up to balance with profit scale (increased from 3.0)
+    emission_scale_factor::Float64 = 1 # Scale emissions up to balance with profit scale (increased from 3.0)
     reward_scale::Float64 = 100_000_000.0  # Manual reward scaling parameter (divide by this to normalize rewards)
 
     # Add market parameters

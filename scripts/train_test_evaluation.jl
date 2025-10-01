@@ -13,9 +13,7 @@ Key Features:
 - More realistic evaluation on unseen data
 """
 
-using Pkg
-Pkg.activate(".")
-
+using LitPOMDP
 using Random
 using Statistics
 using POMDPs
@@ -24,42 +22,37 @@ using POMCPOW
 using POMCPOW: POMCPOWPlanner  # Import POMCPOWPlanner specifically
 using D3Trees
 
-# Include necessary files
-include("src/model.jl")
-include("src/pomdp.jl")
-include("src/historical_data.jl")
-include("src/policies.jl")
-include("src/utils.jl")
-include("src/LitPOMDP.jl")
 
 # Create output directory for tree visualizations
-TREE_DIR = "tree_visualizations"
-if !isdir(TREE_DIR)
-    mkdir(TREE_DIR)
-end
+# TREE_DIR = "tree_visualizations"
+# if !isdir(TREE_DIR)
+#     mkdir(TREE_DIR)
+# end
 
-function save_tree_html(path::AbstractString, dtree::D3Trees.D3Tree)
-    open(path, "w") do io
-        show(io, MIME"text/html"(), dtree)  # writes an interactive D3 page
-    end
-end
+# function save_tree_html(path::AbstractString, dtree::D3Trees.D3Tree)
+#     open(path, "w") do io
+#         show(io, MIME"text/html"(), dtree)  # writes an interactive D3 page
+#     end
+# end
 
 # =============================================================================
 # POLICY CREATION FUNCTIONS
 # =============================================================================
 
-function create_policy(policy_type::String, pomdp::LiPOMDP)
+function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
     """Create a policy of the specified type."""
     if policy_type == "POMCPOW"
         solver = POMCPOWSolver(
-            tree_queries = 2500,
-            max_depth = 29,
+            tree_queries = 50000,
+            max_depth = 25,
             criterion = MaxUCB(15.0),
-            enable_action_pw = false, # ENABLED for large action space
-            # k_action = 5.0,          # Increased for more action exploration
-            # alpha_action = 0.5,     # Increased for more progressive widening
-            # k_observation = 3.0,    # Increased for more observation exploration
-            # alpha_observation = 0.3 # Increased for more observation progressive widening
+            enable_action_pw = true,
+            k_action = 5.0,
+            alpha_action = 0.5,
+            k_observation = 3.0,
+            alpha_observation = 0.3,
+            estimate_value = 0, 
+            tree_in_info = true,
         )
         return solve(solver, pomdp)
     elseif policy_type == "ProfitMaximizer"
@@ -74,6 +67,10 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
         return DynamicProfitMaximizerPolicy(pomdp, debug=false)
     elseif policy_type == "DynamicEmissionMinimizer"
         return DynamicEmissionMinimizerPolicy(pomdp, debug=false)
+    elseif policy_type == "AlphaHeuristic"
+        λe = pomdp.emission_scale_factor
+        top_k = 1
+        return AlphaHeuristic(pomdp, alpha, λe, top_k, debug=false)
     else
         error("Unknown policy type: $policy_type")
     end
@@ -135,11 +132,11 @@ function evaluate_policy_train_test_split(planning_pomdp::LiPOMDP, evaluation_po
             if policy isa POMCPOWPlanner
                 a, info = action_info(policy, b; tree_in_info=true)
                 
-                if haskey(info, :tree)
-                    dtree = D3Trees.D3Tree(info[:tree])
-                    fname = joinpath(TREE_DIR, "train_tree_a$(round(planning_pomdp.alpha, digits=2))_sim$(i)_t$(t).html")
-                    save_tree_html(fname, dtree)
-                end
+                # if haskey(info, :tree)
+                #     dtree = D3Trees.D3Tree(info[:tree])
+                #     fname = joinpath(TREE_DIR, "train_tree_a$(round(planning_pomdp.alpha, digits=2))_sim$(i)_t$(t).html")
+                #     save_tree_html(fname, dtree)
+                # end
             else
                 a = action(policy, b)
             end
@@ -214,11 +211,11 @@ function evaluate_policy_train_test_split(planning_pomdp::LiPOMDP, evaluation_po
             if policy isa POMCPOWPlanner
                 a, info = action_info(policy, b; tree_in_info=true)
                 
-                if haskey(info, :tree)
-                    dtree = D3Trees.D3Tree(info[:tree])
-                    fname = joinpath(TREE_DIR, "test_tree_a$(round(planning_pomdp.alpha, digits=2))_sim$(i)_t$(t).html")
-                    save_tree_html(fname, dtree)
-                end
+                # if haskey(info, :tree)
+                #     dtree = D3Trees.D3Tree(info[:tree])
+                #     fname = joinpath(TREE_DIR, "test_tree_a$(round(planning_pomdp.alpha, digits=2))_sim$(i)_t$(t).html")
+                #     save_tree_html(fname, dtree)
+                # end
             else
                 a = action(policy, b)
             end
@@ -287,8 +284,8 @@ function run_train_test_evaluation(
     evaluation_price_models::Vector{Int64}, 
     alphas::Vector{Float64};
     time_horizon::Int64 = 29,
-    n_train_sims::Int64 = 20,  # Training simulations
-    n_test_sims::Int64 = 10,   # Testing simulations
+    n_train_sims::Int64 = 25,  # Training simulations
+    n_test_sims::Int64 = 25,   # Testing simulations
     output_file::String = "train_test_evaluation_results.txt"
 )
     """Run policy evaluation with proper train/test split to avoid overfitting."""
@@ -341,7 +338,7 @@ function run_train_test_evaluation(
                     updater = LiBeliefUpdater(P=evaluation_pomdp)
                     
                     # Create policy
-                    policy = create_policy(policy_type, planning_pomdp)
+                    policy = create_policy(policy_type, planning_pomdp, alpha=alpha)
                     
                     # Evaluate policy with train/test split
                     results = evaluate_policy_train_test_split(planning_pomdp, evaluation_pomdp, policy, updater, n_train_sims, n_test_sims)
@@ -445,38 +442,44 @@ end
 # EXAMPLE USAGE
 # =============================================================================
 
-if abspath(PROGRAM_FILE) == @__FILE__
-    println("🧪 TRAIN/TEST SPLIT EVALUATION EXAMPLE")
-    println("="^60)
-    
-    # Example configuration
-    policies = ["POMCPOW", "ProfitMaximizer", "EmissionMinimizer"]
-    planning_price_models = [1]  # Static price model for planning
-    evaluation_price_models = [1]  # Static price model for evaluation  
-    alphas = [0.0, 0.5, 1.0]
-    time_horizon = 15  # Shorter for example
-    n_train_sims = 10  # Training simulations
-    n_test_sims = 5    # Testing simulations
-    
-    println("Running example evaluation...")
-    println("Policies: $policies")
-    println("Alpha values: $alphas")
-    println("Train/Test split: $n_train_sims/$n_test_sims")
-    println()
-    
-    # Run the evaluation
-    results = run_train_test_evaluation(
-        policies, planning_price_models, evaluation_price_models, alphas,
-        time_horizon=time_horizon, 
-        n_train_sims=n_train_sims, 
-        n_test_sims=n_test_sims,
-        output_file="example_train_test_results.txt"
-    )
-    
-    println("\n🎯 KEY BENEFITS:")
-    println("1. Different random seeds prevent overfitting to specific scenarios")
-    println("2. Separate training and testing phases")
-    println("3. Overfitting detection and analysis")
-    println("4. More realistic evaluation on unseen data")
-    println("5. Better policy generalization assessment")
-end
+# Automatically run when script is included or executed
+println("🧪 TRAIN/TEST SPLIT EVALUATION")
+println("="^60)
+
+# Configuration
+policies = ["POMCPOW", "DynamicProfitMaximizer", "ExploreOnly", "ProfitMaximizer", "EmissionMinimizer", "DynamicEmissionMinimizer"]
+planning_price_models = [1]  # Static, Linear, Exponential, Historical
+evaluation_price_models = [6]  # Historical price model for evaluation
+alphas = [0.25, 0.5, 0.75, 1.0]
+time_horizon = 29  # Full time horizon
+n_train_sims = 25  # Training simulations
+n_test_sims = 25   # Testing simulations
+
+println("Running train/test evaluation...")
+println("Policies: $policies")
+println("Planning models: $planning_price_models")
+println("Evaluation models: $evaluation_price_models")
+println("Alpha values: $alphas")
+println("Train/Test split: $n_train_sims/$n_test_sims")
+println()
+
+# Create dynamic output filename based on planning and evaluation models
+planning_str = join(planning_price_models, "_")
+evaluation_str = join(evaluation_price_models, "_")
+output_file = "outputs/train_test_results_p$(planning_str)_e$(evaluation_str)_50,000TQ.txt"
+
+# Run the evaluation
+results = run_train_test_evaluation(
+    policies, planning_price_models, evaluation_price_models, alphas,
+    time_horizon=time_horizon, 
+    n_train_sims=n_train_sims, 
+    n_test_sims=n_test_sims,
+    output_file=output_file
+)
+
+println("\n🎯 KEY BENEFITS:")
+println("1. Different random seeds prevent overfitting to specific scenarios")
+println("2. Separate training and testing phases")
+println("3. Overfitting detection and analysis")
+println("4. More realistic evaluation on unseen data")
+println("5. Better policy generalization assessment")
