@@ -61,19 +61,19 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
             # k_observation = 3.0,    # Increased for more observation exploration
             # alpha_observation = 0.3 # Increased for more observation progressive widening
         )
-        return POMCPOWPlanner(solver, pomdp)
+        return solve(solver, pomdp)
     elseif policy_type == "ProfitMaximizer"
-        return ProfitMaximizerPolicy(pomdp)
+        return ProfitMaximizerPolicy(pomdp, top_k=1, times=[1])
     elseif policy_type == "EmissionMinimizer"
-        return EmissionMinimizerPolicy(pomdp)
+        return EmissionMinimizerPolicy(pomdp, top_k=1, times=[1])
     elseif policy_type == "ExploreOnly"
         return ExploreOnlyPolicy(pomdp)
     elseif policy_type == "Random"
-        return RandomPolicy(pomdp)
+        return RandomHeuristicPolicy(pomdp, debug=false)
     elseif policy_type == "DynamicProfitMaximizer"
-        return DynamicProfitMaximizerPolicy(pomdp)
+        return DynamicProfitMaximizerPolicy(pomdp, debug=false)
     elseif policy_type == "DynamicEmissionMinimizer"
-        return DynamicEmissionMinimizerPolicy(pomdp)
+        return DynamicEmissionMinimizerPolicy(pomdp, debug=false)
     else
         error("Unknown policy type: $policy_type")
     end

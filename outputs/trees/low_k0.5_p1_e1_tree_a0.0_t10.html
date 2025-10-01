@@ -1,0 +1,467 @@
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>POMCPOW Tree</title>
+    </head>
+    <body>
+    <div id="treevisEffl2NPj">
+    <style>
+        
+:root {
+  --background-color: white;
+  --text-color: black;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: black;
+    --text-color: white;
+  }
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.node {
+    cursor: pointer;
+}
+
+.node circle {
+	  fill: #fff;
+	  stroke: steelblue;
+	  stroke-width: 3px;
+      r: 10;
+}
+
+.node rect {
+	  fill: #fff;
+	  stroke: steelblue;
+	  stroke-width: 3px;
+      x: -10;
+      y: -10;
+      width: 20;
+      height: 20;
+}
+
+.node path {
+    fill: #ffffff;
+    /* stroke: steelblue; */
+    stroke-width: 2px;
+}
+.node text {
+    font-family: Arial, Helvetica, sans-serif;
+    font-style: normal;
+    font-size: 12px;
+}
+.link /* path */ {
+    fill: none;
+    stroke: #cccccc;
+    stroke-width: 2px;
+}
+.link text {
+    font-family: Arial, Helvetica, sans-serif;
+    font-style: normal;
+    font-size: 12px;
+}
+.hover text{
+    font-family: Arial, Helvetica, sans-serif;
+    font-style: normal;
+    font-size: 12px;
+}
+
+/*
+.svg-container {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    vertical-align: top;
+    overflow: hidden;
+}
+.svg-content-responsive {
+    display: inline-block;
+    position: absolute;
+    top: 10px;
+    left: 0;
+}
+*/
+
+    </style>
+    <script>
+    (function(){
+        var treeData = {"children":[[21],[22],[23],[24],[25],[26],[27],[28],[29],[30],[31],[32],[33],[34],[35],[36],[37],[38],[39],[40],[],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20]],"tooltip":["o: <root>\nN: 1000\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [15529.81528701221, 23525.902275111715, 93144.26870487953, 105057.70524304264]\n  observed_price: Float64 11016.644207344327\n  observed_demand: Float64 13336.380949890214\n\nN: 999\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [11695.67604420429, 16186.145551498674, 99629.41318082498, 106342.83868816882]\n  observed_price: Float64 9224.622618274872\n  observed_demand: Float64 15140.98701951841\n\nN: 998\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [2844.390552217965, 20690.075927144404, 88042.22238806658, 103266.07088129192]\n  observed_price: Float64 9795.718649377335\n  observed_demand: Float64 18026.653748293273\n\nN: 997\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [2530.733832118009, 25938.867862684496, 94525.06962111109, 106445.14639085747]\n  observed_price: Float64 11079.757244325901\n  observed_demand: Float64 21545.80082452185\n\nN: 996\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 18082.72730822811, 86787.43075800971, 99025.03604841729]\n  observed_price: Float64 10052.684160817436\n  observed_demand: Float64 23000.565171813847\n\nN: 995\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 15884.633601648853, 80712.98353393919, 99194.96780471638]\n  observed_price: Float64 10819.143767427153\n  observed_demand: Float64 29070.63104034649\n\nN: 994\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 7659.76705889613, 89461.76930517277, 103618.63828514205]\n  observed_price: Float64 9273.43971165869\n  observed_demand: Float64 25615.886648829044\n\nN: 993\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [8402.743658362075, 11052.731393257698, 87650.4899820615, 109744.15178600495]\n  observed_price: Float64 10936.866769575274\n  observed_demand: Float64 23252.2960315934\n\nN: 992\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [9563.745760921676, 0.0, 78091.02071418108, 113708.4507201562]\n  observed_price: Float64 9841.11335740881\n  observed_demand: Float64 22992.895290250697\n\nN: 991\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 4506.268189094032, 78808.56668580095, 100285.65672876796]\n  observed_price: Float64 9369.625123164671\n  observed_demand: Float64 23174.265893249463\n\nN: 990\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 1203.7567804834682, 61675.69484096398, 103267.73296807821]\n  observed_price: Float64 10218.763611824876\n  observed_demand: Float64 19406.125189093098\n\nN: 989\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 69317.91697130917, 101253.45318241077]\n  observed_price: Float64 9249.725438630023\n  observed_demand: Float64 22098.817478341956\n\nN: 988\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [647.9434542264551, 11824.643922990688, 76756.15217515493, 90184.05751835732]\n  observed_price: Float64 10989.04298642025\n  observed_demand: Float64 26361.616773873404\n\nN: 987\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [3480.4407652301115, 186.7416153963275, 61021.358323628476, 87220.70194981148]\n  observed_price: Float64 9447.489350906093\n  observed_demand: Float64 29696.700107119148\n\nN: 986\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [6582.104065782507, 0.0, 64267.4256129059, 87550.54561506762]\n  observed_price: Float64 11585.111757828094\n  observed_demand: Float64 31051.30948423032\n\nN: 985\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 55514.10372376109, 87119.40816728272]\n  observed_price: Float64 11024.6292231906\n  observed_demand: Float64 37074.24519716221\n\nN: 984\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [2166.2733045627356, 5645.700441220324, 51490.83286768634, 71990.58712234398]\n  observed_price: Float64 10259.693011548985\n  observed_demand: Float64 40171.168598741846\n\nN: 983\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [1054.4571804701834, 0.0, 50101.35781216176, 81337.33912715722]\n  observed_price: Float64 10243.539739648155\n  observed_demand: Float64 47310.160276394316\n\nN: 982\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [1968.9765763506878, 256.75126376197534, 47766.30047734493, 73375.64311960188]\n  observed_price: Float64 10086.87636341508\n  observed_demand: Float64 57555.35907314949\n\nN: 981\n1 children\n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 191.80644717074222, 45563.57667782046, 62578.47946913527]\n  observed_price: Float64 10380.267143526007\n  observed_demand: Float64 65120.32974689574\n\nN: 0\n0 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [0, 0, 0, 0]\n\nN: 1000\nV: -22.804913610863213\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 1, 3, 0]\n\nN: 999\nV: -23.21756070584561\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [0, 0, 0, 1]\n\nN: 998\nV: -23.381802733502784\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [2, 3, 0, 3]\n\nN: 997\nV: -23.47283560154278\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 3, 3, 3]\n\nN: 996\nV: -23.442527333781605\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [0, 3, 3, 3]\n\nN: 995\nV: -23.23745740199862\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [1, 1, 2, 0]\n\nN: 994\nV: -22.53484110820395\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 2, 1, 0]\n\nN: 993\nV: -21.24545481297671\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 3, 0, 2]\n\nN: 992\nV: -20.237152859692337\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 3, 3, 1]\n\nN: 991\nV: -19.414610321823318\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 3, 0, 0]\n\nN: 990\nV: -18.30209896860227\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [2, 1, 3, 1]\n\nN: 989\nV: -16.738371891565098\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [1, 2, 2, 3]\n\nN: 988\nV: -15.469914418394474\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 1, 0, 1]\n\nN: 987\nV: -13.911615277859795\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [2, 1, 3, 2]\n\nN: 986\nV: -12.106867131331034\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [0, 2, 1, 2]\n\nN: 985\nV: -10.244425586364963\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [0, 0, 1, 3]\n\nN: 984\nV: -8.32244205228971\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [1, 0, 3, 3]\n\nN: 983\nV: -6.3390086306940505\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [0, 2, 0, 3]\n\nN: 982\nV: -4.292156210208759\n1 children\n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [2, 0, 2, 0]\n\nN: 981\nV: -2.1798525\n1 children\n"],"link_style":["stroke-width:20.0","stroke-width:19.98999749874922","stroke-width:19.979989989987484","stroke-width:19.969977466186585","stroke-width:19.959959919799438","stroke-width:19.949937343260004","stroke-width:19.939909728983228","stroke-width:19.929877069364977","stroke-width:19.91983935678197","stroke-width:19.909796583591707","stroke-width:19.8997487421324","stroke-width:19.88969582472291","stroke-width:19.879637823662684","stroke-width:19.869574731231666","stroke-width:19.859506539690255","stroke-width:19.849433241279208","stroke-width:19.83935482821959","stroke-width:19.8292712927127","stroke-width:19.81918262693999","stroke-width:19.809088823063014","stroke-width:1.0","stroke-width:20.0","stroke-width:19.98999749874922","stroke-width:19.979989989987484","stroke-width:19.969977466186585","stroke-width:19.959959919799438","stroke-width:19.949937343260004","stroke-width:19.939909728983228","stroke-width:19.929877069364977","stroke-width:19.91983935678197","stroke-width:19.909796583591707","stroke-width:19.8997487421324","stroke-width:19.88969582472291","stroke-width:19.879637823662684","stroke-width:19.869574731231666","stroke-width:19.859506539690255","stroke-width:19.849433241279208","stroke-width:19.83935482821959","stroke-width:19.8292712927127","stroke-width:19.81918262693999","stroke-width:19.809088823063014"],"title":"POMCPOW Tree","unexpanded_children":[],"text":["o: <root>\nN: 1000      \n","o: Observation\n  deposits: Array{Float64}((4,)) [15529.81528701221, 23525.902275111715, 93144.26870487953, 105057.70524304264]\n  observed_price: Float64 11016.644207344327\n  observed_demand: Float64 13336.380949890214\n\nN: 999       \n","o: Observation\n  deposits: Array{Float64}((4,)) [11695.67604420429, 16186.145551498674, 99629.41318082498, 106342.83868816882]\n  observed_price: Float64 9224.622618274872\n  observed_demand: Float64 15140.98701951841\n\nN: 998       \n","o: Observation\n  deposits: Array{Float64}((4,)) [2844.390552217965, 20690.075927144404, 88042.22238806658, 103266.07088129192]\n  observed_price: Float64 9795.718649377335\n  observed_demand: Float64 18026.653748293273\n\nN: 997       \n","o: Observation\n  deposits: Array{Float64}((4,)) [2530.733832118009, 25938.867862684496, 94525.06962111109, 106445.14639085747]\n  observed_price: Float64 11079.757244325901\n  observed_demand: Float64 21545.80082452185\n\nN: 996       \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 18082.72730822811, 86787.43075800971, 99025.03604841729]\n  observed_price: Float64 10052.684160817436\n  observed_demand: Float64 23000.565171813847\n\nN: 995       \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 15884.633601648853, 80712.98353393919, 99194.96780471638]\n  observed_price: Float64 10819.143767427153\n  observed_demand: Float64 29070.63104034649\n\nN: 994       \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 7659.76705889613, 89461.76930517277, 103618.63828514205]\n  observed_price: Float64 9273.43971165869\n  observed_demand: Float64 25615.886648829044\n\nN: 993       \n","o: Observation\n  deposits: Array{Float64}((4,)) [8402.743658362075, 11052.731393257698, 87650.4899820615, 109744.15178600495]\n  observed_price: Float64 10936.866769575274\n  observed_demand: Float64 23252.2960315934\n\nN: 992       \n","o: Observation\n  deposits: Array{Float64}((4,)) [9563.745760921676, 0.0, 78091.02071418108, 113708.4507201562]\n  observed_price: Float64 9841.11335740881\n  observed_demand: Float64 22992.895290250697\n\nN: 991       \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 4506.268189094032, 78808.56668580095, 100285.65672876796]\n  observed_price: Float64 9369.625123164671\n  observed_demand: Float64 23174.265893249463\n\nN: 990       \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 1203.7567804834682, 61675.69484096398, 103267.73296807821]\n  observed_price: Float64 10218.763611824876\n  observed_demand: Float64 19406.125189093098\n\nN: 989       \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 69317.91697130917, 101253.45318241077]\n  observed_price: Float64 9249.725438630023\n  observed_demand: Float64 22098.817478341956\n\nN: 988       \n","o: Observation\n  deposits: Array{Float64}((4,)) [647.9434542264551, 11824.643922990688, 76756.15217515493, 90184.05751835732]\n  observed_price: Float64 10989.04298642025\n  observed_demand: Float64 26361.616773873404\n\nN: 987       \n","o: Observation\n  deposits: Array{Float64}((4,)) [3480.4407652301115, 186.7416153963275, 61021.358323628476, 87220.70194981148]\n  observed_price: Float64 9447.489350906093\n  observed_demand: Float64 29696.700107119148\n\nN: 986       \n","o: Observation\n  deposits: Array{Float64}((4,)) [6582.104065782507, 0.0, 64267.4256129059, 87550.54561506762]\n  observed_price: Float64 11585.111757828094\n  observed_demand: Float64 31051.30948423032\n\nN: 985       \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 0.0, 55514.10372376109, 87119.40816728272]\n  observed_price: Float64 11024.6292231906\n  observed_demand: Float64 37074.24519716221\n\nN: 984       \n","o: Observation\n  deposits: Array{Float64}((4,)) [2166.2733045627356, 5645.700441220324, 51490.83286768634, 71990.58712234398]\n  observed_price: Float64 10259.693011548985\n  observed_demand: Float64 40171.168598741846\n\nN: 983       \n","o: Observation\n  deposits: Array{Float64}((4,)) [1054.4571804701834, 0.0, 50101.35781216176, 81337.33912715722]\n  observed_price: Float64 10243.539739648155\n  observed_demand: Float64 47310.160276394316\n\nN: 982       \n","o: Observation\n  deposits: Array{Float64}((4,)) [1968.9765763506878, 256.75126376197534, 47766.30047734493, 73375.64311960188]\n  observed_price: Float64 10086.87636341508\n  observed_demand: Float64 57555.35907314949\n\nN: 981       \n","o: Observation\n  deposits: Array{Float64}((4,)) [0.0, 191.80644717074222, 45563.57667782046, 62578.47946913527]\n  observed_price: Float64 10380.267143526007\n  observed_demand: Float64 65120.32974689574\n\nN: 0         \n","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [0, 0, 0, 0]\n\nN: 1000    V: -22.8     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 1, 3, 0]\n\nN: 999     V: -23.2     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [0, 0, 0, 1]\n\nN: 998     V: -23.4     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [2, 3, 0, 3]\n\nN: 997     V: -23.5     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 3, 3, 3]\n\nN: 996     V: -23.4     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [0, 3, 3, 3]\n\nN: 995     V: -23.2     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [1, 1, 2, 0]\n\nN: 994     V: -22.5     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 2, 1, 0]\n\nN: 993     V: -21.2     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 3, 0, 2]\n\nN: 992     V: -20.2     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 3, 3, 1]\n\nN: 991     V: -19.4     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 3, 0, 0]\n\nN: 990     V: -18.3     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [2, 1, 3, 1]\n\nN: 989     V: -16.7     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [1, 2, 2, 3]\n\nN: 988     V: -15.5     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [3, 1, 0, 1]\n\nN: 987     V: -13.9     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [2, 1, 3, 2]\n\nN: 986     V: -12.1     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [0, 2, 1, 2]\n\nN: 985     V: -10.2     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [0, 0, 1, 3]\n\nN: 984     V: -8.32     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [1, 0, 3, 3]\n\nN: 983     V: -6.34     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [0, 2, 0, 3]\n\nN: 982     V: -4.29     ","a: Action\n  site: Array{Int64}((4,)) [1, 2, 3, 4]\n  type: Array{Int64}((4,)) [2, 0, 2, 0]\n\nN: 981     V: -2.18     "],"style":["","","","","","","","","","","","","","","","","","","","","","stroke:#F70400","stroke:#FC0200","stroke:#FE0100","stroke:#FF0000","stroke:#FF0000","stroke:#FC0100","stroke:#F40600","stroke:#E40D00","stroke:#D81300","stroke:#CE1800","stroke:#C11F00","stroke:#AE2800","stroke:#9F3000","stroke:#8C3900","stroke:#774400","stroke:#615000","stroke:#4A5B00","stroke:#326700","stroke:#197300","stroke:#008000"]};
+        var rootID = 1-1;
+        var div = "treevisEffl2NPj";
+        var initExpand = 0;
+        var initDuration = 750;
+        var svgHeight = 600;
+        var svgNodeSize = [60, 60];
+        var on_click_display_depth = 1;
+        var tree_url = "";
+        if (typeof $ === 'undefined') {
+    loadScript("https://code.jquery.com/jquery-3.1.1.min.js", run);
+} else {
+    run();
+}
+
+function run() {
+    if (typeof d3 === 'undefined') {
+        loadScript("https://d3js.org/d3.v3.js", showTree);
+    } else {
+        showTree();
+    }
+}
+
+function loadScript(url, callback)
+{
+    console.log("starting script load...")
+    // Adding the script tag to the head as suggested before
+    var head = document.getElementsByTagName('head')[0];
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = url;
+
+    // Then bind the event to the callback function.
+    // There are several events for cross browser compatibility.
+    script.onreadystatechange = callback;
+    script.onload = callback;
+
+    // Fire the loading
+    head.appendChild(script);
+}
+
+// ======== Fetching subtree data
+async function fetchSubtree(dataID){
+    console.log({msg:"Sending request to D3Trees.jl server", dataID:dataID});
+
+    return  fetch(tree_url+div+"/"+(dataID+1), {
+        method: 'GET',
+      }).then(function(response){
+        console.log({msg:"Got response from D3Trees.jl server", dataID:dataID, response:response})
+        return response
+       })
+      .then(response => response.json());
+}
+
+function addSubTreeData(subtree){
+    treeData.unexpanded_children.delete(subtree.root_id);
+
+    treeData.children[subtree.root_id]=subtree.root_children;
+    treeData.children.push(...(subtree.children));
+    treeData.unexpanded_children = new Set([...treeData.unexpanded_children, ...subtree.unexpanded_children]);
+    treeData.text.push(...subtree.text);
+    treeData.tooltip.push(...subtree.tooltip);
+    treeData.style.push(...subtree.style);
+    treeData.link_style.push(...subtree.link_style);
+}
+
+// ==== Showing trees ====
+function showTree() {
+    treeData.unexpanded_children = new Set(treeData.unexpanded_children);
+        
+    // var margin = {top: 20, right: 120, bottom: 20, left: 120},
+    var margin = {top: 20, right: 120, bottom: 80, left: 120},
+        width = $("#"+div).width() - margin.right - margin.left,
+        height = svgHeight - margin.top - margin.bottom;
+        // TODO make height a parameter of TreeVisualizer
+
+    var i = 0,
+        root;
+
+    var tree = d3.layout.tree()
+        .nodeSize(svgNodeSize); // For fixed spacing between nodes, see https://stackoverflow.com/questions/17558649/d3-tree-layout-separation-between-nodes-using-nodesize
+        // .size([width, height]); // For dynamic spacing between nodes. Using this option adjusts the length of the edges to fit pre-fixed svg area.
+
+    var diagonal = d3.svg.diagonal();
+        //.projection(function(d) { return [d.y, d.x]; });
+        // uncomment above to make the tree go horizontally
+
+    // see http://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js
+    if (d3.select("#"+div+"_svg").empty()) {
+        $(".d3twarn").remove();
+        d3.select("#"+div).append("svg")
+            .attr("id", div+"_svg")
+            .attr("width", width + margin.right + margin.left)
+            .attr("height", height + margin.top + margin.bottom);
+    }
+
+    d3.select("#"+div+"_svg").selectAll("*").remove();
+
+    let root_position = [(width+margin.left+margin.right)/2,margin.top] // where in the drawarea to show root
+
+    var svg = d3.select("#"+div+"_svg")
+        // .append("svg:svg")
+        // .attr("class", "svg_container")
+        // .attr("width", width)
+        // .attr("height", height)
+        // .style("overflow", "scroll")
+        .append("svg:g")
+        .attr("class", "drawarea")
+        // .append("svg:g")
+        .attr("transform", "translate(" + root_position + ")");
+
+    // Enables zoom and pan
+    d3.select("#"+div+"_svg")
+        .call(d3.behavior.zoom()
+            .translate(root_position) // initial pan from the position of the root
+        // .scaleExtent([0.5, 5])
+        .on("zoom", zoom))
+        .on("dblclick.zoom", null) 
+
+    // console.log("tree data:");
+    // console.log(treeData[rootID]);
+    root = createDisplayNode(rootID, initExpand);
+    root.x0 = width / 2;
+    root.y0 = 0;
+
+    update(root, initDuration);
+    console.log("tree should appear");
+
+    function createDisplayNode(id, expandLevel) {
+      var dnode = {"dataID":id,
+                   "children": null,
+                   "_children":null};
+      if (expandLevel > 0) {
+        initializeChildren(dnode, expandLevel);
+      }
+      return dnode;
+    }
+
+    function initializeChildren(d, expandLevel) {
+      // create children
+      var children = treeData.children[d.dataID];
+      d.children = [];
+      if (children) {
+        for (var i = 0; i < children.length; i++) {
+          var cid = children[i];
+          d.children.push(createDisplayNode(cid, expandLevel-1));
+        }
+      }
+    }
+
+    /**
+     * Recursively called to update each node in the tree.
+     * 
+     * source is a d3 node that has position, etc.
+    */
+    function update(source, duration) {
+
+    //   width = $("#"+div).width() - margin.right - margin.left,
+    //   height = $("#"+div).height() - margin.top - margin.bottom;
+
+    // //   tree.size([width,height]);
+    //   d3.select("#"+div).attr("width", width + margin.right + margin.left)
+    //         .attr("height", height + margin.top + margin.bottom);
+    //   d3.select("#"+div+"_svg").attr("width", width + margin.right + margin.left)
+    //          .attr("height", height + margin.top + margin.bottom);
+
+
+      // Compute the new tree layout.
+      var nodes = tree.nodes(root).reverse(),
+          links = tree.links(nodes);
+
+
+      // Update the nodes…
+      var node = svg.selectAll("g.node")
+          .data(nodes, function(d) { return d.id || (d.id = ++i); });
+
+      // Enter any new nodes at the parent's previous position.
+      var timeout = null;
+      var double_click_timeout=300
+      var nodeEnter = node.enter().append("g")
+          .attr("class", "node")
+          .attr("transform", function(d) { return "translate(" + source.x0 + "," + source.y0 + ")"; })
+          .on("click", function(d){ 
+            clearTimeout(timeout);
+            timeout = setTimeout(function(d) {
+                click(d);}, double_click_timeout, d)
+            })
+          .on("dblclick", function(d){ 
+            clearTimeout(timeout);
+            dblclick(d);
+            })
+
+      nodeEnter.append("circle")
+          .attr("r", "10px")
+          .attr("style", function(d) { return treeData.style[d.dataID]; } )
+
+      var tbox = nodeEnter.append("text")
+          .attr("y", 25)
+          .attr("text-anchor", "middle")
+          //.text( function(d) { return treeData.text[d.dataID]; } )
+          .style("fill-opacity", 1e-6);
+
+      tbox.each( function(d) {
+          var el = d3.select(this)
+          var text = treeData.text[d.dataID];
+          //=== Debug helper - display visualization data ID as part of message
+          //   text = '=' + d.dataID + '= ' + text;
+          //===
+          var lines = text.split('\n');
+          for (var i = 0; i < lines.length; i++) {
+              var tspan = el.append("tspan").text(lines[i]);
+              if (i > 0) {
+                  tspan.attr("x", 0).attr("dy", "1.2em");
+              }
+          }
+      });
+
+      //tooltip
+      nodeEnter.append("title").text( function(d) { return treeData.tooltip[d.dataID];} );
+
+      // Transition nodes to their new position.
+      var nodeUpdate = node.transition()
+          .duration(duration)
+          .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+      nodeUpdate.select("text")
+          .style("fill-opacity", 1);
+
+      // Transition exiting nodes to the parent's new position.
+      var nodeExit = node.exit().transition()
+          .duration(duration)
+          .attr("transform", function(d) { return "translate(" + source.x + "," + source.y + ")"; })
+          .remove();
+
+      nodeExit.select("text")
+          .style("fill-opacity", 1e-6);
+
+      // Update the links…
+      var link = svg.selectAll("path.link")
+          .data(links, function(d) { return d.target.id; });
+
+      // Enter any new links at the parent's previous position.
+      // XXX link width should be based on transition data, not node data
+      link.enter().insert("path", "g")
+          .attr("class", "link")
+          .attr("style", function(d) {
+              var ls = treeData.link_style[d.target.dataID];
+              return ls;
+          } )
+          .attr("d", function(d) {
+            var o = {x: source.x0, y: source.y0};
+            return diagonal({source: o, target: o});
+          });
+
+      // Transition links to their new position.
+      link.transition()
+          .duration(duration)
+          .attr("d", diagonal);
+
+      // Transition exiting nodes to the parent's new position.
+      link.exit().transition()
+          .duration(duration)
+          .attr("d", function(d) {
+            var o = {x: source.x, y: source.y};
+            return diagonal({source: o, target: o});
+          })
+          .remove();
+
+      // Stash the old positions for transition.
+      nodes.forEach(function(d) {
+        d.x0 = d.x;
+        d.y0 = d.y;
+      });
+    }
+
+    function hide_children(d){
+        d._children = d.children;
+        d.children = null;
+        update(d, 750);
+    }
+
+    async function display_children(d){
+        if (d._children) {
+            d.children = d._children;
+            d._children = null;
+            update(d, 750);
+        } else if(treeData.unexpanded_children.has(d.dataID)) {
+            console.log("Fetching subtrees!")
+            await fetchSubtree(d.dataID)
+            .then(subtree => addSubTreeData(subtree))
+            .then(() => initializeChildren(d, 1));
+            update(d, 750);
+        } else {
+            initializeChildren(d, 1);
+            update(d, 750);
+        }
+    }
+
+    async function display_nested_children(d, display_depth){
+        let depth = 1;
+        let expanding=null;
+        let to_expand=[d];
+        while(depth<=display_depth){
+            expanding=to_expand;
+            to_expand=[];
+            while(expanding.length>0){
+                let n = expanding.pop();
+                await display_children(n)
+                if(n.children && n.children.length>0){
+                    to_expand.push(...n.children);
+                }
+            }
+            depth++;
+        }
+    }
+
+    async function click(d) {
+        if (d.children) {
+            hide_children(d)
+        } else {
+            if(on_click_display_depth==1){
+                display_children(d)
+            } else{
+                await display_nested_children(d, on_click_display_depth)
+            }
+        }
+    }
+
+    async function dblclick(d){
+        if (d.children) {
+            hide_children(d)
+        } else {
+            if(on_click_display_depth==1){
+                await display_nested_children(d, 2)
+            } else{
+                display_children(d)
+            }
+        }
+    }
+
+    // Allows zoom and pan, see https://stackoverflow.com/questions/17405638/d3-js-zooming-and-panning-a-collapsible-tree-diagram
+    function zoom() {
+        console.log("zoom")
+        var scale = d3.event.scale,
+          translation = d3.event.translate,
+          tbound = -height * scale,
+          bbound = height * scale,
+          lbound = -(width - margin.left) * scale,
+          rbound = (width - margin.right) * scale;
+        // limit translation to thresholds
+        // translation = [
+        //   Math.max(Math.min(translation[0], rbound), lbound),
+        //   Math.max(Math.min(translation[1], bbound), tbound)
+        // ];
+        d3.select("#"+div+"_svg").select(".drawarea")
+          .attr("transform", "translate(" + translation + ")" +
+            " scale(" + scale + ")");
+      }
+
+}
+
+        })();
+    </script>
+    <p class="d3twarn">
+    Attempting to display the tree. If the tree is large, this may take some time.
+    </p>
+    <p class="d3twarn">
+    Note: D3Trees.jl requires an internet connection. If no tree appears, please check your connection. To help fix this, please see <a href="https://github.com/sisl/D3Trees.jl/issues/10">this issue</a>. You may also diagnose errors with the javascript console (Ctrl-Shift-J in chrome).
+    </p>
+    </div>
+    </body>
+    </html>
+

@@ -354,7 +354,7 @@ function POMDPs.action(policy::ExploreOnlyPolicy, s::State)
     if policy.debug
         println("  [DEBUG] All sites opened, doing nothing")
     end
-    return Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0])
+    return Action(site=[1, 2, 3, 4], type=[0, 0, 0, 0])
 end
 
 function POMDPs.action(policy::ExploreOnlyPolicy, b::LiBelief)
@@ -657,6 +657,21 @@ end
 
 DynamicEmissionMinimizerPolicy(pomdp::LiPOMDP; debug=false) = DynamicEmissionMinimizerPolicy(pomdp, debug)
 
+"""
+AlphaHeuristic - A policy that balances profit and emissions using a weighted score.
+This policy scores unopened sites by (profit - α*λe*emission) and selects the top_k sites.
+If no sites have positive scores, it explores the best single site.
+"""
+struct AlphaHeuristic <: Policy
+    P::LiPOMDP
+    α::Float64                # profit weight ∈ [0,1]
+    λe::Float64               # emission scale factor
+    top_k::Int                # open up to K sites per step (e.g., 1)
+    debug::Bool
+end
+
+AlphaHeuristic(P::LiPOMDP, α::Float64, λe::Float64, top_k::Int; debug=false) = AlphaHeuristic(P, α, λe, top_k, debug)
+
 function POMDPs.action(policy::DynamicEmissionMinimizerPolicy, s::State)
     if policy.debug
         println("\n[DEBUG] DynamicEmissionMinimizerPolicy evaluating state:")
@@ -826,4 +841,98 @@ function POMDPs.action(policy::DynamicEmissionMinimizerPolicy, b::LiBelief)
     )
     
     return POMDPs.action(policy, s)
+end
+
+function POMDPs.action(pol::AlphaHeuristic, s::State)
+    if pol.debug
+        println("\n[DEBUG] AlphaHeuristic evaluating state:")
+        println("  Time: $(s.time)")
+        println("  Price: $(round(s.price, digits=2))")
+        println("  Deposits: $(round.(s.deposit, digits=1))")
+        println("  Have opened: $(s.have_opened)")
+        println("  α: $(pol.α), λe: $(pol.λe), top_k: $(pol.top_k)")
+    end
+    
+    n = pol.P.n_deposits
+    
+    # Check for restoration opportunities first
+    types = fill(0, n)
+    for site in 1:n
+        if s.have_opened[site] && s.is_depleted[site] && !s.restored_mines[site]
+            types[site] = 3  # Restore action
+            if pol.debug
+                println("  [DEBUG] Restoring site $site: Mine is depleted and not yet restored")
+            end
+        end
+    end
+    
+    # Score unopened sites by (profit − α*λe*emission)
+    scores = Float64[]
+    sites = Int[]
+    for i in 1:n
+        if !s.have_opened[i] && s.deposit[i] > 0.1 && !s.is_depleted[i] && !s.restored_mines[i]
+            μp = expected_profit_site(pol.P, s, i)
+            μe = expected_emission_site(pol.P, s, i)
+            score = pol.α * μp - (1-pol.α) * pol.λe * μe
+            push!(scores, score)
+            push!(sites, i)
+            
+            if pol.debug
+                println("  [DEBUG] Site $i: profit=$(round(μp/1e6, digits=2))M, emission=$(round(μe, digits=1)), score=$(round(score/1e6, digits=2))M")
+            end
+        end
+    end
+
+    if !isempty(scores) && maximum(scores) > 0
+        sel = sortperm(scores, rev=true)[1:min(pol.top_k, length(scores))]
+        for j in sel
+            types[sites[j]] = 2  # 2 = OPEN
+        end
+        
+        if pol.debug
+            println("  [DEBUG] Opening sites: $(sites[sel]) with scores: $(round.(scores[sel]/1e6, digits=2))M")
+        end
+        
+        return Action(site=collect(1:n), type=types)
+    elseif !isempty(scores)
+        # Explore the best single site if opening isn't positive
+        best = argmax(scores)
+        types[sites[best]] = 1   # 1 = EXPLORE
+        
+        if pol.debug
+            println("  [DEBUG] Exploring site $(sites[best]) with score: $(round(scores[best]/1e6, digits=2))M")
+        end
+        
+        return Action(site=collect(1:n), type=types)
+    else
+        if pol.debug
+            println("  [DEBUG] No unopened sites available, doing nothing")
+        end
+        return Action(site=collect(1:n), type=types)  # NO-OP (but may include restoration actions)
+    end
+end
+
+function POMDPs.action(pol::AlphaHeuristic, b::LiBelief)
+    if pol.debug
+        println("\n[DEBUG] AlphaHeuristic evaluating belief")
+    end
+    
+    # Sample from belief distributions for consistency with other policies
+    sampled_deposits = [rand(d) for d in b.deposits_distribution]  # Sample from distributions
+    sampled_price = rand(b.price_distribution)  # Sample from distributions
+    sampled_demand = rand(b.demand_distribution)  # Sample from distributions
+    
+    # Create a representative state
+    s = State(
+        deposit = sampled_deposits,
+        time = b.time,
+        price = sampled_price,
+        company_demand = sampled_demand,
+        total_mined = b.total_mined,
+        have_opened = copy(b.have_opened),
+        is_depleted = copy(b.is_depleted),
+        restored_mines = copy(b.restored_mines)
+    )
+    
+    return POMDPs.action(pol, s)
 end

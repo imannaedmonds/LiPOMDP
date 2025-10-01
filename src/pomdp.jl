@@ -730,8 +730,7 @@ function POMDPs.actions(P::LiPOMDP)
         end
     end
 
-    #add do nothing action
-    push!(acts, Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0]))
+    # No need for special global do-nothing action - [1,2,3,4] with type=[0,0,0,0] already covers it
     return acts
 end
 
@@ -782,18 +781,15 @@ end
 
 
 function POMDPs.actionindex(P::LiPOMDP, a::Action)
-    # Do nothing action
-    if all(a.site .== 0) && all(a.type .== 0)
-        return 1
-    end
-    
     # For the new action space with all combinations
     # Each site can have action 0, 1, 2, or 3
-    # Total combinations: 4^4 = 256, plus 1 for do nothing = 257 total actions
+    # Total combinations: 4^4 = 256 actions
     
-    # Convert action combination to index
+    # Convert action combination to index using base-4 representation
     # action.type = [type1, type2, type3, type4] where each type is 0, 1, 2, or 3
-    index = 1  # Start at 1 (do nothing is index 1)
+    # Index = type1 * 4^3 + type2 * 4^2 + type3 * 4^1 + type4 * 4^0 + 1
+    
+    index = 1  # Start at 1 (Julia uses 1-based indexing)
     
     for i in 1:4
         index += a.type[i] * (4^(4-i))
@@ -920,6 +916,86 @@ end
     
 #     return 1  # Default to do nothing
 # end
+
+# Helper functions for AlphaHeuristic policy
+"""
+Calculate expected profit if opening site i now.
+Returns the expected profit over the mine's lifetime.
+"""
+function expected_profit_site(P::LiPOMDP, s::State, i::Int)
+    if s.have_opened[i] || s.deposit[i] <= 0.1 || s.is_depleted[i] || s.restored_mines[i]
+        return 0.0
+    end
+    
+    remaining_time = P.time_horizon - s.time
+    if remaining_time <= 0
+        return 0.0
+    end
+    
+    # Calculate expected production over lifetime
+    max_possible_in_situ = min(s.deposit[i], P.output * remaining_time)
+    max_possible_sellable = max_possible_in_situ * P.recovery[i] * P.LCE_per_lithium
+    
+    # Calculate realistic production considering demand constraints
+    avg_demand_per_period = s.company_demand
+    realistic_lifetime_demand = avg_demand_per_period * remaining_time
+    realistic_sellable = min(max_possible_sellable, realistic_lifetime_demand)
+    
+    # Calculate lifetime revenue using current price (simplified)
+    # In practice, you might want to use price forecasting like in other policies
+    lifetime_revenue = realistic_sellable * s.price
+    
+    # Calculate lifetime costs
+    capex = P.deposit_types[i] ? P.dle_capex : P.mining_capex
+    opex = P.deposit_types[i] ? P.dle_opex : P.mining_opex
+    lifetime_opex = opex * realistic_sellable
+    
+    # Calculate lifetime profit
+    total_profit = lifetime_revenue - lifetime_opex - capex
+    
+    return total_profit
+end
+
+"""
+Calculate expected emissions if opening site i now.
+Returns the expected emissions over the mine's lifetime.
+"""
+function expected_emission_site(P::LiPOMDP, s::State, i::Int)
+    if s.have_opened[i] || s.deposit[i] <= 0.1 || s.is_depleted[i] || s.restored_mines[i]
+        return 0.0
+    end
+    
+    remaining_time = P.time_horizon - s.time
+    if remaining_time <= 0
+        return 0.0
+    end
+    
+    # Calculate expected production over lifetime
+    max_possible_in_situ = min(s.deposit[i], P.output * remaining_time)
+    max_possible_sellable = max_possible_in_situ * P.recovery[i] * P.LCE_per_lithium
+    
+    # Calculate realistic production considering demand constraints
+    avg_demand_per_period = s.company_demand
+    realistic_lifetime_demand = avg_demand_per_period * remaining_time
+    realistic_sellable = min(max_possible_sellable, realistic_lifetime_demand)
+    
+    # Calculate lifetime emissions
+    # Variable emissions (per tonne LCE produced)
+    variable_emissions_per_tonne = P.deposit_types[i] ? P.dle_CO2_emissions : P.mining_CO2_emissions
+    lifetime_variable_emissions = realistic_sellable * variable_emissions_per_tonne
+    
+    # Fixed emissions (per period for remaining time)
+    fixed_emissions_per_period = P.deposit_types[i] ? P.dle_fixed_CO2 : P.mining_fixed_CO2
+    lifetime_fixed_emissions = fixed_emissions_per_period * remaining_time
+    
+    # Startup emissions (one-time when opening)
+    startup_emissions = P.deposit_types[i] ? P.dle_startup_CO2 : P.mining_startup_CO2
+    
+    # Total lifetime emissions
+    total_lifetime_emissions = lifetime_variable_emissions + lifetime_fixed_emissions + startup_emissions
+    
+    return total_lifetime_emissions
+end
 
 # Initial observation distribution
 function POMDPs.initialobs(P::LiPOMDP, s::State)

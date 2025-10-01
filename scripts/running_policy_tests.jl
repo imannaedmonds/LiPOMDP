@@ -1,26 +1,25 @@
-
 # Import without other commands doesn't do anything
-
+using LitPOMDP
 using POMDPs
 using POMDPTools
 using POMCPOW
 using Random
 using Statistics
 using Distributions
-using LitPOMDP
 using JSON
 using D3Trees
 using POMCPOW: POMCPOWPlanner  # so `isa POMCPOWPlanner` works
+using POMDPTools
 
 
-const TREE_DIR = "outputs/trees"
-isdir(TREE_DIR) || mkpath(TREE_DIR)
+# const TREE_DIR = "outputs/trees"
+# isdir(TREE_DIR) || mkpath(TREE_DIR)
 
-function save_tree_html(path::AbstractString, dtree::D3Trees.D3Tree)
-    open(path, "w") do io
-        show(io, MIME"text/html"(), dtree)  # writes an interactive D3 page
-    end
-end
+# function save_tree_html(path::AbstractString, dtree::D3Trees.D3Tree)
+#     open(path, "w") do io
+#         show(io, MIME"text/html"(), dtree)  # writes an interactive D3 page
+#     end
+# end
 
 """
 Simple Policy Testing Script with different price models for planning vs evaluation.
@@ -29,33 +28,21 @@ Simple Policy Testing Script with different price models for planning vs evaluat
 # Helper function to convert action to readable format
 function action_to_string(action::Action)
     site_actions = []
+    site_names = ["DLE-1", "DLE-2", "Mining-3", "Mining-4"]
+    
     for (i, (site, type)) in enumerate(zip(action.site, action.type))
-        if site == 0 && type == 0
+        # For each site, determine the action based on type
+        # Use i (1-indexed position) to get site name instead of site value
+        site_name = i <= 4 ? site_names[i] : "Site-$i"
+        
+        if type == 0
             push!(site_actions, "DoNothing")
-        elseif site == 1 && type == 1
-            push!(site_actions, "Explore DLE-1")
-        elseif site == 1 && type == 2
-            push!(site_actions, "Open DLE-1")
-        elseif site == 1 && type == 3
-            push!(site_actions, "Restore DLE-1")
-        elseif site == 2 && type == 1
-            push!(site_actions, "Explore DLE-2")
-        elseif site == 2 && type == 2
-            push!(site_actions, "Open DLE-2")
-        elseif site == 2 && type == 3
-            push!(site_actions, "Restore DLE-2")
-        elseif site == 3 && type == 1
-            push!(site_actions, "Explore Mining-3")
-        elseif site == 3 && type == 2
-            push!(site_actions, "Open Mining-3")
-        elseif site == 3 && type == 3
-            push!(site_actions, "Restore Mining-3")
-        elseif site == 4 && type == 1
-            push!(site_actions, "Explore Mining-4")
-        elseif site == 4 && type == 2
-            push!(site_actions, "Open Mining-4")
-        elseif site == 4 && type == 3
-            push!(site_actions, "Restore Mining-4")
+        elseif type == 1
+            push!(site_actions, "Explore $site_name")
+        elseif type == 2
+            push!(site_actions, "Open $site_name")
+        elseif type == 3
+            push!(site_actions, "Restore $site_name")
         else
             push!(site_actions, "Unknown($site,$type)")
         end
@@ -63,23 +50,56 @@ function action_to_string(action::Action)
     return join(site_actions, " | ")
 end
 
-function create_policy(policy_type::String, pomdp::LiPOMDP)
+# Global variable to store POMCPOW configuration for printing
+global POMCPOW_CONFIG = nothing
+
+function print_pomcpow_config()
+    """Print current POMCPOW configuration dynamically."""
+    if POMCPOW_CONFIG === nothing
+        println("\n🔧 POMCPOW CONFIGURATION: Not available")
+        return
+    end
+    
+    println("\n🔧 POMCPOW CONFIGURATION:")
+    println("  • Tree queries: $(POMCPOW_CONFIG.tree_queries)")
+    println("  • Max depth: $(POMCPOW_CONFIG.max_depth)")
+    println("  • UCB criterion: $(POMCPOW_CONFIG.criterion)")
+    println("  • Enable action progressive widening: $(POMCPOW_CONFIG.enable_action_pw)")
+    println("  • k_action: $(POMCPOW_CONFIG.k_action)")
+    println("  • alpha_action: $(POMCPOW_CONFIG.alpha_action)")
+    println("  • k_observation: $(POMCPOW_CONFIG.k_observation)")
+    println("  • alpha_observation: $(POMCPOW_CONFIG.alpha_observation)")
+    println("  • Estimate value: $(typeof(POMCPOW_CONFIG.estimate_value))")
+    println("  • Tree in info: $(POMCPOW_CONFIG.tree_in_info)")
+end
+
+function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
     """Create a policy based on type."""
     
     if policy_type == "POMCPOW"
-        solver = POMCPOWSolver(
-            tree_queries = 2500, #give it time to plan
-            max_depth = 29, #max time step you can get, planning over POMDP in the future
-            criterion = MaxUCB(15.0),#increased exploration constant for high uncertainty deposits
-            # Progressive widening (actions)
-            enable_action_pw = false,
-            # k_action = 5.0,  # increased for more action exploration
-            # alpha_action = 0.5,  # increased for more progressive widening
-            # # Progressive widening (observations)
-            # k_observation = 3.0,  # increased for more observation exploration
-            # alpha_observation = 0.3,  # increased for more observation progressive widening
-            
+        # # Create AlphaHeuristic rollout policy with the same alpha being tested
+        # λe = pomdp.emission_scale_factor
+        # top_k = 1
+        # rollout_policy = AlphaHeuristic(pomdp, alpha, λe, top_k, debug=false)
         
+        solver = POMCPOWSolver(
+            #tree_queries = 2500, #give it time to plan
+            tree_queries = 9000,
+            max_depth = 25, #max time step you can get, planning over POMDP in the future
+            criterion = MaxUCB(15.0),#increased exploration constant for high uncertainty deposits
+            # Progressive widening (actions) - ENABLED for large action space
+            enable_action_pw = true,
+            # k_action = 1.2,
+            # alpha_action = 0.4,
+            # k_observation = 0.8,
+            # alpha_observation = 0.20,
+           #SECOND
+            k_action = 5.0,  # increased for more action exploration
+            alpha_action = 0.5,  # increased for more progressive widening
+            # Progressive widening (observations)
+            k_observation = 3.0,  # increased for more observation exploration
+            alpha_observation = 0.3,  # increased for more observation progressive widening
+
             # k_action = 1.0,          # Less action exploration
             # alpha_action = 0.25,     # Less progressive widening
             # k_observation = 1.0,     # Less observation exploration
@@ -90,11 +110,14 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
             # alpha_action = 0.1,      # Much less progressive widening
             # k_observation = 0.5,     # Even less observation exploration
             # alpha_observation = 0.1, # Much less observation progressive wideningng
-
-            estimate_value = 0.0, 
+            
+            estimate_value = 0, 
+            #estimate_value = 0,
             tree_in_info = true,
            # rng = MersenneTwister(1234)
         )
+        # Store the solver configuration for printing
+        global POMCPOW_CONFIG = solver
         return solve(solver, pomdp)
         
     elseif policy_type == "ProfitMaximizer"
@@ -115,6 +138,11 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
     elseif policy_type == "DynamicEmissionMinimizer"
         return DynamicEmissionMinimizerPolicy(pomdp, debug=false)
         
+    elseif policy_type == "AlphaHeuristic"
+        # Use the alpha parameter passed to the function
+        λe = pomdp.emission_scale_factor  # emission scale factor
+        top_k = 1  # open up to 1 site per step
+        return AlphaHeuristic(pomdp, alpha, λe, top_k, debug=false)
     else
         error("Unknown policy type: $policy_type")
     end
@@ -158,12 +186,12 @@ function evaluate_policy_simple(planning_pomdp::LiPOMDP, evaluation_pomdp::LiPOM
             if policy isa POMCPOWPlanner
                 a, info = action_info(policy, b; tree_in_info=true)
 
-                if haskey(info, :tree)
-                    dtree = D3Trees.D3Tree(info[:tree])
-                    fname = joinpath(TREE_DIR,
-                                        "1M_ucb_p1_e1_tree_a$(round(planning_pomdp.alpha, digits=2))_t$(t).html")
-                    save_tree_html(fname, dtree)
-                end
+                # if haskey(info, :tree)
+                #     dtree = D3Trees.D3Tree(info[:tree])
+                #     fname = joinpath(TREE_DIR,
+                #                         "gpt_p1_e1_tree_a$(round(planning_pomdp.alpha, digits=2))_t$(t).html")
+                #     save_tree_html(fname, dtree)
+                # end
             else
                 # Heuristics don't support tree_in_info
                 a = action(policy, b)
@@ -350,7 +378,7 @@ function run_simple_policy_test(
     alphas::Vector{Float64};
     time_horizon::Int64 = 29,
     n_sims::Int64 = 30, 
-    output_file::String = "simple_policy_test_results.txt"
+    output_file::String = "gpt_policy_test_results.txt"
 )
     """Run the simple policy testing."""
     
@@ -372,6 +400,14 @@ function run_simple_policy_test(
     println("  • Evaluation price models: $evaluation_price_models")
     println("  • Policies: $policies")
     println("  • Alpha values: $alphas")
+    
+    # Print POMCPOW configuration if POMCPOW is in the policies
+    if "POMCPOW" in policies
+        # Create a temporary POMDP and policy to initialize the configuration
+        temp_pomdp = LiPOMDP(price_model_type=planning_price_models[1], time_horizon=time_horizon, alpha=alphas[1])
+        temp_policy = create_policy("POMCPOW", temp_pomdp, alpha=alphas[1])
+        print_pomcpow_config()  # Commented out to reduce output
+    end
     
     # Store all results
     all_results = Dict{String, Dict{String, Any}}()
@@ -416,7 +452,7 @@ function run_simple_policy_test(
                     updater = LiBeliefUpdater(P=evaluation_pomdp) #TODO is it supposed to be evaluation_pomdp? or planning_pomdp??
                     
                     # Create policy
-                    policy = create_policy(policy_type, planning_pomdp)
+                    policy = create_policy(policy_type, planning_pomdp, alpha=alpha)
                     
                     # Evaluate policy
                     results = evaluate_policy_simple(planning_pomdp, evaluation_pomdp, policy, updater, n_sims)
@@ -467,18 +503,22 @@ function run_simple_policy_test(
     print_results(all_results, alphas)
     
     # Save all results in main file
+    println("Saving results to: $output_file")
     open(output_file, "w") do f
         write(f, JSON.json(all_results, 2))
     end
+    println("Results saved successfully!")
     
     # Create summary CSV for easy analysis
     summary_file = replace(output_file, ".txt" => "_summary.csv")
+    println("Saving summary to: $summary_file")
     open(summary_file, "w") do f
         println(f, "Alpha,Policy,PlanningModel,EvalModel,MeanProfit,StdProfit,MeanEmissions,StdEmissions,DiscountedReward")
         for (_, results) in all_results
             println(f, "$(results["alpha"]),$(results["policy_type"]),$(results["planning_price_model"]),$(results["evaluation_price_model"]),$(results["mean_profit"]),$(results["std_profit"]),$(results["mean_emission_cost"]),$(results["std_emission_cost"]),$(results["mean_discounted_reward"])")
         end
     end
+    println("Summary saved successfully!")
     
     println("\n✅ Policy testing complete!")
     println("📊 Results saved to:")
@@ -486,17 +526,25 @@ function run_simple_policy_test(
     println("   - Summary CSV: $(summary_file)")
     println("   - Individual alpha results in: $(dirname(output_file))")
     
+    # Print POMCPOW configuration again at the end for reference
+    if "POMCPOW" in policies
+        print_pomcpow_config()  # Commented out to reduce output
+    end
+    
     return all_results, pareto_data
 end
 
 # Configuration
 time_horizon = 29
 n_sims = 30
-planning_price_models = [3]  # Exponential model for planning
-evaluation_price_models = [3]  # Static model for evaluation
-policies = ["DynamicProfitMaximizer", "ExploreOnly", "ProfitMaximizer", "EmissionMinimizer", "DynamicEmissionMinimizer", "POMCPOW"]
-alphas = [0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pure emission minimization (1)
-output_file = "outputs/simple_policy_test_results.txt"
+planning_price_models = Int64[6]  # Exponential model for planning
+evaluation_price_models = Int64[6]  # Static model for evaluation
+policies = String["DynamicProfitMaximizer", "ExploreOnly", "ProfitMaximizer", "EmissionMinimizer", "DynamicEmissionMinimizer", "POMCPOW"]
+alphas = Float64[0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pure emission minimization (1)
+# Create dynamic output filename based on planning and evaluation models
+planning_str = join(planning_price_models, "_")
+evaluation_str = join(evaluation_price_models, "_")
+output_file = "outputs/policy_test_results_p$(planning_str)_e$(evaluation_str).txt"
 
 
 results, pareto_data = run_simple_policy_test(
@@ -505,18 +553,12 @@ results, pareto_data = run_simple_policy_test(
  
 
 # Function to show POMCPOW actions for different alpha values
-function show_all_policies_actions_by_alpha(planning_models=[1], evaluation_models=[1])
+function show_all_policies_actions_by_alpha(planning_models=[1], evaluation_models=[1], alpha_values=[0.5], policy_names=["POMCPOW"], time_horizon_val=29)
     println("\n🎯 ALL POLICIES ACTIONS BY ALPHA VALUES")
     println("=" ^ 80)
     
     # Set random seed for reproducibility
-    Random.seed!(8)
-    
-    # Alpha values to test (same as main results)
-    alpha_values = [0.0, 0.25, 0.5, 0.75, 1.0]
-    
-    # Policies to test (same as main results)
-    policy_names = ["POMCPOW"]
+    Random.seed!(1)
     
     # Price model names for display
     price_model_names = ["Static", "Linear", "Exponential", "Dynamic", "State-Dependent", "Historical"]
@@ -534,14 +576,14 @@ function show_all_policies_actions_by_alpha(planning_models=[1], evaluation_mode
                 # Create planning POMDP
                 planning_pomdp = LiPOMDP(
                     price_model_type = planning_model,
-                    time_horizon = 29,
+                    time_horizon = time_horizon_val,
                     alpha = alpha
                 )
                 
                 # Create evaluation POMDP
                 evaluation_pomdp = LiPOMDP(
                     price_model_type = evaluation_model,
-                    time_horizon = 29,
+                    time_horizon = time_horizon_val,
                     alpha = alpha
                 )
                 
@@ -553,7 +595,7 @@ function show_all_policies_actions_by_alpha(planning_models=[1], evaluation_mode
                     println("-" ^ 40)
                     
                     # Create policy using planning POMDP
-                    policy = create_policy(policy_name, planning_pomdp)
+                    policy = create_policy(policy_name, planning_pomdp, alpha=alpha)
                     
                     # Run one simulation using evaluation POMDP
                     s0 = rand(initialstate(evaluation_pomdp))
@@ -567,7 +609,7 @@ function show_all_policies_actions_by_alpha(planning_models=[1], evaluation_mode
                     println("-" ^ 60)
                     
                     total_discounted_reward = 0.0
-                    for step in 1:29  # Show all 29 steps
+                    for step in 1:time_horizon_val  # Show all steps
                         # Get action from policy
                         action = POMDPs.action(policy, belief)
                         
@@ -591,7 +633,7 @@ function show_all_policies_actions_by_alpha(planning_models=[1], evaluation_mode
                     end
                     
                     # Show final results
-                    println("\n📊 FINAL RESULTS cut reward scale to 50M $policy_name (α=$alpha):")
+                    println("\n📊 FINAL RESULTS $policy_name (α=$alpha):")
                     println("  Planning Model: Type $planning_model, Evaluation Model: Type $evaluation_model")
                     println("  Discounted Reward: $(round(total_discounted_reward, digits=2))")
                     println("  Final Price: $(round(state.price, digits=2))")
@@ -607,12 +649,8 @@ function show_all_policies_actions_by_alpha(planning_models=[1], evaluation_mode
 end
 
 
-# Run the ALL POLICIES actions analysis
-# You can manually choose which price models to test:
-# show_all_policies_actions_by_alpha([1], [1])  # Static planning, Static evaluation
-# show_all_policies_actions_by_alpha([3], [3])  # Exponential planning, Exponential evaluation
-# show_all_policies_actions_by_alpha([1, 3], [1, 3])  # Multiple combinations
-#show_all_policies_actions_by_alpha([1], [1])  # Default: Static planning, Static evaluation
+# Run the ALL POLICIES actions analysis - using same models as main configuration
+#show_all_policies_actions_by_alpha(planning_price_models, evaluation_price_models, alphas, policies, time_horizon)
 
 println("="^80)
 

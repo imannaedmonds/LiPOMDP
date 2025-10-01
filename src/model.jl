@@ -78,13 +78,13 @@ end
     # output is NAMEPLATE Li t/yr per mine
     output::Float64 = 3_500.0  # Annual output per mine of Li
     init_deposit_size_dle::Float64 = 20_000.0  # Smaller DLE deposits for more exploration
-    init_deposit_size_mining::Float64 = 60_000.0  # Larger mining deposits for more exploration 
+    init_deposit_size_mining::Float64 = 71_000.0  # Larger mining deposits for more exploration 
     dle_uncertainty_factor::Float64 = 0.3  # Reduced to prevent negative deposits
     mining_uncertainty_factor::Float64 = 0.2 # Reduced to prevent negative deposits
 
     # Mining method for each deposit (true = DLE, false = hard rock mining)
     deposit_types::Vector{Bool} = [true, true, false, false]  # First two are DLE, last two Hard Rock Mining
-    recovery::Vector{Float64} = [0.80, 0.80, 0.65, 0.65]    # Fraction of in‑situ Li recovered as saleable product
+    recovery::Vector{Float64} = [0.75, 0.75, 0.85, 0.85]    # Fraction of in‑situ Li recovered as saleable product
     CO2_cost::Int64 = 100
 
     # Hard Rock mining parameters
