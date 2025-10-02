@@ -84,34 +84,34 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
         
         solver = POMCPOWSolver(
             #tree_queries = 2500, #give it time to plan
-            tree_queries = 9000,
+            tree_queries = 2500,
             max_depth = 25, #max time step you can get, planning over POMDP in the future
             criterion = MaxUCB(15.0),#increased exploration constant for high uncertainty deposits
             # Progressive widening (actions) - ENABLED for large action space
-            enable_action_pw = true,
-            # k_action = 1.2,
-            # alpha_action = 0.4,
-            # k_observation = 0.8,
-            # alpha_observation = 0.20,
-           #SECOND
-            k_action = 5.0,  # increased for more action exploration
-            alpha_action = 0.5,  # increased for more progressive widening
-            # Progressive widening (observations)
-            k_observation = 3.0,  # increased for more observation exploration
-            alpha_observation = 0.3,  # increased for more observation progressive widening
+            enable_action_pw = false,
+            k_action = 1.2,
+            alpha_action = 0.4,
+            k_observation = 0.8,
+            alpha_observation = 0.20,
+           #SECOND using
+            # k_action = 5.0,  # increased for more action exploration
+            # alpha_action = 0.5,  # increased for more progressive widening
+            # # Progressive widening (observations)
+            # k_observation = 3.0,  # increased for more observation exploration
+            # alpha_observation = 0.3,  # increased for more observation progressive widening
 
             # k_action = 1.0,          # Less action exploration
             # alpha_action = 0.25,     # Less progressive widening
             # k_observation = 1.0,     # Less observation exploration
             # alpha_observation = 0.25, # Less observation progressive widening
 
-            #VSCode params
+            # #VSCode params
             # k_action = 0.5,          # Even less action exploration
             # alpha_action = 0.1,      # Much less progressive widening
             # k_observation = 0.5,     # Even less observation exploration
             # alpha_observation = 0.1, # Much less observation progressive wideningng
             
-            estimate_value = 0, 
+            estimate_value = FORollout(ExploreOnlyPolicy(pomdp)),
             #estimate_value = 0,
             tree_in_info = true,
            # rng = MersenneTwister(1234)
@@ -378,7 +378,7 @@ function run_simple_policy_test(
     alphas::Vector{Float64};
     time_horizon::Int64 = 29,
     n_sims::Int64 = 30, 
-    output_file::String = "gpt_policy_test_results.txt"
+    output_file::String = "results.txt"
 )
     """Run the simple policy testing."""
     
@@ -537,20 +537,21 @@ end
 # Configuration
 time_horizon = 29
 n_sims = 30
-planning_price_models = Int64[6]  # Exponential model for planning
+planning_price_models = Int64[1]  # Exponential model for planning
 evaluation_price_models = Int64[6]  # Static model for evaluation
 policies = String["DynamicProfitMaximizer", "ExploreOnly", "ProfitMaximizer", "EmissionMinimizer", "DynamicEmissionMinimizer", "POMCPOW"]
 alphas = Float64[0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pure emission minimization (1)
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/policy_test_results_p$(planning_str)_e$(evaluation_str).txt"
+output_file = "outputs/policy_test_results_p$(planning_str)_e$(evaluation_str)_multi_actions-1.2k-explore-2500.txt"
 
 
 results, pareto_data = run_simple_policy_test(
                 policies, planning_price_models, evaluation_price_models, alphas,
                 time_horizon=time_horizon, n_sims=n_sims, output_file=output_file)
  
+
 
 # Function to show POMCPOW actions for different alpha values
 function show_all_policies_actions_by_alpha(planning_models=[1], evaluation_models=[1], alpha_values=[0.5], policy_names=["POMCPOW"], time_horizon_val=29)
@@ -650,18 +651,23 @@ end
 
 
 # Run the ALL POLICIES actions analysis - using same models as main configuration
-#show_all_policies_actions_by_alpha(planning_price_models, evaluation_price_models, alphas, policies, time_horizon)
+show_all_policies_actions_by_alpha(planning_price_models, evaluation_price_models, alphas, policies, time_horizon)
 
 println("="^80)
 
 
+planning_pomdp = LiPOMDP(price_model_type=1, time_horizon=25, alpha=0.5)
 
-
-
-
-
-
-
+actions(planning_pomdp)
+s0, b0 = create_initial_belief(planning_pomdp)
+actions(planning_pomdp, b0)
+a0 = rand(actions(planning_pomdp, b0))
+rng = MersenneTwister(1234)
+s1, o1, r1 = gen(planning_pomdp, s0, a0, rng)
+o1
+b1 = update(LiBeliefUpdater(planning_pomdp), b0, a0, o1)
+actions(planning_pomdp, b1)
+a1 = rand(actions(planning_pomdp, b1))
 
 
 
