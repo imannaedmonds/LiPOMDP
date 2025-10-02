@@ -84,7 +84,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
         
         solver = POMCPOWSolver(
             #tree_queries = 2500, #give it time to plan
-            tree_queries = 9000,
+            tree_queries = 2500,
             max_depth = 25, #max time step you can get, planning over POMDP in the future
             criterion = MaxUCB(15.0),#increased exploration constant for high uncertainty deposits
             # Progressive widening (actions) - ENABLED for large action space
@@ -384,7 +384,7 @@ function run_simple_policy_test(
     
     println("🚀 SIMPLE POLICY TESTING")
     println("="^80)
-    println("Emissions Scaled to 1, ExplorePOlicy")
+    println("Emissions Scaled to 1, ExplorePolicy")
     println("Testing POMCPOW vs ProfitMaximizer vs EmissionMinimizer vs ExploreOnly vs Random vs DynamicProfitMaximizer vs DynamicEmissionMinimizer")
     println("Different price models for planning vs evaluation")
     println("Using ALPHA values for multi-objective optimization")
@@ -538,14 +538,14 @@ end
 # Configuration
 time_horizon = 29
 n_sims = 30
-planning_price_models = Int64[1]  # Exponential model for planning
+planning_price_models = Int64[6]  # Exponential model for planning
 evaluation_price_models = Int64[6]  # Static model for evaluation
 policies = String["DynamicProfitMaximizer", "ExploreOnly", "ProfitMaximizer", "EmissionMinimizer", "DynamicEmissionMinimizer", "POMCPOW"]
 alphas = Float64[0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pure emission minimization (1)
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/policy_test_results_p$(planning_str)_e$(evaluation_str)_multi_actions-5k-explore-emissions2-9TQ.txt"
+output_file = "outputs/policy_test_results_p$(planning_str)_e$(evaluation_str)_multi_actions-explore.txt"
 
 
 results, pareto_data = run_simple_policy_test(
