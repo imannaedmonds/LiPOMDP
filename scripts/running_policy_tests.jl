@@ -84,21 +84,21 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
         
         solver = POMCPOWSolver(
             #tree_queries = 2500, #give it time to plan
-            tree_queries = 2500,
+            tree_queries = 9000,
             max_depth = 25, #max time step you can get, planning over POMDP in the future
             criterion = MaxUCB(15.0),#increased exploration constant for high uncertainty deposits
             # Progressive widening (actions) - ENABLED for large action space
-            enable_action_pw = false,
-            k_action = 1.2,
-            alpha_action = 0.4,
-            k_observation = 0.8,
-            alpha_observation = 0.20,
+            enable_action_pw = true,
+            # k_action = 1.2,
+            # alpha_action = 0.4,
+            # k_observation = 0.8,
+            # alpha_observation = 0.20,
            #SECOND using
-            # k_action = 5.0,  # increased for more action exploration
-            # alpha_action = 0.5,  # increased for more progressive widening
-            # # Progressive widening (observations)
-            # k_observation = 3.0,  # increased for more observation exploration
-            # alpha_observation = 0.3,  # increased for more observation progressive widening
+            k_action = 5.0,  # increased for more action exploration
+            alpha_action = 0.5,  # increased for more progressive widening
+            # Progressive widening (observations)
+            k_observation = 3.0,  # increased for more observation exploration
+            alpha_observation = 0.3,  # increased for more observation progressive widening
 
             # k_action = 1.0,          # Less action exploration
             # alpha_action = 0.25,     # Less progressive widening
@@ -384,6 +384,7 @@ function run_simple_policy_test(
     
     println("🚀 SIMPLE POLICY TESTING")
     println("="^80)
+    println("Emissions Scaled to 1, ExplorePOlicy")
     println("Testing POMCPOW vs ProfitMaximizer vs EmissionMinimizer vs ExploreOnly vs Random vs DynamicProfitMaximizer vs DynamicEmissionMinimizer")
     println("Different price models for planning vs evaluation")
     println("Using ALPHA values for multi-objective optimization")
@@ -544,7 +545,7 @@ alphas = Float64[0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pur
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/policy_test_results_p$(planning_str)_e$(evaluation_str)_multi_actions-1.2k-explore-2500.txt"
+output_file = "outputs/policy_test_results_p$(planning_str)_e$(evaluation_str)_multi_actions-5k-explore-emissions2-9TQ.txt"
 
 
 results, pareto_data = run_simple_policy_test(
@@ -651,23 +652,23 @@ end
 
 
 # Run the ALL POLICIES actions analysis - using same models as main configuration
-show_all_policies_actions_by_alpha(planning_price_models, evaluation_price_models, alphas, policies, time_horizon)
+#show_all_policies_actions_by_alpha(planning_price_models, evaluation_price_models, alphas, policies, time_horizon)
 
 println("="^80)
 
 
-planning_pomdp = LiPOMDP(price_model_type=1, time_horizon=25, alpha=0.5)
+# planning_pomdp = LiPOMDP(price_model_type=1, time_horizon=25, alpha=0.5)
 
-actions(planning_pomdp)
-s0, b0 = create_initial_belief(planning_pomdp)
-actions(planning_pomdp, b0)
-a0 = rand(actions(planning_pomdp, b0))
-rng = MersenneTwister(1234)
-s1, o1, r1 = gen(planning_pomdp, s0, a0, rng)
-o1
-b1 = update(LiBeliefUpdater(planning_pomdp), b0, a0, o1)
-actions(planning_pomdp, b1)
-a1 = rand(actions(planning_pomdp, b1))
+# actions(planning_pomdp)
+# s0, b0 = create_initial_belief(planning_pomdp)
+# actions(planning_pomdp, b0)
+# a0 = rand(actions(planning_pomdp, b0))
+# rng = MersenneTwister(1234)
+# s1, o1, r1 = gen(planning_pomdp, s0, a0, rng)
+# o1
+# b1 = update(LiBeliefUpdater(planning_pomdp), b0, a0, o1)
+# actions(planning_pomdp, b1)
+# a1 = rand(actions(planning_pomdp, b1))
 
 
 
