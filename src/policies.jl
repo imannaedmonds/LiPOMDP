@@ -69,18 +69,20 @@ function POMDPs.action(policy::ProfitMaximizerPolicy, s::State)
     end
     
     # Check for restoration opportunities first (outside of time restrictions)
-    opened_sites = zeros(Int, policy.pomdp.n_deposits)
-    opened_types = zeros(Int, policy.pomdp.n_deposits)
+    site_actions = zeros(Int, policy.pomdp.n_deposits)
+    site_types = zeros(Int, policy.pomdp.n_deposits)
 
+    # First check for restoration opportunities - SINGLE ACTION
     for site in 1:policy.pomdp.n_deposits
         if s.have_opened[site] && s.is_depleted[site] && !s.restored_mines[site]
-            # Restore depleted mine
-            opened_sites[site] = site
-            opened_types[site] = 3  # Restore action
+            # Restore depleted mine - SINGLE ACTION
+            site_actions[site] = site
+            site_types[site] = 3  # Restore action
             
             if policy.debug
                 println("  [DEBUG] Restoring site $site: Mine is depleted and not yet restored")
             end
+            return Action(site=site_actions, type=site_types)
         end
     end
 
@@ -130,18 +132,19 @@ function POMDPs.action(policy::ProfitMaximizerPolicy, s::State)
     
         ranked_sites = sortperm(profits, rev=true)
         
-        for i in 1:policy.top_k
-            opened_sites[ranked_sites[i]] = ranked_sites[i]  # Set to actual site number
-            opened_types[ranked_sites[i]] = 2
+        # Only open the top 1 site (single step action)
+        if length(ranked_sites) > 0 && profits[ranked_sites[1]] > 0
+            site_actions[ranked_sites[1]] = ranked_sites[1]  # Set to actual site number
+            site_types[ranked_sites[1]] = 2
         end
 
-        return Action(site=opened_sites, type=opened_types)
+        return Action(site=site_actions, type=site_types)
     else
         if policy.debug
             println("  [DEBUG] ProfitMaximizerPolicy not activated at time $(s.time), but checking for restoration")
         end
         # Even if not at an allowed time, return any restoration actions that were set
-        return Action(site=opened_sites, type=opened_types)
+        return Action(site=site_actions, type=site_types)
     end
     
 end
@@ -194,18 +197,20 @@ function POMDPs.action(policy::EmissionMinimizerPolicy, s::State)
     end
 
     # Check for restoration opportunities first (outside of time restrictions)
-    opened_sites = zeros(Int, policy.pomdp.n_deposits)
-    opened_types = zeros(Int, policy.pomdp.n_deposits)
+    site_actions = zeros(Int, policy.pomdp.n_deposits)
+    site_types = zeros(Int, policy.pomdp.n_deposits)
 
+    # First check for restoration opportunities - SINGLE ACTION
     for site in 1:policy.pomdp.n_deposits
         if s.have_opened[site] && s.is_depleted[site] && !s.restored_mines[site]
-            # Restore depleted mine
-            opened_sites[site] = site
-            opened_types[site] = 3  # Restore action
+            # Restore depleted mine - SINGLE ACTION
+            site_actions[site] = site
+            site_types[site] = 3  # Restore action
             
             if policy.debug
                 println("  [DEBUG] Restoring site $site: Mine is depleted and not yet restored")
             end
+            return Action(site=site_actions, type=site_types)
         end
     end
 
@@ -249,26 +254,27 @@ function POMDPs.action(policy::EmissionMinimizerPolicy, s::State)
 
         ranked_sites = sortperm(emissions)
         
-        for i in 1:policy.top_k
-            opened_sites[ranked_sites[i]] = ranked_sites[i]  # Set to actual site number
-            opened_types[ranked_sites[i]] = 2
+        # Only open the top 1 site (single step action)
+        if length(ranked_sites) > 0 && emissions[ranked_sites[1]] < Inf
+            site_actions[ranked_sites[1]] = ranked_sites[1]  # Set to actual site number
+            site_types[ranked_sites[1]] = 2
         end
 
         if policy.debug
             for i in 1:policy.pomdp.n_deposits
-                if opened_types[i] == 2
+                if site_types[i] == 2
                     println("  [DEBUG] Opening site $i with emissions $(round(emissions[i], digits=2)) tCO2")
                 end
             end
         end
 
-        return Action(site=opened_sites, type=opened_types)
+        return Action(site=site_actions, type=site_types)
     else
         if policy.debug
             println("  [DEBUG] EmissionMinimizerPolicy not activated at time $(s.time), but checking for restoration")
         end
         # Even if not at an allowed time, return any restoration actions that were set
-        return Action(site=opened_sites, type=opened_types)
+        return Action(site=site_actions, type=site_types)
     end
 end
 
@@ -314,7 +320,7 @@ struct ExploreOnlyPolicy <: Policy
     debug::Bool
 end
 
-ExploreOnlyPolicy(pomdp::LiPOMDP) = ExploreOnlyPolicy(pomdp, false)
+ExploreOnlyPolicy(pomdp::LiPOMDP; debug=false) = ExploreOnlyPolicy(pomdp, debug)
 
 function POMDPs.action(policy::ExploreOnlyPolicy, s::State)
     if policy.debug
@@ -324,30 +330,36 @@ function POMDPs.action(policy::ExploreOnlyPolicy, s::State)
         println("  Deposits: $(round.(s.deposit, digits=1))")
     end
     
-    # Check for restoration opportunities first
-    explore_actions = zeros(Int, 4)
-    explore_sites = zeros(Int, 4)
+    # Check for restoration opportunities first - SINGLE ACTION
+    site_actions = zeros(Int, 4)
+    site_types = zeros(Int, 4)
 
+    # First check for restoration opportunities - SINGLE ACTION
     for i in 1:policy.pomdp.n_deposits
         if s.have_opened[i] && s.is_depleted[i] && !s.restored_mines[i]
-            # Restore depleted mine
-            explore_actions[i] = 3  # Restore action
-            explore_sites[i] = i
+            # Restore depleted mine - SINGLE ACTION
+            site_actions[i] = i
+            site_types[i] = 3  # Restore action
             
             if policy.debug
                 println("  [DEBUG] Restoring site $i: Mine is depleted and not yet restored")
             end
-        elseif !s.have_opened[i]
-            if policy.debug
-                println("  [DEBUG] Choosing to explore site $i (unopened)")
-            end            
-            explore_actions[i] = 1
-            explore_sites[i] = i
+            return Action(site=site_actions, type=site_types)
         end
     end
 
-    if sum(explore_actions) > 0
-        return Action(site=explore_sites, type=explore_actions)
+    # Then check for exploration opportunities - SINGLE ACTION
+    for i in 1:policy.pomdp.n_deposits
+        if !s.have_opened[i] && !s.is_depleted[i] && !s.restored_mines[i]
+            # Explore unopened site - SINGLE ACTION
+            site_actions[i] = i
+            site_types[i] = 1  # Explore action
+            
+            if policy.debug
+                println("  [DEBUG] Exploring site $i: Site is unopened")
+            end
+            return Action(site=site_actions, type=site_types)
+        end
     end
     
     # Fallback: do nothing if all sites are opened
@@ -570,52 +582,34 @@ function POMDPs.action(policy::DynamicProfitMaximizerPolicy, s::State)
         # If mine is already opened, do nothing (action = 0)
     end
     
-    # Check for restoration opportunities first - use sampled state deposits
+    # Check for restoration opportunities first - SINGLE ACTION
     for site in 1:policy.pomdp.n_deposits
         if s.have_opened[site] && s.is_depleted[site] && !s.restored_mines[site] && s.deposit[site] <= 0.1
-            # Restore depleted mine - only if sampled deposits are actually zero
+            # Restore depleted mine - SINGLE ACTION
             site_actions[site] = site
             site_types[site] = 3  # Restore action
             
             if policy.debug
                 println("  [DEBUG] Restoring site $site: Mine is depleted and not yet restored (deposits: $(s.deposit[site]))")
             end
+            return Action(site=site_actions, type=site_types)
         end
     end
     
-    # FIXED: Now make decisions based on all available information
+    # FIXED: Now make decisions based on all available information - SINGLE ACTION
     if !isempty(site_evaluations)
         # Sort by profitability (highest first)
         sort!(site_evaluations, by=x->x[2], rev=true)
         
-        # FIXED: Open the most profitable mine regardless of threshold
+        # FIXED: Open only the most profitable mine (single action)
         best_site, best_profit, best_recovery, best_revenue = site_evaluations[1]
         
-        # Open the most profitable mine
+        # Open the most profitable mine - SINGLE ACTION
         site_actions[best_site] = best_site
         site_types[best_site] = 2  # Open mine
         
         if policy.debug
             println("  [DEBUG] Opening site $best_site: Profit = \$$(round(best_profit/1e6, digits=2))M (most profitable)")
-        end
-        
-        # Explore other promising sites (restore exploration) - but be selective
-        for i in 2:length(site_evaluations)
-            site, profit, recovery, revenue = site_evaluations[i]
-            # Only explore if the site is reasonably profitable (within 70% of best) AND has good potential
-            if profit > best_profit * 0.7 && recovery > 0
-                site_actions[site] = site
-                site_types[site] = 1  # Explore
-                if policy.debug
-                    println("  [DEBUG] Exploring site $site: Profit = \$$(round(profit/1e6, digits=2))M (promising)")
-                end
-            else
-                site_actions[site] = 0  # Do nothing
-                site_types[site] = 0  # Do nothing
-                if policy.debug
-                    println("  [DEBUG] Site $site: Doing nothing (not profitable enough or no recovery potential)")
-                end
-            end
         end
     end
     

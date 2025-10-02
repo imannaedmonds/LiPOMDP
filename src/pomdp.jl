@@ -805,7 +805,7 @@ function POMDPs.actions(P::LiPOMDP)
     # For now, return a simplified action space with single actions
     # This can be expanded to include multiple simultaneous actions
     acts = Action[]
-    
+
     # Do nothing action (no site=0, just all zeros)
     push!(acts, Action(site=[0, 0, 0, 0], type=[0, 0, 0, 0]))
 
@@ -891,7 +891,7 @@ function POMDPs.actions(P::LiPOMDP, b::LiBelief)
 
     return actions
 end
-    
+
 
 function POMDPs.actionindex(P::LiPOMDP, a::Action)
     # Simple indexing for single-action vectors
