@@ -108,13 +108,14 @@ end
     mining_restoration_emissions::Int64 = 8  # Emissions from restoration process
 
     #pricing model parameters
-    price_model_type::Int64 = 1  #different pricing models 1) static 2) linear, 3) exponential, 4) Dynamic Price, 5) State-Dependent, 6) Historical
+    price_model_type::Int64 = 1  #different pricing models 1) static 2) linear, 3) exponential, 4) GBM, 6) Historical, 9) Dynamic Price, 10) State-Dependent
     hist_data::Dict{Int64, Tuple{Float64, Float64, Float64}} = lithium_data  # Historical data as (demand, price, production) tuples by year
     start_year::Int64 = 1995  #TODO-MANSUR check this Starting year for historical data
     # Starting prices for each pricing model
     p₀_static::Float64 = 10_355.33    # Starting value for static pricing
     p₀_linear::Float64 = 2_381.38     # Starting value for linear pricing  
     p₀_exponential::Float64 = 917.36  # Starting value for exponential pricing
+    p₀_gbm::Float64 = 10_000.0        # Starting value for GBM pricing
     p₀_fallback::Float64 = 10_000.0   # Fallback value
     
     α_slope::Float64 = 878.39   # linear slope (for linear pricing), increasing 10,000 dollars every year 
@@ -122,6 +123,10 @@ end
     μ_drift::Float64 = 0.0     # drift for dynamic pricing models 
     β_action::Float64 = 0.01   # market-maker action sensitivity
     γ_state::Float64 = 0.01    # state-dependence sensitivity
+    
+    # GBM (Geometric Brownian Motion) parameters
+    gbm_drift::Float64 = 0.051      # 5% annual drift (expected return)
+    gbm_volatility::Float64 = 0.33  # 33% annual volatility
 end
 
 # Helper function to get the appropriate starting price based on model type
@@ -132,6 +137,12 @@ function get_p₀(P::LiPOMDP)
         return P.p₀_linear
     elseif P.price_model_type == 3
         return P.p₀_exponential
+    elseif P.price_model_type == 4
+        return P.p₀_gbm
+    elseif P.price_model_type == 9
+        return P.p₀_fallback
+    elseif P.price_model_type == 10
+        return P.p₀_fallback
     else
         return P.p₀_fallback
     end

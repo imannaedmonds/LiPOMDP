@@ -208,29 +208,24 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         new_price = base_price + noise
         return max(new_price, 1000.0)  # Ensure minimum price
     end
-    # # 4. Dynamic (Market Maker, action-dependent)
-    # if P.price_model_type == 4
-    #     β = P.β_action
-    #     if a === nothing
-    #         a_val = 0.0
-    #     else
-    #         a_val = a.type
-    #     end
-    #     # For exponential models, noise should be in the exponent for log-normal behavior
-    #     noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
-    #     new_price = p₀ * exp(P.μ_drift * Δt + β * a_val + noise)
-    #     return max(new_price, 1000.0)  # Ensure minimum price
-    # end
-
-    # 5. Dynamic Pricing (Market Maker) -- State-Dependent
-    # if P.price_model_type == 5
-    #     γ = P.γ_state
-    #     scarcity = sum(s.deposit)   # Example: total remaining deposits
-    #     # For exponential models, noise should be in the exponent
-    #     noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
-    #     new_price = p₀ * exp(P.μ_drift * Δt + γ * scarcity + noise)
-    #     return max(new_price, 1000.0)  # Ensure minimum price
-    # end
+    
+    # 4. Geometric Brownian Motion (GBM) Pricing
+    if P.price_model_type == 4
+        # GBM formula: S(t) = S(0) * exp((μ - σ²/2) * t + σ * W(t))
+        # where μ is drift, σ is volatility, W(t) is Wiener process
+        
+        # Time step (1 year)
+        Δt = 1.0
+        
+        # Wiener process increment: W(t+Δt) - W(t) ~ N(0, Δt)
+        dW = rand(Normal(0, sqrt(Δt)))
+        
+        # GBM formula with multiplicative noise in the exponent
+        # Using configurable parameters from POMDP struct
+        new_price = p₀ * exp((P.gbm_drift - P.gbm_volatility^2/2) * Δt + P.gbm_volatility * dW)
+        
+        return max(new_price, 1000.0)  # Ensure minimum price
+    end
 
     # 6. Historical Pricing
     if P.price_model_type == 6
@@ -258,6 +253,33 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
             return max(new_price, 1000.0)
         end
     end
+    
+    # # 9. Dynamic (Market Maker, action-dependent)
+    # if P.price_model_type == 9
+    #     β = P.β_action
+    #     if a === nothing
+    #         a_val = 0.0
+    #     else
+    #         # Sum all action types to get total action intensity
+    #         a_val = sum(a.type)
+    #     end
+    #     # For exponential models, noise should be in the exponent for log-normal behavior
+    #     noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
+    #     new_price = p₀ * exp(P.μ_drift * Δt + β * a_val + noise)
+    #     return max(new_price, 1000.0)  # Ensure minimum price
+    # end
+
+    # # 10. Dynamic Pricing (Market Maker) -- State-Dependent
+    # if P.price_model_type == 10
+    #     γ = P.γ_state
+    #     # Calculate scarcity as inverse of total remaining deposits (normalized)
+    #     total_deposits = sum(s.deposit)
+    #     scarcity = total_deposits > 0 ? 1.0 / total_deposits : 0.0
+    #     # For exponential models, noise should be in the exponent
+    #     noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
+    #     new_price = p₀ * exp(P.μ_drift * Δt + γ * scarcity + noise)
+    #     return max(new_price, 1000.0)  # Ensure minimum price
+    # end
     
     # Fallback case
     return max(p₀, 1000.0)
