@@ -79,7 +79,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
     if policy_type == "POMCPOW"
         solver = POMCPOWSolver(
             #tree_queries = 2500, #give it time to plan
-            tree_queries = 2500,
+            tree_queries = 10000,
             max_depth = 25, #max time step you can get, planning over POMDP in the future
             criterion = MaxUCB(15.0),#increased exploration constant for high uncertainty deposits
             # Progressive widening (actions) - ENABLED for large action space
@@ -562,7 +562,7 @@ alphas = Float64[0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pur
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/results v2/policy_test_results_p$(planning_str)_e$(evaluation_str)_1Brewardscale.txt"
+output_file = "outputs/results v2/policy_test_results_p$(planning_str)_e$(evaluation_str)_1Brewardscale_10kTQ.txt"
 
 
 results, pareto_data = run_simple_policy_test(
