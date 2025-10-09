@@ -47,8 +47,8 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
     """Create a policy of the specified type."""
     if policy_type == "POMCPOW"
         solver = POMCPOWSolver(
-            tree_queries = 2500,
-            max_depth = 29,
+            tree_queries = 15000,
+            max_depth = 25,
             criterion = MaxUCB(15.0),
             enable_action_pw = true, # ENABLED for large action space
             k_action = 5.0,          # Increased for more action exploration
@@ -59,18 +59,34 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
             #estimate_value = 0
             )
         return solve(solver, pomdp), solver
-    elseif policy_type == "ProfitMaximizer"
+    elseif policy_type == "POMCPOW_Depth1"
+        # Shallow planning heuristic - only looks one step ahead
+        solver = POMCPOWSolver(
+            tree_queries = 2500,
+            max_depth = 1,           # Only one step ahead
+            criterion = MaxUCB(15.0),
+            enable_action_pw = true, # ENABLED for large action space
+            k_action = 5.0,
+            alpha_action = 0.5,
+            k_observation = 3.0,
+            alpha_observation = 0.3,
+            estimate_value = FORollout(DynamicProfitMaximizerPolicy(pomdp))  # Use rollout for leaf evaluation
+            )
+        return solve(solver, pomdp), solver
+    elseif policy_type == "OneMineProfitMaximization"
         return ProfitMaximizerPolicy(pomdp, top_k=1, times=[1]), nothing
-    elseif policy_type == "EmissionMinimizer"
+    elseif policy_type == "OneMineEmissionMinimization"
         return EmissionMinimizerPolicy(pomdp, top_k=1, times=[1]), nothing
     elseif policy_type == "ExploreOnly"
         return ExploreOnlyPolicy(pomdp), nothing
-    elseif policy_type == "Random"
+    elseif policy_type == "Random" || policy_type == "RandomHeuristicPolicy"
         return RandomHeuristicPolicy(pomdp, debug=false), nothing
     elseif policy_type == "DynamicProfitMaximizer"
         return DynamicProfitMaximizerPolicy(pomdp, debug=false), nothing
     elseif policy_type == "DynamicEmissionMinimizer"
         return DynamicEmissionMinimizerPolicy(pomdp, debug=false), nothing
+    elseif policy_type == "OneStepLookahead"
+        return OneStepLookaheadPolicy(pomdp, n_rollouts=30, debug=false), nothing
     else
         error("Unknown policy type: $policy_type")
     end
@@ -772,8 +788,9 @@ println("🧪 TRAIN/TEST SPLIT EVALUATION")
 println("="^60)
 
 # Configuration
-policies = ["POMCPOW", "DynamicProfitMaximizer", "ExploreOnly", "ProfitMaximizer", "EmissionMinimizer", "DynamicEmissionMinimizer"]
-planning_price_models = [4]  # Static, Linear, Exponential, Historical
+#policies = ["POMCPOW", "POMCPOW_Depth1", "DynamicProfitMaximizer", "ExploreOnly", "OneMineProfitMaximization", "OneMineEmissionMinimization", "DynamicEmissionMinimizer", "RandomHeuristicPolicy"]
+policies = [ "OneStepLookahead"]
+planning_price_models = [2]  # Static, Linear, Exponential, Historical
 evaluation_price_models = [6]  # Historical price model for evaluation
 alphas = [0.0, 0.25, 0.5, 0.75, 1.0]
 time_horizon = 29  # Full time horizon
@@ -791,7 +808,7 @@ println()
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/testing v1 results/train_test_results_p$(planning_str)_e$(evaluation_str)_dynamic.csv"
+output_file = "outputs/testing v1 results/train_test_results_p$(planning_str)_e$(evaluation_str)_onestep_allactions.csv"
 
 # Run the evaluation
 results = run_train_test_evaluation(

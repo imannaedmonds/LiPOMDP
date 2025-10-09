@@ -120,8 +120,8 @@ end
     
     α_slope::Float64 = 878.39   # linear slope (for linear pricing), increasing 10,000 dollars every year 
     λ_exp::Float64 = 0.1261     # exponential growth rate, changing to 0.1261
-    μ_drift::Float64 = 0.0     # drift for dynamic pricing models 
-    β_action::Float64 = 0.01   # market-maker action sensitivity
+    #μ_drift::Float64 = 0.0     # drift for dynamic pricing models 
+    #β_action::Float64 = 0.01   # market-maker action sensitivity
     γ_state::Float64 = 0.01    # state-dependence sensitivity
     
     # GBM (Geometric Brownian Motion) parameters

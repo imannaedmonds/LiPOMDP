@@ -657,21 +657,6 @@ end
 
 DynamicEmissionMinimizerPolicy(pomdp::LiPOMDP; debug=false) = DynamicEmissionMinimizerPolicy(pomdp, debug)
 
-"""
-AlphaHeuristic - A policy that balances profit and emissions using a weighted score.
-This policy scores unopened sites by (profit - α*λe*emission) and selects the top_k sites.
-If no sites have positive scores, it explores the best single site.
-"""
-struct AlphaHeuristic <: Policy
-    P::LiPOMDP
-    α::Float64                # profit weight ∈ [0,1]
-    λe::Float64               # emission scale factor
-    top_k::Int                # open up to K sites per step (e.g., 1)
-    debug::Bool
-end
-
-AlphaHeuristic(P::LiPOMDP, α::Float64, λe::Float64, top_k::Int; debug=false) = AlphaHeuristic(P, α, λe, top_k, debug)
-
 function POMDPs.action(policy::DynamicEmissionMinimizerPolicy, s::State)
     if policy.debug
         println("\n[DEBUG] DynamicEmissionMinimizerPolicy evaluating state:")
@@ -843,84 +828,196 @@ function POMDPs.action(policy::DynamicEmissionMinimizerPolicy, b::LiBelief)
     return POMDPs.action(policy, s)
 end
 
-function POMDPs.action(pol::AlphaHeuristic, s::State)
-    if pol.debug
-        println("\n[DEBUG] AlphaHeuristic evaluating state:")
-        println("  Time: $(s.time)")
-        println("  Price: $(round(s.price, digits=2))")
-        println("  Deposits: $(round.(s.deposit, digits=1))")
-        println("  Have opened: $(s.have_opened)")
-        println("  α: $(pol.α), λe: $(pol.λe), top_k: $(pol.top_k)")
-    end
-    
-    n = pol.P.n_deposits
-    
-    # Check for restoration opportunities first
-    types = fill(0, n)
-    for site in 1:n
-        if s.have_opened[site] && s.is_depleted[site] && !s.restored_mines[site]
-            types[site] = 3  # Restore action
-            if pol.debug
-                println("  [DEBUG] Restoring site $site: Mine is depleted and not yet restored")
-            end
-        end
-    end
-    
-    # Score unopened sites by (profit − α*λe*emission)
-    scores = Float64[]
-    sites = Int[]
-    for i in 1:n
-        if !s.have_opened[i] && s.deposit[i] > 0.1 && !s.is_depleted[i] && !s.restored_mines[i]
-            μp = expected_profit_site(pol.P, s, i)
-            μe = expected_emission_site(pol.P, s, i)
-            score = pol.α * μp - (1-pol.α) * pol.λe * μe
-            push!(scores, score)
-            push!(sites, i)
-            
-            if pol.debug
-                println("  [DEBUG] Site $i: profit=$(round(μp/1e6, digits=2))M, emission=$(round(μe, digits=1)), score=$(round(score/1e6, digits=2))M")
-            end
-        end
-    end
+# =============================================================================
+# One-Step Lookahead Policy with Rollouts
+# =============================================================================
 
-    if !isempty(scores) && maximum(scores) > 0
-        sel = sortperm(scores, rev=true)[1:min(pol.top_k, length(scores))]
-        for j in sel
-            types[sites[j]] = 2  # 2 = OPEN
-        end
-        
-        if pol.debug
-            println("  [DEBUG] Opening sites: $(sites[sel]) with scores: $(round.(scores[sel]/1e6, digits=2))M")
-        end
-        
-        return Action(site=collect(1:n), type=types)
-    elseif !isempty(scores)
-        # Explore the best single site if opening isn't positive
-        best = argmax(scores)
-        types[sites[best]] = 1   # 1 = EXPLORE
-        
-        if pol.debug
-            println("  [DEBUG] Exploring site $(sites[best]) with score: $(round(scores[best]/1e6, digits=2))M")
-        end
-        
-        return Action(site=collect(1:n), type=types)
-    else
-        if pol.debug
-            println("  [DEBUG] No unopened sites available, doing nothing")
-        end
-        return Action(site=collect(1:n), type=types)  # NO-OP (but may include restoration actions)
-    end
+"""
+One-step lookahead heuristic policy.
+
+At each time step:
+1. Consider all possible actions
+2. For each action, simulate forward using DynamicProfitMaximizer
+3. Run multiple simulations (default 30) to get average reward
+4. Choose the action with highest expected reward
+
+This is essentially a rollout-based policy using DynamicProfitMaximizer as the rollout policy.
+"""
+struct OneStepLookaheadPolicy <: Policy
+    pomdp::LiPOMDP
+    rollout_policy::DynamicProfitMaximizerPolicy
+    n_rollouts::Int
+    debug::Bool
 end
 
-function POMDPs.action(pol::AlphaHeuristic, b::LiBelief)
-    if pol.debug
-        println("\n[DEBUG] AlphaHeuristic evaluating belief")
+function OneStepLookaheadPolicy(pomdp::LiPOMDP; n_rollouts=30, debug=false)
+    rollout_policy = DynamicProfitMaximizerPolicy(pomdp, debug=false)
+    return OneStepLookaheadPolicy(pomdp, rollout_policy, n_rollouts, debug)
+end
+
+"""
+Generate all feasible actions for a given state.
+Returns a vector of possible actions to consider.
+This generates ALL possible action combinations (4^n_sites = 256 for 4 sites),
+filtered by state constraints.
+"""
+function generate_feasible_actions(policy::OneStepLookaheadPolicy, s::State)
+    n_sites = policy.pomdp.n_deposits
+    actions = Action[]
+    
+    # Generate all possible combinations of actions across all sites
+    # Action types: 0=nothing, 1=explore, 2=open, 3=restore
+    n_combinations = 4^n_sites  # 256 for 4 sites
+    
+    for combo_idx in 0:(n_combinations-1)
+        types = zeros(Int, n_sites)
+        
+        # Convert combination index to base-4 representation
+        temp_idx = combo_idx
+        for site in 1:n_sites
+            action_type = temp_idx % 4
+            types[site] = action_type
+            temp_idx = div(temp_idx, 4)
+        end
+        
+        # Check if this action combination is valid
+        valid = true
+        for site in 1:n_sites
+            if types[site] == 1  # EXPLORE
+                # Can only explore unopened sites
+                if s.have_opened[site]
+                    valid = false
+                    break
+                end
+            elseif types[site] == 2  # OPEN
+                # Can only open unopened sites
+                if s.have_opened[site]
+                    valid = false
+                    break
+                end
+            elseif types[site] == 3  # RESTORE
+                # Can only restore depleted mines that haven't been restored
+                if !s.have_opened[site] || !s.is_depleted[site] || s.restored_mines[site]
+                    valid = false
+                    break
+                end
+            end
+        end
+        
+        # Add valid action to list
+        if valid
+            push!(actions, Action(site=collect(1:n_sites), type=types))
+        end
     end
     
-    # Sample from belief distributions for consistency with other policies
-    sampled_deposits = [rand(d) for d in b.deposits_distribution]  # Sample from distributions
-    sampled_price = rand(b.price_distribution)  # Sample from distributions
-    sampled_demand = rand(b.demand_distribution)  # Sample from distributions
+    return actions
+end
+
+"""
+Simulate one rollout from the given state with the given initial action,
+then following the rollout policy for all subsequent steps.
+Returns the total discounted reward.
+"""
+function simulate_rollout(policy::OneStepLookaheadPolicy, s::State, a::Action, rng::AbstractRNG)
+    total_reward = 0.0
+    discount_factor = 1.0  # First reward is not discounted (γ^0 = 1.0)
+    
+    # Execute the first action
+    sp, o, r = @gen(:sp, :o, :r)(policy.pomdp, s, a, rng)
+    total_reward += discount_factor * r
+    
+    # Check if terminal
+    if isterminal(policy.pomdp, sp)
+        return total_reward
+    end
+    
+    # Continue with rollout policy for remaining time steps
+    current_state = sp
+    remaining_steps = Int(policy.pomdp.time_horizon - current_state.time + 1)
+    
+    for t in 1:remaining_steps
+        discount_factor *= policy.pomdp.γ
+        
+        # Get action from rollout policy
+        rollout_action = action(policy.rollout_policy, current_state)
+        
+        # Execute action
+        sp, o, r = @gen(:sp, :o, :r)(policy.pomdp, current_state, rollout_action, rng)
+        total_reward += discount_factor * r
+        
+        # Check if terminal
+        if isterminal(policy.pomdp, sp)
+            break
+        end
+        
+        current_state = sp
+    end
+    
+    return total_reward
+end
+
+"""
+Action selection: evaluate all feasible actions and choose the best one.
+"""
+function POMDPs.action(policy::OneStepLookaheadPolicy, s::State)
+    if policy.debug
+        println("\n[DEBUG] OneStepLookaheadPolicy evaluating state:")
+        println("  Time: $(s.time)")
+        println("  Price: $(round(s.price, digits=2))")
+    end
+    
+    # Generate all feasible actions
+    feasible_actions = generate_feasible_actions(policy, s)
+    
+    if policy.debug
+        println("  Evaluating $(length(feasible_actions)) feasible actions")
+    end
+    
+    # Evaluate each action with multiple rollouts
+    best_action = feasible_actions[1]
+    best_avg_reward = -Inf
+    
+    for (idx, a) in enumerate(feasible_actions)
+        # Run multiple rollout simulations for this action
+        rewards = Float64[]
+        
+        for sim in 1:policy.n_rollouts
+            rng = Random.MersenneTwister(hash((s.time, idx, sim)))
+            reward = simulate_rollout(policy, s, a, rng)
+            push!(rewards, reward)
+        end
+        
+        avg_reward = mean(rewards)
+        
+        if policy.debug && any(a.type .!= 0)  # Only print non-NO-OP actions
+            action_desc = join(["Site $i: $(a.type[i])" for i in 1:length(a.type) if a.type[i] != 0], ", ")
+            println("  Action $(idx): $action_desc")
+            println("    Avg reward: $(round(avg_reward, digits=2)) (std: $(round(std(rewards), digits=2)))")
+        end
+        
+        # Update best action
+        if avg_reward > best_avg_reward
+            best_avg_reward = avg_reward
+            best_action = a
+        end
+    end
+    
+    if policy.debug
+        best_action_desc = join(["Site $i: $(best_action.type[i])" for i in 1:length(best_action.type) if best_action.type[i] != 0], ", ")
+        println("  ✓ Selected action: $best_action_desc (avg reward: $(round(best_avg_reward, digits=2)))")
+    end
+    
+    return best_action
+end
+
+"""
+Action from belief: sample a state and use state-based action selection.
+"""
+function POMDPs.action(policy::OneStepLookaheadPolicy, b::LiBelief)
+    # Sample from belief distributions
+    sampled_deposits = [rand(d) for d in b.deposits_distribution]
+    sampled_price = rand(b.price_distribution)
+    sampled_demand = rand(b.demand_distribution)
     
     # Create a representative state
     s = State(
@@ -934,5 +1031,5 @@ function POMDPs.action(pol::AlphaHeuristic, b::LiBelief)
         restored_mines = copy(b.restored_mines)
     )
     
-    return POMDPs.action(pol, s)
+    return POMDPs.action(policy, s)
 end

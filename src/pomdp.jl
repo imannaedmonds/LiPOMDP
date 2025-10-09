@@ -939,7 +939,7 @@ end
 #     return 1  # Default to do nothing
 # end
 
-# Helper functions for AlphaHeuristic policy
+# Helper functions for policy evaluation
 """
 Calculate expected profit if opening site i now.
 Returns the expected profit over the mine's lifetime.

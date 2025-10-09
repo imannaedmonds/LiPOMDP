@@ -77,11 +77,6 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
     """Create a policy based on type."""
     
     if policy_type == "POMCPOW"
-        # # Create AlphaHeuristic rollout policy with the same alpha being tested
-        # λe = pomdp.emission_scale_factor
-        # top_k = 1
-        # rollout_policy = AlphaHeuristic(pomdp, alpha, λe, top_k, debug=false)
-        
         solver = POMCPOWSolver(
             #tree_queries = 2500, #give it time to plan
             tree_queries = 2500,
@@ -137,12 +132,6 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
         
     elseif policy_type == "DynamicEmissionMinimizer"
         return DynamicEmissionMinimizerPolicy(pomdp, debug=false)
-        
-    elseif policy_type == "AlphaHeuristic"
-        # Use the alpha parameter passed to the function
-        λe = pomdp.emission_scale_factor  # emission scale factor
-        top_k = 1  # open up to 1 site per step
-        return AlphaHeuristic(pomdp, alpha, λe, top_k, debug=false)
     else
         error("Unknown policy type: $policy_type")
     end
