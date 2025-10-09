@@ -63,7 +63,7 @@ end
     time_horizon::Int64 = 29 #time horizon
     n_deposits::Int64 = 4 # number of deposits
     alpha::Float64 = 0.5 # Parameter to control tradeoff between emissions and volume
-    exploration_cost::Float64 = 5000.0
+    exploration_cost::Float64 = 100_000.0
     LCE_per_lithium = 5.323  # 1 t Li ≈ 5.323 t LCE
 
     # FIXED: Add emission scaling factor to balance scales between emissions and profit
@@ -77,8 +77,8 @@ end
     # Production parameters (deposits are in-situ Li metal tonnes)
     # output is NAMEPLATE Li t/yr per mine
     output::Float64 = 3_500.0  # Annual output per mine of Li
-    init_deposit_size_dle::Float64 = 20_000.0  # Smaller DLE deposits for more exploration
-    init_deposit_size_mining::Float64 = 71_000.0  # Larger mining deposits for more exploration 
+    init_deposit_size_dle::Float64 = 11_000.0  # Smaller DLE deposits for more exploration
+    init_deposit_size_mining::Float64 = 73_000.0  # Larger mining deposits for more exploration 
     dle_uncertainty_factor::Float64 = 0.3  # Reduced to prevent negative deposits
     mining_uncertainty_factor::Float64 = 0.2 # Reduced to prevent negative deposits
 
@@ -91,15 +91,15 @@ end
     mining_CO2_emissions::Int64 = 15
     mining_fixed_CO2::Int64 = 5  # Fixed emissions per mine opened
     mining_startup_CO2::Int64 = 20  # Emissions spike when mine first opens
-    mining_capex::Int64 = 120_000_000    # $20M in total
-    mining_opex::Int64 = 4_500     # $4500 per ton operating cost
+    mining_capex::Int64 = 152_000_000    # $20M in total
+    mining_opex::Int64 = 5_000     # $4500 per ton operating cost
 
     # DLE parameters
-    dle_CO2_emissions::Int64 = 7   # Lower emissions
+    dle_CO2_emissions::Int64 = 2   # Lower emissions
     dle_fixed_CO2::Int64 = 2  # Lower fixed emissions per mine opened
     dle_startup_CO2::Int64 = 10  # Lower emissions spike when mine first opens
-    dle_capex::Int64 = 95_000_000       # Higher initial investment ($5000 per ton)
-    dle_opex::Int64 = 4_000        # Lower operating costs ($3500 per ton)
+    dle_capex::Int64 = 102_000_000       # Higher initial investment ($5000 per ton)
+    dle_opex::Int64 = 5_800        # Lower operating costs ($3500 per ton)
     
     # Restoration parameters
     dle_restoration_cost::Int64 = 10_000_000  # Cost to restore depleted DLE mine

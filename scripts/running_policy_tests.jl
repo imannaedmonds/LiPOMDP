@@ -79,7 +79,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
     if policy_type == "POMCPOW"
         solver = POMCPOWSolver(
             #tree_queries = 2500, #give it time to plan
-            tree_queries = 2500,
+            tree_queries = 15000,
             max_depth = 25, #max time step you can get, planning over POMDP in the future
             criterion = MaxUCB(15.0),#increased exploration constant for high uncertainty deposits
             # Progressive widening (actions) - ENABLED for large action space
@@ -115,16 +115,31 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
         global POMCPOW_CONFIG = solver
         return solve(solver, pomdp)
         
-    elseif policy_type == "ProfitMaximizer"
+    elseif policy_type == "POMCPOW_Depth1"
+        # Shallow planning heuristic - only looks one step ahead
+        solver = POMCPOWSolver(
+            tree_queries = 2500,
+            max_depth = 1,           # Only one step ahead
+            criterion = MaxUCB(15.0),
+            enable_action_pw = true,
+            k_action = 5.0,
+            alpha_action = 0.5,
+            k_observation = 3.0,
+            alpha_observation = 0.3,
+            estimate_value = FORollout(DynamicProfitMaximizerPolicy(pomdp))
+        )
+        return solve(solver, pomdp)
+        
+    elseif policy_type == "ProfitMaximizer" || policy_type == "OneMineProfitMaximization"
         return ProfitMaximizerPolicy(pomdp, top_k=1, times=[1])
         
-    elseif policy_type == "EmissionMinimizer"
+    elseif policy_type == "EmissionMinimizer" || policy_type == "OneMineEmissionMinimization"
         return EmissionMinimizerPolicy(pomdp, top_k=1, times=[1])
         
     elseif policy_type == "ExploreOnly"
         return ExploreOnlyPolicy(pomdp)
         
-    elseif policy_type == "Random"
+    elseif policy_type == "Random" || policy_type == "RandomHeuristicPolicy"
         return RandomHeuristicPolicy(pomdp, debug=false)
         
     elseif policy_type == "DynamicProfitMaximizer"
@@ -132,6 +147,9 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
         
     elseif policy_type == "DynamicEmissionMinimizer"
         return DynamicEmissionMinimizerPolicy(pomdp, debug=false)
+        
+    elseif policy_type == "OneStepLookahead"
+        return OneStepLookaheadPolicy(pomdp, n_rollouts=30, debug=false)
     else
         error("Unknown policy type: $policy_type")
     end
@@ -527,14 +545,24 @@ end
 # Configuration
 time_horizon = 29
 n_sims = 30
-planning_price_models = Int64[6]  # Exponential model for planning
+planning_price_models = Int64[2]  # Exponential model for planning
 evaluation_price_models = Int64[6]  # Static model for evaluation
-policies = String["DynamicProfitMaximizer", "ExploreOnly", "ProfitMaximizer", "EmissionMinimizer", "DynamicEmissionMinimizer", "POMCPOW"]
+policies = String[
+    "POMCPOW",
+    "POMCPOW_Depth1",
+    "OneStepLookahead",
+    "DynamicProfitMaximizer",
+    "DynamicEmissionMinimizer",
+    "OneMineProfitMaximization",
+    "OneMineEmissionMinimization",
+    "ExploreOnly",
+    "RandomHeuristicPolicy"
+]
 alphas = Float64[0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pure emission minimization (1)
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/policy_test_results_p$(planning_str)_e$(evaluation_str)_multi_actions-explore.txt"
+output_file = "outputs/results v3/policy_test_results_p$(planning_str)_e$(evaluation_str)_15kTQ.txt"
 
 
 results, pareto_data = run_simple_policy_test(
