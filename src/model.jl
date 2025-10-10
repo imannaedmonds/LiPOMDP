@@ -9,7 +9,7 @@ using Statistics
     deposit::Vector{Float64} # [v₁, v₂, v₃, v₄] in-situ Li (t Li)
     time::Float64 = 1.0  # current time, year
     price::Float64 = 1_000.0  #$/t LCE 
-    company_demand::Float64 = 0.0  # t LCE / year (company)  (market share * global)
+    company_demand::Float64 = 0.0  # t LCE / year (company target based on market share * global production)
     total_mined::Float64   # track cumulative SOLD LCE
     have_opened::Vector{Bool}  # Boolean value to represent whether or not we have opened a mine
     is_depleted::Vector{Bool}  # Boolean value to represent whether a mine is depleted
@@ -52,7 +52,8 @@ end
 
 @with_kw mutable struct LiPOMDP <: POMDP{State,Action,Observation}
     #Observation parameters
-    σ_obs_d::Float64 = 1000.0 # Reduced observation noise for more accurate depletion detection
+    σ_obs_d_dle::Float64 = 60_000.0 # Observation noise for DLE deposits (sites 1&2)
+    σ_obs_d_hard_rock::Float64 = 150_000.0 # Observation noise for Hard Rock deposits (sites 3&4)
     σ_obs_p::Float64 = 500.0 # Standard deviation of the observation noise for price
     σ_obs_demand::Float64 = 100.0  # Standard deviation for demand observation noise (reduced for lower error)
 
@@ -63,7 +64,8 @@ end
     time_horizon::Int64 = 29 #time horizon
     n_deposits::Int64 = 4 # number of deposits
     alpha::Float64 = 0.5 # Parameter to control tradeoff between emissions and volume
-    exploration_cost::Float64 = 100_000.0
+    exploration_cost_dle::Float64 = 500_000.0  # Exploration cost for DLE sites
+    exploration_cost_hard_rock::Float64 = 4_500_000.0  # Exploration cost for Hard Rock sites
     LCE_per_lithium = 5.323  # 1 t Li ≈ 5.323 t LCE
 
     # FIXED: Add emission scaling factor to balance scales between emissions and profit
@@ -84,32 +86,26 @@ end
 
     # Mining method for each deposit (true = DLE, false = hard rock mining)
     deposit_types::Vector{Bool} = [true, true, false, false]  # First two are DLE, last two Hard Rock Mining
-    recovery::Vector{Float64} = [0.75, 0.75, 0.85, 0.85]    # Fraction of in‑situ Li recovered as saleable product
+    recovery::Vector{Float64} = [0.80, 0.80, 0.70, 0.70]    # Fraction of in‑situ Li recovered as saleable product
     CO2_cost::Int64 = 100
 
     # Hard Rock mining parameters
-    mining_CO2_emissions::Int64 = 15
-    mining_fixed_CO2::Int64 = 5  # Fixed emissions per mine opened
-    mining_startup_CO2::Int64 = 20  # Emissions spike when mine first opens
+    mining_CO2_emissions::Float64 = 6.25  # kg CO2 per tonne LCE (production only)
     mining_capex::Int64 = 1_790_000_000    # $20M in total
     mining_opex::Int64 = 5_000     # $4500 per ton operating cost
 
     # DLE parameters
-    dle_CO2_emissions::Int64 = 7   # Lower emissions
-    dle_fixed_CO2::Int64 = 2  # Lower fixed emissions per mine opened
-    dle_startup_CO2::Int64 = 10  # Lower emissions spike when mine first opens
+    dle_CO2_emissions::Float64 = 4.1   # kg CO2 per tonne LCE (production only)
     dle_capex::Int64 = 695_000_000       # Higher initial investment ($5000 per ton)
-    dle_opex::Int64 = 5_800        # Lower operating costs ($3500 per ton)
+    dle_opex::Int64 = 5_600        # Lower operating costs ($3500 per ton)
     
     # Restoration parameters
     dle_restoration_cost::Int64 = 10_000_000  # Cost to restore depleted DLE mine
     mining_restoration_cost::Int64 = 20_000_000  # Cost to restore depleted mining mine
-    dle_restoration_emissions::Int64 = 5  # Emissions from restoration process
-    mining_restoration_emissions::Int64 = 8  # Emissions from restoration process
 
     #pricing model parameters
     price_model_type::Int64 = 1  #different pricing models 1) static 2) linear, 3) exponential, 4) GBM, 6) Historical, 9) Dynamic Price, 10) State-Dependent
-    hist_data::Dict{Int64, Tuple{Float64, Float64, Float64}} = lithium_data  # Historical data as (demand, price, production) tuples by year
+    hist_data::Dict{Int64, Tuple{Float64, Float64}} = lithium_data  # Historical data as (production, price) tuples by year
     start_year::Int64 = 1995  #TODO-MANSUR check this Starting year for historical data
     # Starting prices for each pricing model
     p₀_static::Float64 = 10_355.33    # Starting value for static pricing
@@ -125,8 +121,8 @@ end
     γ_state::Float64 = 0.01    # state-dependence sensitivity
     
     # GBM (Geometric Brownian Motion) parameters
-    gbm_drift::Float64 = 0.051      # 5% annual drift (expected return)
-    gbm_volatility::Float64 = 0.33  # 33% annual volatility
+    gbm_drift::Float64 = 0.033      
+    gbm_volatility::Float64 = 0.238 
 end
 
 # Helper function to get the appropriate starting price based on model type

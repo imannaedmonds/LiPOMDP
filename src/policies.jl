@@ -228,20 +228,14 @@ function POMDPs.action(policy::EmissionMinimizerPolicy, s::State)
                 var_emissions_per_ton = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_CO2_emissions : policy.pomdp.mining_CO2_emissions
                 lifetime_var_emissions = max_in_situ * var_emissions_per_ton
                 
-                # Fixed emissions (per period for remaining time)
-                fixed_emissions_per_period = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_fixed_CO2 : policy.pomdp.mining_fixed_CO2
-                lifetime_fixed_emissions = fixed_emissions_per_period * remaining_time
-                
-                # Startup emissions (one-time when opening)
-                startup_emissions = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_startup_CO2 : policy.pomdp.mining_startup_CO2
-                
-                # Total lifetime emissions
-                total_lifetime_emissions = lifetime_var_emissions + lifetime_fixed_emissions + startup_emissions
+        
+                # Total lifetime emissions (production only)
+                total_lifetime_emissions = lifetime_var_emissions / 1000.0  # Convert kg to tonnes
                 
                 emissions[site] = total_lifetime_emissions
                 
                 if policy.debug
-                    println("  [DEBUG] Site $site: lifetime emissions=$(round(total_lifetime_emissions, digits=2)) tCO2 (var=$(round(lifetime_var_emissions, digits=2)), fixed=$(round(lifetime_fixed_emissions, digits=2)), startup=$(round(startup_emissions, digits=2)))")
+                    println("  [DEBUG] Site $site: lifetime emissions=$(round(total_lifetime_emissions, digits=2)) tCO2 (production-only)")
                 end
             end
         end
@@ -535,14 +529,12 @@ function POMDPs.action(policy::DynamicProfitMaximizerPolicy, s::State)
                 variable_emissions_per_tonne = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_CO2_emissions : policy.pomdp.mining_CO2_emissions
                 lifetime_variable_emissions = realistic_sellable * variable_emissions_per_tonne
                 
-                # Fixed emissions (per mine opened)
-                fixed_emissions = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_fixed_CO2 : policy.pomdp.mining_fixed_CO2
+                # Removed: No fixed emissions
+                # Removed: No startup emissions
+                # Emissions are ONLY based on production
                 
-                # Startup emissions (one-time when mine opens)
-                startup_emissions = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_startup_CO2 : policy.pomdp.mining_startup_CO2
-                
-                # Total emissions cost
-                total_emissions_cost = (lifetime_variable_emissions + fixed_emissions + startup_emissions) * policy.pomdp.CO2_cost
+                # Total emissions cost (production only, convert kg to tonnes)
+                total_emissions_cost = (lifetime_variable_emissions / 1000.0) * policy.pomdp.CO2_cost
                 
                 # FIXED: Calculate total profit including environmental costs
                 # Total profit = revenue - operational costs - environmental costs
@@ -711,13 +703,11 @@ function POMDPs.action(policy::DynamicEmissionMinimizerPolicy, s::State)
                 mine_capacity_per_period = policy.pomdp.output * policy.pomdp.recovery[site] * policy.pomdp.LCE_per_lithium
                 realistic_production_per_period = min(mine_capacity_per_period, remaining_demand)
                 
-                # Calculate total emissions for this mine
+                # Calculate total emissions for this mine (production only)
                 emission_factor = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_CO2_emissions : policy.pomdp.mining_CO2_emissions
-                fixed_emissions = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_fixed_CO2 : policy.pomdp.mining_fixed_CO2
-                startup_emissions = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_startup_CO2 : policy.pomdp.mining_startup_CO2
                 
-                # Total emissions = startup + fixed + variable
-                total_emissions = startup_emissions + (fixed_emissions * remaining_time) + (realistic_production_per_period * emission_factor * remaining_time)
+                # Total emissions = variable production emissions only (convert kg to tonnes)
+                total_emissions = (realistic_production_per_period * emission_factor * remaining_time) / 1000.0
                 
                 # Store evaluation
                 push!(site_evaluations, (site, total_emissions, realistic_production_per_period, emission_factor))

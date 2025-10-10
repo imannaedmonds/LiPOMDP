@@ -79,9 +79,9 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
     if policy_type == "POMCPOW"
         solver = POMCPOWSolver(
             #tree_queries = 2500, #give it time to plan
-            tree_queries = 10000,
+            tree_queries = 2500,
             max_depth = 25, #max time step you can get, planning over POMDP in the future
-            criterion = MaxUCB(15.0),#increased exploration constant for high uncertainty deposits
+            criterion = MaxUCB(30.0),#increased exploration constant for high uncertainty deposits
             # Progressive widening (actions) - ENABLED for large action space
             enable_action_pw = true,
             # k_action = 1.2,
@@ -106,7 +106,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
             # k_observation = 0.5,     # Even less observation exploration
             # alpha_observation = 0.1, # Much less observation progressive wideningng
             
-            estimate_value = FORollout(ExploreOnlyPolicy(pomdp)),
+            estimate_value = FORollout(DynamicProfitMaximizerPolicy(pomdp)),
             #estimate_value = 0,
             tree_in_info = true,
            # rng = MersenneTwister(1234)
@@ -345,7 +345,7 @@ function print_results(all_results::Dict, alphas::Vector{Float64})
             println("$(rpad(policy_type, 20)) | $(lpad(planning_name[1], 8)) | $(lpad(eval_name[1], 4)) | " *
                     "$(lpad(round(mean_profit/1e6, digits=2), 11))M | " *
                     "$(lpad(round(mean_emission_cost/1e6, digits=2), 13))M | " *
-                    "$(lpad(round(mean_disc_reward, digits=2), 19)) | " *
+                    "$(lpad(round(mean_disc_reward, digits=4), 19)) | " *
                     "$(lpad(round(met_demand_pct, digits=1), 10))%")
          end
         
@@ -501,7 +501,7 @@ function run_simple_policy_test(
                     # Print quick summary
                     println("  ✓ Profit: \$$(round(mean_profit/1e6, digits=2))M ± $(round(std_profit/1e6, digits=2))M")
                     println("  ✓ Emissions: \$$(round(mean_emission_cost/1e6, digits=2))M ± $(round(std_emission_cost/1e6, digits=2))M")
-                    println("  ✓ Disc. Reward: $(round(mean_disc_reward, digits=2))M")  
+                    println("  ✓ Disc. Reward: $(round(mean_disc_reward, digits=4))M")  
                     end
             end
         end
@@ -545,24 +545,29 @@ end
 # Configuration
 time_horizon = 29
 n_sims = 30
-planning_price_models = Int64[2]  # Exponential model for planning
+planning_price_models = Int64[3]  # Exponential model for planning
 evaluation_price_models = Int64[6]  # Static model for evaluation
 policies = String[
     "POMCPOW",
-    "POMCPOW_Depth1",
     "OneStepLookahead",
-    "DynamicProfitMaximizer",
-    "DynamicEmissionMinimizer",
-    "OneMineProfitMaximization",
-    "OneMineEmissionMinimization",
-    "ExploreOnly",
-    "RandomHeuristicPolicy"
 ]
-alphas = Float64[0.0, 0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pure emission minimization (1)
+
+# policies = String[
+#     "POMCPOW",
+#     "POMCPOW_Depth1",
+#     "OneStepLookahead",
+#     "DynamicProfitMaximizer",
+#     "DynamicEmissionMinimizer",
+#     "OneMineProfitMaximization",
+#     "OneMineEmissionMinimization",
+#     "ExploreOnly",
+#     "RandomHeuristicPolicy"
+# ]
+alphas = Float64[0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pure emission minimization (1)
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/results v2/policy_test_results_p$(planning_str)_e$(evaluation_str)_1Brewardscale_10kTQ.txt"
+output_file = "outputs/results v4/policy_test_results_p$(planning_str)_e$(evaluation_str)_2Brewards_2.5k_30UCB_25depth.txt"
 
 
 results, pareto_data = run_simple_policy_test(
@@ -646,7 +651,7 @@ function show_all_policies_actions_by_alpha(planning_models=[1], evaluation_mode
                         # Format deposits for display
                         deposits_str = "[$(round(state.deposit[1], digits=0)), $(round(state.deposit[2], digits=0)), $(round(state.deposit[3], digits=0)), $(round(state.deposit[4], digits=0))]"
                         
-                        println("$step   | $action_str | $(round(r, digits=2)) | $(round(total_discounted_reward, digits=2)) | $deposits_str")
+                        println("$step   | $action_str | $(round(r, digits=2)) | $(round(total_discounted_reward, digits=4)) | $deposits_str")
                         
                         state = sp
                     end
@@ -654,7 +659,7 @@ function show_all_policies_actions_by_alpha(planning_models=[1], evaluation_mode
                     # Show final results
                     println("\n📊 FINAL RESULTS $policy_name (α=$alpha):")
                     println("  Planning Model: Type $planning_model, Evaluation Model: Type $evaluation_model")
-                    println("  Discounted Reward: $(round(total_discounted_reward, digits=2))")
+                    println("  Discounted Reward: $(round(total_discounted_reward, digits=4))")
                     println("  Final Price: $(round(state.price, digits=2))")
                     println("  Final Demand: $(round(state.company_demand, digits=2))")
                     println("  Sites Opened: $(sum(state.have_opened))")

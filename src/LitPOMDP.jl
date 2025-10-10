@@ -15,8 +15,8 @@ export State, Action, Observation, LiPOMDP, LiBelief, LiBeliefUpdater
 include("model.jl")
 
 export get_historical_price, 
-         get_historical_demand,
          get_historical_production,
+         get_historical_demand,
          get_historical_data
 include("utils.jl")
 

@@ -1,152 +1,112 @@
 #!/usr/bin/env julia
 
-"""
-Calculate theoretical maximum reward with current model parameters
-"""
+using Pkg
+Pkg.activate(".")
 
 using LitPOMDP
+using Statistics
 
-# Create POMDP with linear pricing (used in train_test)
-pomdp = LiPOMDP(price_model_type=2, time_horizon=29, alpha=0.5)
+println("🔍 CALCULATING MAXIMUM REWARD")
+println("=" ^ 80)
 
-println("="^80)
-println("THEORETICAL MAXIMUM REWARD CALCULATION")
-println("="^80)
-println("\nModel Parameters:")
-println("  Time horizon: $(pomdp.time_horizon) years")
-println("  Discount factor: $(pomdp.γ)")
+# Create POMDP with current parameters
+pomdp = LiPOMDP()
+
+println("📊 POMDP PARAMETERS:")
+println("  Output per mine: $(pomdp.output) tonnes Li/year")
 println("  Number of deposits: $(pomdp.n_deposits)")
-println("  Market share: $(pomdp.market_share_target)")
-println("  Price model: Linear (starts at \$$(round(pomdp.p₀_linear, digits=2)), slope \$$(round(pomdp.α_slope, digits=2))/year)")
-println()
+println("  Time horizon: $(pomdp.time_horizon) years")
+println("  Current reward_scale: $(pomdp.reward_scale)")
+println("  Emission scale factor: $(pomdp.emission_scale_factor)")
+println("  Alpha: $(pomdp.alpha)")
 
-# Calculate production capacity
-println("Production Capacity per Mine:")
-for i in 1:pomdp.n_deposits
-    deposit_type = pomdp.deposit_types[i] ? "DLE" : "Mining"
-    li_output = pomdp.output
-    lce_output = li_output * pomdp.recovery[i] * pomdp.LCE_per_lithium
-    println("  Site $i ($deposit_type): $(round(li_output/1e3, digits=1))k t Li/year → $(round(lce_output/1e3, digits=1))k t LCE/year")
+println("\n💰 REVENUE CALCULATION:")
+# Maximum production scenario: All 4 mines open and producing at full capacity
+max_production_per_year = pomdp.n_deposits * pomdp.output  # Li tonnes/year
+println("  Max production (all mines): $(max_production_per_year) tonnes Li/year")
+
+# Convert to LCE (assume average recovery of 0.8)
+avg_recovery = mean(pomdp.recovery)
+max_lce_per_year = max_production_per_year * avg_recovery * pomdp.LCE_per_lithium
+println("  Max LCE production: $(round(max_lce_per_year, digits=0)) tonnes LCE/year")
+
+# Typical price range
+price_low = 15_000.0  # $/tonne LCE
+price_high = 25_000.0  # $/tonne LCE
+price_avg = 20_000.0
+
+println("  Price range: \$$(Int(price_low)) - \$$(Int(price_high)) per tonne LCE")
+
+max_revenue_per_year = max_lce_per_year * price_high
+println("  Max revenue per year: \$$(round(max_revenue_per_year/1e6, digits=2))M")
+
+max_revenue_lifetime = max_revenue_per_year * pomdp.time_horizon
+println("  Max revenue (29 years): \$$(round(max_revenue_lifetime/1e9, digits=2))B")
+
+println("\n💸 COST CALCULATION:")
+# CAPEX for all 4 mines
+total_capex = 2 * pomdp.dle_capex + 2 * pomdp.mining_capex
+println("  Total CAPEX (all 4 mines): \$$(round(total_capex/1e9, digits=2))B")
+
+# OPEX per year (assume average)
+avg_opex_per_tonne = (pomdp.dle_opex + pomdp.mining_opex) / 2
+max_opex_per_year = max_lce_per_year * avg_opex_per_tonne
+println("  Max OPEX per year: \$$(round(max_opex_per_year/1e6, digits=2))M")
+
+max_opex_lifetime = max_opex_per_year * pomdp.time_horizon
+println("  Max OPEX (29 years): \$$(round(max_opex_lifetime/1e9, digits=2))B")
+
+total_costs = total_capex + max_opex_lifetime
+println("  Total costs: \$$(round(total_costs/1e9, digits=2))B")
+
+println("\n💨 EMISSION CALCULATION:")
+# Average emission rate
+avg_emissions_per_tonne = (pomdp.dle_CO2_emissions + pomdp.mining_CO2_emissions) / 2
+total_emissions_kg = max_lce_per_year * pomdp.time_horizon * avg_emissions_per_tonne
+total_emissions_tonnes = total_emissions_kg / 1000.0
+emission_cost = total_emissions_tonnes * pomdp.CO2_cost
+println("  Total emissions: $(round(total_emissions_tonnes, digits=0)) tonnes CO2")
+println("  Emission cost: \$$(round(emission_cost/1e6, digits=2))M")
+
+println("\n🎯 MAXIMUM REWARD CALCULATION:")
+max_profit = max_revenue_lifetime - total_costs
+println("  Max profit: \$$(round(max_profit/1e9, digits=2))B")
+println("  Emission penalty: \$$(round(emission_cost/1e6, digits=2))M")
+
+# Calculate for different alpha values
+println("\n📊 MAX REWARD BY ALPHA:")
+println("-" ^ 60)
+println("Alpha | Max Raw Reward | Max Scaled Reward")
+println("-" ^ 60)
+
+for alpha in [0.0, 0.25, 0.5, 0.75, 1.0]
+    raw_reward = alpha * max_profit + (1 - alpha) * (-emission_cost * pomdp.emission_scale_factor)
+    scaled_reward = raw_reward / pomdp.reward_scale
+    
+    println("$(lpad(alpha, 5)) | \$$(lpad(round(raw_reward/1e9, digits=2), 6))B | $(lpad(round(scaled_reward, digits=4), 10))")
 end
 
-total_lce_capacity = sum([pomdp.output * pomdp.recovery[i] * pomdp.LCE_per_lithium for i in 1:pomdp.n_deposits])
-println("  Total capacity (all 4 mines): $(round(total_lce_capacity/1e6, digits=2))M t LCE/year")
+println("\n💡 REWARD NORMALIZATION RECOMMENDATIONS:")
 println()
-
-# Calculate costs
-println("Opening Costs (CAPEX):")
-global total_capex = 0.0
-for i in 1:pomdp.n_deposits
-    global total_capex
-    capex = pomdp.deposit_types[i] ? pomdp.dle_capex : pomdp.mining_capex
-    deposit_type = pomdp.deposit_types[i] ? "DLE" : "Mining"
-    println("  Site $i ($deposit_type): \$$(round(capex/1e9, digits=2))B")
-    total_capex += capex
-end
-println("  Total CAPEX: \$$(round(total_capex/1e9, digits=2))B")
+println("  Current reward_scale: \$$(pomdp.reward_scale/1e9)B")
 println()
-
-# Scenario: Open all mines immediately, produce at capacity
-println("BEST-CASE SCENARIO: Open all 4 mines immediately, zero emissions")
-println("="^80)
-
-global total_discounted_reward = 0.0
-global cumulative_revenue = 0.0
-global cumulative_costs = 0.0
-global cumulative_opex = 0.0
-global cumulative_emissions_cost = 0.0
-
-# Year 0: Pay all CAPEX
-total_discounted_reward -= total_capex
-cumulative_costs += total_capex
-
-println("\nYear 0: Open all mines (CAPEX: \$$(round(total_capex/1e9, digits=2))B)")
-
-# Years 1-29: Produce at capacity
-for t in 1:pomdp.time_horizon
-    global cumulative_revenue, cumulative_opex, cumulative_emissions_cost, cumulative_costs, total_discounted_reward
-    
-    # Price in year t (linear model)
-    price = pomdp.p₀_linear + pomdp.α_slope * (t - 1)
-    
-    # Assume demand is sufficient (market share × global demand)
-    # From historical data, global demand is ~1-3M tonnes LCE/year
-    # Company demand at 35% market share would be huge, so assume unconstrained
-    
-    # Production (assume all mines produce at full capacity)
-    production_lce = total_lce_capacity
-    
-    # Revenue
-    revenue = production_lce * price
-    cumulative_revenue += revenue
-    
-    # OPEX
-    opex = 0.0
-    for i in 1:pomdp.n_deposits
-        site_lce = pomdp.output * pomdp.recovery[i] * pomdp.LCE_per_lithium
-        site_opex = (pomdp.deposit_types[i] ? pomdp.dle_opex : pomdp.mining_opex) * site_lce
-        opex += site_opex
-    end
-    cumulative_opex += opex
-    
-    # Emissions cost (assuming alpha=0.5, so emissions matter)
-    # Variable emissions
-    emissions_cost = 0.0
-    for i in 1:pomdp.n_deposits
-        site_lce = pomdp.output * pomdp.recovery[i] * pomdp.LCE_per_lithium
-        emission_factor = pomdp.deposit_types[i] ? pomdp.dle_CO2_emissions : pomdp.mining_CO2_emissions
-        fixed_emissions = pomdp.deposit_types[i] ? pomdp.dle_fixed_CO2 : pomdp.mining_fixed_CO2
-        
-        # Variable + fixed
-        site_emissions = (site_lce * emission_factor + fixed_emissions) * pomdp.CO2_cost
-        emissions_cost += site_emissions
-    end
-    
-    # Startup emissions (only in year 1)
-    if t == 1
-        for i in 1:pomdp.n_deposits
-            startup = pomdp.deposit_types[i] ? pomdp.dle_startup_CO2 : pomdp.mining_startup_CO2
-            emissions_cost += startup * pomdp.CO2_cost
-        end
-    end
-    
-    cumulative_emissions_cost += emissions_cost
-    cumulative_costs += opex + emissions_cost
-    
-    # Reward = Revenue - OPEX - Emissions
-    reward = revenue - opex - emissions_cost
-    
-    # Discount
-    discount_factor = pomdp.γ^(t-1)
-    discounted_reward = discount_factor * reward
-    total_discounted_reward += discounted_reward
-    
-    if t <= 5 || t == pomdp.time_horizon
-        println("  Year $t: Price=\$$(round(price, digits=0)), Prod=$(round(production_lce/1e6, digits=2))M t, Revenue=\$$(round(revenue/1e9, digits=2))B, Reward=\$$(round(reward/1e9, digits=2))B (disc: \$$(round(discounted_reward/1e9, digits=2))B)")
-    elseif t == 6
-        println("  ...")
-    end
-end
-
+println("  📈 Option 1: Use max profit as scale")
+max_profit_scale = max_profit
+println("     reward_scale = $(max_profit_scale)")
+println("     Result: Rewards normalized to ~[-1, 1] range")
 println()
-println("="^80)
-println("RESULTS (Best Case - No Exploration, Full Capacity, All Mines)")
-println("="^80)
-println("Total Revenue:              \$$(round(cumulative_revenue/1e9, digits=2))B")
-println("Total CAPEX:                \$$(round(total_capex/1e9, digits=2))B")
-println("Total OPEX:                 \$$(round(cumulative_opex/1e9, digits=2))B")
-println("Total Emissions Cost:       \$$(round(cumulative_emissions_cost/1e9, digits=2))B")
-println("Total Costs:                \$$(round(cumulative_costs/1e9, digits=2))B")
-println("-"^80)
-println("Undiscounted Profit:        \$$(round((cumulative_revenue - cumulative_costs)/1e9, digits=2))B")
-println("TOTAL DISCOUNTED REWARD:    \$$(round(total_discounted_reward/1e9, digits=2))B")
-println("="^80)
+println("  📈 Option 2: Use half of max profit")
+half_profit_scale = max_profit / 2
+println("     reward_scale = $(half_profit_scale)")
+println("     Result: Rewards normalized to ~[-2, 2] range")
 println()
-println("Note: This assumes:")
-println("  • All 4 mines opened immediately (year 0)")
-println("  • No exploration costs")
-println("  • All mines produce at full capacity for 29 years")
-println("  • Sufficient demand to absorb all production")
-println("  • Linear price model (planning model)")
-println("  • Alpha = 0.5 (emissions cost included)")
+println("  📈 Option 3: Dynamic scaling per timestep")
+println("     Calculate max possible reward at each timestep")
+println("     Accounts for remaining time and current state")
 
+println("\n🎯 RECOMMENDED:")
+println("  Set reward_scale = $(round(max_profit, digits=0))")
+println("  This normalizes rewards to approximately [-1, 1] range")
+println("  Making different alpha values more comparable")
+
+println("\n" * "=" ^ 80)

@@ -68,32 +68,16 @@ function compute_emissions(P::LiPOMDP, s::State, a::Action)
             in_situ_li, sellable_lce = calculate_site_production(P, s, site, remaining_demand_lce)
             remaining_demand_lce -= sellable_lce
             if sellable_lce > 0
-                ef_lce = P.deposit_types[site] ? P.dle_CO2_emissions : P.mining_CO2_emissions  # tCO2 per t LCE
-                total_CO2_tons += sellable_lce * ef_lce
+                ef_lce = P.deposit_types[site] ? P.dle_CO2_emissions : P.mining_CO2_emissions  # kg CO2 per t LCE
+                total_CO2_tons += sellable_lce * ef_lce / 1000.0  # Convert kg to tonnes CO2
             end
         end
     end
 
-    # fixed emissions per open site this period
-    for site in 1:P.n_deposits
-        if s.have_opened[site]
-            total_CO2_tons += (P.deposit_types[site] ? P.dle_fixed_CO2 : P.mining_fixed_CO2)
-        end
-    end
-
-    # startup emissions for newly opened sites
-    for site in 1:P.n_deposits
-        if a.type[site] == 2 && !s.have_opened[site]
-            total_CO2_tons += (P.deposit_types[site] ? P.dle_startup_CO2 : P.mining_startup_CO2)
-        end
-    end
-
-    # restoration emissions for depleted mines
-    for site in 1:P.n_deposits
-        if a.type[site] == 3 && s.have_opened[site] && s.is_depleted[site]
-            total_CO2_tons += (P.deposit_types[site] ? P.dle_restoration_emissions : P.mining_restoration_emissions)
-        end
-    end
+    # Removed: No fixed emissions per open site
+    # Removed: No startup emissions for newly opened sites
+    # Removed: No restoration emissions
+    # Emissions are ONLY based on production (sellable LCE)
 
     return - total_CO2_tons * P.CO2_cost  # negative penalty
 end
@@ -106,7 +90,9 @@ function compute_costs(P::LiPOMDP, s::State, a::Action)
     exploration_cost = 0.0  # Start with zero, don't add base cost
     for site in 1:P.n_deposits
         if a.type[site] == 1  # Exploring
-            exploration_cost += P.exploration_cost  # Add cost only when exploring
+            # Use deposit-type-specific exploration cost
+            cost = site <= 2 ? P.exploration_cost_dle : P.exploration_cost_hard_rock
+            exploration_cost += cost  # Add cost only when exploring
         end
     end
     
@@ -286,16 +272,17 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
 end
 
 # Add function to calculate company's demand
-function update_demand(P::LiPOMDP, global_demand::Float64)
-    # Convert global demand from Li metal to LCE
-    global_demand_lce = global_demand * P.LCE_per_lithium
+function update_demand(P::LiPOMDP, global_production::Float64)
+    # Use global production instead of demand as basis for company target
+    # Convert global production from Li metal to LCE
+    global_production_lce = global_production * P.LCE_per_lithium
     
-    # Add uncertainty to global demand forecast
-    demand_noise = global_demand_lce * P.demand_uncertainty
-    uncertain_global_demand = max(0.0, global_demand_lce + rand(Normal(0, demand_noise)))
+    # Add uncertainty to global production forecast
+    production_noise = global_production_lce * P.demand_uncertainty
+    uncertain_global_production = max(0.0, global_production_lce + rand(Normal(0, production_noise)))
     
-    # Calculate company's target demand based on market share
-    company_demand = uncertain_global_demand * P.market_share_target
+    # Calculate company's target demand based on market share of global production
+    company_demand = uncertain_global_production * P.market_share_target
     
     return (company_demand)
 end
@@ -322,21 +309,27 @@ function POMDPs.observation(P::LiPOMDP, s::State,  a::Action, sp::State)
         
         if is_exploring
             # Direct exploration: high-quality observation
-            noise = P.σ_obs_d * 2.0  
+            # Use deposit-type-specific observation noise
+            σ_obs_base = i <= 2 ? P.σ_obs_d_dle : P.σ_obs_d_hard_rock
+            noise = σ_obs_base * 2.0  
             # Truncate to ensure non-negative observations
             mean_deposit = max(0.0, sp.deposit[i])
             push!(deposit_estimate_dist, Normal(mean_deposit, noise))
         elseif is_open
             # Production-based observation: learn from mining activity
-            # The agent can infer deposit size from production capacity and depletion
-            # Use moderate noise since production provides indirect but useful information
-            noise = P.σ_obs_d * 5.0  # 5x base noise - less precise than exploration but informative
+            # Production provides VERY precise observations through actual extraction
+            # This should be MORE precise than exploration
+            # Use deposit-type-specific observation noise
+            σ_obs_base = i <= 2 ? P.σ_obs_d_dle : P.σ_obs_d_hard_rock
+            noise = σ_obs_base * 0.1  # 10x LESS noise - production is more precise than exploration
             # Truncate to ensure non-negative observations
             mean_deposit = max(0.0, sp.deposit[i])
             push!(deposit_estimate_dist, Normal(mean_deposit, noise))
         else
             # No information: unexplored and not producing
-            noise = P.σ_obs_d * 50.0  
+            # Use deposit-type-specific observation noise
+            σ_obs_base = i <= 2 ? P.σ_obs_d_dle : P.σ_obs_d_hard_rock
+            noise = σ_obs_base * 50.0  
             # Truncate to ensure non-negative observations
             mean_deposit = max(0.0, sp.deposit[i])
             push!(deposit_estimate_dist, Normal(mean_deposit, noise))
@@ -379,28 +372,45 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
             μ_prior, σ_prior = mean(prior), std(prior)
             z = o.deposits[i]                        # observed noisy deposit value for site i
 
-            # Use lower noise for exploration observations
-            σ_obs2 = max((P.σ_obs_d * 2.0)^2, 1e-10)  # 2x base noise for exploration
+            # Use different noise levels based on deposit type for balanced convergence
+            # DLE sites (1&2): lower noise for faster convergence
+            # Hard Rock sites (3&4): higher noise for realistic uncertainty
+            σ_obs_base = i <= 2 ? P.σ_obs_d_dle : P.σ_obs_d_hard_rock  # DLE vs Hard Rock observation noise
+            σ_obs2 = max((σ_obs_base * 1.5)^2, 1e-10)  # 1x base noise for exploration
             σ_prior2 = max(σ_prior^2, 1e-10)  # Prevent division by zero
             σ_post2 = 1 / (1/σ_prior2 + 1/σ_obs2)     # updated variance
             μ_post = σ_post2 * (μ_prior/σ_prior2 + z/σ_obs2)  # updated mean (weighted avg)
 
+            # Ensure minimum uncertainty floor based on initial deposit size (not current estimate)
+            # This prevents uncertainty from going to zero even with many observations
+            initial_deposit_size = i <= 2 ? P.init_deposit_size_dle : P.init_deposit_size_mining
+            min_uncertainty = max(500.0, 0.01 * initial_deposit_size)  # 1% of initial deposit
+            σ_post_final = max(sqrt(σ_post2), min_uncertainty)
+
             # Store the updated Normal distribution with truncation to prevent negatives
-            updated_deposits[i] = truncated(Normal(μ_post, sqrt(σ_post2)), 0.0, Inf)
+            updated_deposits[i] = truncated(Normal(μ_post, σ_post_final), 0.0, Inf)
         elseif is_open
             # Production-based observation: learn from mining activity
             prior = b.deposits_distribution[i]      # prior belief (Normal) for site i
             μ_prior, σ_prior = mean(prior), std(prior)
             z = o.deposits[i]                        # observed noisy deposit value for site i
 
-            # Use moderate noise for production observations
-            σ_obs2 = max((P.σ_obs_d * 5.0)^2, 1e-10)  # 5x base noise for production
+            # Use low noise for production observations (production is more precise than exploration)
+            # Use same deposit-type-specific base noise as exploration
+            σ_obs_base = i <= 2 ? P.σ_obs_d_dle : P.σ_obs_d_hard_rock  # DLE vs Hard Rock observation noise
+            σ_obs2 = max((σ_obs_base * 0.1)^2, 1e-10)  # 10x LESS noise for production
             σ_prior2 = max(σ_prior^2, 1e-10)  # Prevent division by zero
             σ_post2 = 1 / (1/σ_prior2 + 1/σ_obs2)     # updated variance
             μ_post = σ_post2 * (μ_prior/σ_prior2 + z/σ_obs2)  # updated mean (weighted avg)
 
+            # Ensure minimum uncertainty floor based on initial deposit size (not current estimate)
+            # This prevents uncertainty from going to zero even with many observations
+            initial_deposit_size = i <= 2 ? P.init_deposit_size_dle : P.init_deposit_size_mining
+            min_uncertainty = max(500.0, 0.01 * initial_deposit_size)  # 1% of initial deposit
+            σ_post_final = max(sqrt(σ_post2), min_uncertainty)
+
             # Store the updated Normal distribution with truncation to prevent negatives
-            updated_deposits[i] = truncated(Normal(μ_post, sqrt(σ_post2)), 0.0, Inf)
+            updated_deposits[i] = truncated(Normal(μ_post, σ_post_final), 0.0, Inf)
         else
             # Keep prior belief unchanged for unexplored and non-producing sites
             updated_deposits[i] = b.deposits_distribution[i]
@@ -449,7 +459,7 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
     # Check for restoration actions
     for site in 1:length(a.site)
         if a.type[site] == 3 && a.site[site] != 0  # Restore action
-            updated_is_depleted[site] = false
+            # Keep is_depleted as true - mine stays depleted after restoration
             updated_restored_mines[site] = true  # Mark as restored
             # FIXED: Set deposit distribution to 0 when restoring - mine is completely depleted
             updated_deposits[site] = Normal(0.0, 0.1)  # Very small distribution around 0
@@ -460,9 +470,11 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
     # For opened mines, check if they should be depleted based on the observed deposit
     for site in 1:length(updated_deposits)
         if updated_have_opened[site] && !updated_is_depleted[site] && !updated_restored_mines[site]
-            # Check if the observed deposit is zero (direct observation of depletion)
+            # Check if the observed deposit is below depletion threshold (5% of initial size)
             observed_deposit = o.deposits[site]
-            if observed_deposit <= 0.1  # Marks depleted when observed deposit is essentially zero
+            initial_deposit_size = site <= 2 ? P.init_deposit_size_dle : P.init_deposit_size_mining
+            depletion_threshold = 0.05 * initial_deposit_size  # 5% of initial deposit
+            if observed_deposit <= depletion_threshold  # Marks depleted when observed deposit is essentially zero
                 updated_is_depleted[site] = true
                 # Update the deposit distribution to reflect depletion
                 updated_deposits[site] = Normal(0.0, 0.1)  # Very small distribution around 0
@@ -470,7 +482,7 @@ function POMDPs.update(up::LiBeliefUpdater, b::LiBelief, a::Action, o::Observati
         end
     end
 
-    # FIXED: Use centralized production calculation with proper demand tracking
+ # FIXED: Use centralized production calculation with proper demand tracking
     # Create a temporary state-like object for production calculation
     temp_deposits = [mean(updated_deposits[i]) for i in 1:P.n_deposits]
     expected_demand = mean(updated_demand)
@@ -599,8 +611,8 @@ function POMDPs.initialstate(P::LiPOMDP)
 
     # Anchors for price & demand (their means)
     price0 = get_p₀(P)
-    global_demand = get_historical_demand(P, P.start_year)
-    demand0 = update_demand(P, global_demand)
+    global_production = get_historical_production(P, P.start_year)
+    demand0 = update_demand(P, global_production)
 
     # Uncertainty for price & demand (now directly from P fields)
     price_std  = P.price_init_std
@@ -630,7 +642,7 @@ function create_initial_belief(P::LiPOMDP)
         restored_mines = fill(false, P.n_deposits)
     )
     true_state = rand(initialstate(P))  # Get the true initial state
-
+    
     return true_state, belief  # Return both state and belief
 end
 
@@ -645,11 +657,11 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
     current_year = P.start_year + Int(floor(sp.time)) - 1
     sp.price = update_price(P, s, a)
     
-    # Get demand data
-    global_demand = get_historical_demand(P, current_year)
+    # Get production data (using production instead of demand for company target)
+    global_production = get_historical_production(P, current_year)
     
-    # Update demands with uncertainty
-    sp.company_demand = update_demand(P, global_demand)
+    # Update company demand based on global production with uncertainty
+    sp.company_demand = update_demand(P, global_production)
 
     # Process each site's action
     for site in 1:P.n_deposits
@@ -668,7 +680,7 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
         
         # Action: Restore Mine (type 3)
         if action_type == 3 && s.have_opened[site] && s.is_depleted[site] && !s.restored_mines[site]
-            sp.is_depleted[site] = false
+            # Keep is_depleted as true - mine stays depleted after restoration
             sp.restored_mines[site] = true
             # FIXED: Set deposits to 0 when restoring - mine is completely depleted
             sp.deposit[site] = 0.0
@@ -688,8 +700,10 @@ function POMDPs.transition(P::LiPOMDP, s::State, a::Action)
             sp.deposit[site] -= in_situ_li                # Li depletion
             total_mined_this_step += sellable_lce         # track SOLD LCE
             
-            # Check if mine is depleted after this step
-            if sp.deposit[site] <= 0.1
+            # Check if mine is depleted after this step (5% of initial deposit)
+            initial_deposit_size = site <= 2 ? P.init_deposit_size_dle : P.init_deposit_size_mining
+            depletion_threshold = 0.05 * initial_deposit_size
+            if sp.deposit[site] <= depletion_threshold
                 sp.is_depleted[site] = true
             end
         end
@@ -739,7 +753,7 @@ end
 # Define action space - now returns all possible combinations of actions
 function POMDPs.actions(P::LiPOMDP)
     acts = Action[]
-
+    
     possible_actions = [0, 1, 2, 3]
 
     for action_site_1 in possible_actions
@@ -1006,15 +1020,12 @@ function expected_emission_site(P::LiPOMDP, s::State, i::Int)
     variable_emissions_per_tonne = P.deposit_types[i] ? P.dle_CO2_emissions : P.mining_CO2_emissions
     lifetime_variable_emissions = realistic_sellable * variable_emissions_per_tonne
     
-    # Fixed emissions (per period for remaining time)
-    fixed_emissions_per_period = P.deposit_types[i] ? P.dle_fixed_CO2 : P.mining_fixed_CO2
-    lifetime_fixed_emissions = fixed_emissions_per_period * remaining_time
+    # Removed: No fixed emissions
+    # Removed: No startup emissions
+    # Emissions are ONLY based on production
     
-    # Startup emissions (one-time when opening)
-    startup_emissions = P.deposit_types[i] ? P.dle_startup_CO2 : P.mining_startup_CO2
-    
-    # Total lifetime emissions
-    total_lifetime_emissions = lifetime_variable_emissions + lifetime_fixed_emissions + startup_emissions
+    # Total lifetime emissions (production only)
+    total_lifetime_emissions = lifetime_variable_emissions / 1000.0  # Convert kg to tonnes
     
     return total_lifetime_emissions
 end
