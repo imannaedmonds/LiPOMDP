@@ -46,7 +46,7 @@ const OPTIMIZED_POMCPOW_CONFIGS = Dict(
     0.25 => (tree_queries=2500, depth=5,  use_rollout=true),
     0.5  => (tree_queries=5000, depth=5,  use_rollout=true),
     0.75 => (tree_queries=5000, depth=5,  use_rollout=true),
-    1.0  => (tree_queries=2500, depth=20, use_rollout=true),   # Deep planning for pure profit
+    1.0  => (tree_queries=2500, depth=25, use_rollout=true),   # Deep planning for pure profit
 )
 
 # =============================================================================

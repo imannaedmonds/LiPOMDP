@@ -1,0 +1,69 @@
+# OPTIMIZED POMCPOW Configurations (per alpha):
+# Alpha 1.0:
+#   enable_action_pw = false
+#   tree_queries = 5000
+#   max_depth = 20
+#   alpha_observation = 0.3
+#   estimate_value = FORollout(DynamicProfitMaximizerPolicy(LiPOMDP
+  σ_obs_d_dle: Float64 60000.0
+  σ_obs_d_hard_rock: Float64 150000.0
+  σ_obs_p: Float64 500.0
+  σ_obs_demand: Float64 100.0
+  price_init_std: Float64 1000.0
+  demand_init_std: Float64 500.0
+  γ: Float64 0.97
+  time_horizon: Int64 29
+  n_deposits: Int64 4
+  alpha: Float64 1.0
+  exploration_cost_dle: Float64 500000.0
+  exploration_cost_hard_rock: Float64 4.5e6
+  LCE_per_lithium: Float64 5.323
+  emission_scale_factor: Float64 1.0
+  reward_scale: Float64 5.3558e10
+  market_share_target: Float64 0.3
+  demand_uncertainty: Float64 0.05
+  output: Float64 25000.0
+  init_deposit_size_dle: Float64 130000.0
+  init_deposit_size_mining: Float64 868780.0
+  dle_uncertainty_factor: Float64 0.3
+  mining_uncertainty_factor: Float64 0.2
+  deposit_types: Array{Bool}((4,)) Bool[1, 1, 0, 0]
+  recovery: Array{Float64}((4,)) [0.8, 0.8, 0.7, 0.7]
+  CO2_cost: Int64 100
+  mining_CO2_emissions: Float64 6.25
+  mining_capex: Int64 1790000000
+  mining_opex: Int64 5000
+  dle_CO2_emissions: Float64 4.1
+  dle_capex: Int64 695000000
+  dle_opex: Int64 5600
+  dle_restoration_cost: Int64 10000000
+  mining_restoration_cost: Int64 20000000
+  price_model_type: Int64 1
+  hist_data: Dict{Int64, Tuple{Float64, Float64}}
+  start_year: Int64 1995
+  p₀_static: Float64 10355.33
+  p₀_linear: Float64 2381.38
+  p₀_exponential: Float64 917.36
+  p₀_gbm: Float64 10000.0
+  p₀_fallback: Float64 10000.0
+  α_slope: Float64 878.39
+  λ_exp: Float64 0.1261
+  γ_state: Float64 0.01
+  gbm_drift: Float64 0.033
+  gbm_volatility: Float64 0.238
+, false))
+#   criterion = MaxUCB(0.5)
+#   k_action = 5.0
+#   alpha_action = 0.5
+#   k_observation = 5.0
+#
+# Evaluation Configuration:
+# time_horizon = 29
+# n_train_sims = 25
+# n_test_sims = 50
+# planning_price_models = [1]
+# evaluation_price_models = [6]
+# alphas = [1.0]
+#
+policy_type,planning_price_model,evaluation_price_model,alpha,train_mean_profit,train_std_profit,train_mean_emission_cost,train_std_emission_cost,train_mean_discounted_reward,train_std_discounted_reward,train_mean_demand,train_mean_production,train_met_demand_pct,train_mean_exploration_cost,train_mean_capex,train_mean_opex,train_mean_costs,train_cost_per_tonne,train_mean_mines_opened,train_mean_active_mines,train_mean_mines_depleted,train_mean_co2_tonnes,train_mean_revenue,train_mean_explorations,train_mean_successful_explorations,train_exploration_success_rate,train_avg_selling_price,train_emissions_intensity,train_capacity_utilization,train_market_share_achieved,test_mean_profit,test_std_profit,test_mean_emission_cost,test_std_emission_cost,test_mean_discounted_reward,test_std_discounted_reward,test_mean_demand,test_mean_production,test_met_demand_pct,test_mean_exploration_cost,test_mean_capex,test_mean_opex,test_mean_costs,test_cost_per_tonne,test_mean_mines_opened,test_mean_active_mines,test_mean_mines_depleted,test_mean_co2_tonnes,test_mean_revenue,test_mean_explorations,test_mean_successful_explorations,test_exploration_success_rate,test_avg_selling_price,test_emissions_intensity,test_capacity_utilization,test_market_share_achieved,profit_overfitting,emission_overfitting,reward_overfitting,n_train_sims,n_test_sims
+POMCPOW,1,6,1.0,1.749589470708175e10,4.832025114175819e9,-973875.9341289985,81096.73451230982,0.1258493078284429,0.038881572399353616,2.0313561123488366e6,1.8729048854213145e6,92.19973169823452,7.532e7,4.9422e9,9.913425690155848e9,1.4941745690155846e10,7977.845434897599,3.96,1.7379310344827588,1.52,9738.759341289986,3.24376403972376e10,25.52,25.52,100.0,17319.427510565052,0.005199815226654838,0.6523527988231678,0.9219973169823451,1.721750477121566e10,4.122977519918014e9,-961684.9695429021,66528.5386848933,0.1239518975965166,0.03333744274823665,2.0194507904504957e6,1.8710179297585937e6,92.64984017467492,7.802e7,4.97e9,9.934721006624277e9,1.4992941006624277e10,8013.253517329322,4.0,1.716551724137931,1.5,9616.849695429022,3.2210445777839935e10,26.28,26.28,100.0,17215.466119021028,0.005139902479005013,0.6451785964684805,0.9264984017467492,2.7838993586608887e8,-12190.964586096467,0.0018974102319262859,25,50
