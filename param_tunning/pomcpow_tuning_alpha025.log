@@ -1,0 +1,179 @@
+The latest version of Julia in the `release` channel is 1.12.0+0.x64.linux.gnu. You currently have `1.11.5+0.x64.linux.gnu` installed. Run:
+
+  juliaup update
+
+in your terminal shell to install Julia 1.12.0+0.x64.linux.gnu and update the `release` channel to that version.
+  Activating project at `~/LiPOMDP`
+🔧 TESTING TUNED POMCPOW PARAMETERS
+====================================================================================================
+📊 TEST CONFIGURATION:
+  Planning model: Price Model 1 (Static)
+  Evaluation model: Price Model 2 (Linear)
+  Alphas: [0.25, 0.5, 1.0]
+  Simulations per policy: 10
+  Time horizon: 29 years
+
+
+====================================================================================================
+🎯 TESTING ALPHA = 0.25
+====================================================================================================
+
+📈 POLICY CONFIGURATIONS:
+
+1️⃣  Original POMCPOW:
+    - tree_queries: 10000
+    - max_depth: 25
+    - MaxUCB: 2.0
+    - enable_action_pw: true
+    - k_action: 5.0
+    - k_observation: 3.0
+
+2️⃣  Tuned POMCPOW:
+    - tree_queries: 30000 ✨ (3x increase, more than OneStepLookahead)
+    - max_depth: 20 ✨ (focus on breadth)
+    - MaxUCB: 0.5 ✨ (optimized for static pricing)
+    - enable_action_pw: FALSE ✨ (exhaustive like OneStepLookahead)
+    - k_action: 15.0 ✨
+    - k_observation: 5.0 ✨
+    - Always uses rollout (even for alpha=0)
+
+3️⃣  OneStepLookahead (Baseline):
+    - Evaluates ALL 256 actions exhaustively
+    - Only 1-step lookahead (no tree search)
+    - n_rollouts: 15 (reduced from default 30)
+
+----------------------------------------------------------------------------------------------------
+🎮 RUNNING SIMULATIONS...
+----------------------------------------------------------------------------------------------------
+
+▶️  Testing: Original POMCPOW
+  Run 1/10... Reward: 0.1214, Time: 108.5s
+  Run 2/10... Reward: 0.0942, Time: 100.3s
+  Run 3/10... Reward: 0.1081, Time: 103.8s
+  Run 4/10... Reward: 0.1139, Time: 103.2s
+  Run 5/10... Reward: 0.1148, Time: 103.0s
+  Run 6/10... Reward: 0.1185, Time: 104.1s
+  Run 7/10... Reward: 0.0969, Time: 101.0s
+  Run 8/10... Reward: 0.1153, Time: 104.4s
+  Run 9/10... Reward: 0.1098, Time: 104.8s
+  Run 10/10... Reward: 0.1214, Time: 106.2s
+  ✅ Original POMCPOW - Mean: 0.1114 ± 0.0094, Avg Time: 103.9s
+
+▶️  Testing: Tuned POMCPOW
+  Run 1/10... Reward: 0.1131, Time: 263.8s
+  Run 2/10... Reward: 0.1006, Time: 258.5s
+  Run 3/10... Reward: 0.1279, Time: 261.1s
+  Run 4/10... Reward: 0.1026, Time: 243.9s
+  Run 5/10... Reward: 0.1019, Time: 251.2s
+  Run 6/10... Reward: 0.129, Time: 256.6s
+  Run 7/10... Reward: 0.1002, Time: 254.2s
+  Run 8/10... Reward: 0.114, Time: 261.8s
+  Run 9/10... Reward: 0.1024, Time: 249.4s
+  Run 10/10... Reward: 0.1067, Time: 258.4s
+  ✅ Tuned POMCPOW - Mean: 0.1098 ± 0.0109, Avg Time: 255.9s
+
+▶️  Testing: OneStepLookahead
+  Run 1/10... Reward: 0.1048, Time: 3.6s
+  Run 2/10... Reward: 0.1313, Time: 2.6s
+  Run 3/10... Reward: 0.1056, Time: 3.8s
+  Run 4/10... Reward: 0.1128, Time: 3.4s
+  Run 5/10... Reward: 0.1182, Time: 3.3s
+  Run 6/10... Reward: 0.1045, Time: 3.2s
+  Run 7/10... Reward: 0.1244, Time: 3.5s
+  Run 8/10... Reward: 0.1094, Time: 2.8s
+  Run 9/10... Reward: 0.1005, Time: 2.7s
+  Run 10/10... Reward: 0.0923, Time: 4.1s
+  ✅ OneStepLookahead - Mean: 0.1104 ± 0.0116, Avg Time: 3.3s
+
+====================================================================================================
+🎯 TESTING ALPHA = 0.5
+====================================================================================================
+
+📈 POLICY CONFIGURATIONS:
+
+1️⃣  Original POMCPOW:
+    - tree_queries: 10000
+    - max_depth: 25
+    - MaxUCB: 2.0
+    - enable_action_pw: true
+    - k_action: 5.0
+    - k_observation: 3.0
+
+2️⃣  Tuned POMCPOW:
+    - tree_queries: 30000 ✨ (3x increase, more than OneStepLookahead)
+    - max_depth: 20 ✨ (focus on breadth)
+    - MaxUCB: 0.5 ✨ (optimized for static pricing)
+    - enable_action_pw: FALSE ✨ (exhaustive like OneStepLookahead)
+    - k_action: 15.0 ✨
+    - k_observation: 5.0 ✨
+    - Always uses rollout (even for alpha=0)
+
+3️⃣  OneStepLookahead (Baseline):
+    - Evaluates ALL 256 actions exhaustively
+    - Only 1-step lookahead (no tree search)
+    - n_rollouts: 15 (reduced from default 30)
+
+----------------------------------------------------------------------------------------------------
+🎮 RUNNING SIMULATIONS...
+----------------------------------------------------------------------------------------------------
+
+▶️  Testing: Original POMCPOW
+  Run 1/10... Reward: 0.2235, Time: 99.4s
+  Run 2/10... Reward: 0.2454, Time: 103.1s
+  Run 3/10... Reward: 0.2193, Time: 104.7s
+  Run 4/10... Reward: 0.196, Time: 98.5s
+  Run 5/10... Reward: 0.1859, Time: 102.1s
+  Run 6/10... Reward: 0.2344, Time: 104.8s
+  Run 7/10... Reward: 0.2374, Time: 104.5s
+  Run 8/10... Reward: 0.2393, Time: 104.6s
+  Run 9/10... Reward: 0.2035, Time: 97.5s
+  Run 10/10... Reward: 0.2392, Time: 103.5s
+  ✅ Original POMCPOW - Mean: 0.2224 ± 0.0207, Avg Time: 102.3s
+
+▶️  Testing: Tuned POMCPOW
+  Run 1/10... Reward: 0.2185, Time: 264.1s
+  Run 2/10... Reward: 0.2008, Time: 252.3s
+  Run 3/10... Reward: 0.1987, Time: 261.6s
+  Run 4/10... Reward: 0.1877, Time: 258.3s
+  Run 5/10... Reward: 0.2036, Time: 248.9s
+  Run 6/10... Reward: 0.2002, Time: 257.3s
+  Run 7/10... Reward: 0.22, Time: 262.5s
+  Run 8/10...
+[2492146] signal 15: Terminated
+in expression starting at /home/edmondsa/LiPOMDP/scripts/test_tuned_pomcpow.jl:45
+sig_match_fast at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/gf.c:2961 [inlined]
+jl_lookup_generic_ at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/gf.c:3048 [inlined]
+ijl_apply_generic at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/gf.c:3121
+reward at /home/edmondsa/LiPOMDP/src/pomdp.jl:159
+gen at /home/edmondsa/LiPOMDP/src/pomdp.jl:736
+simulate at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/solver2.jl:0
+search at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/planner2.jl:78
+#action_info#13 at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/planner2.jl:34
+action_info at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/planner2.jl:27 [inlined]
+action at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/planner2.jl:44
+unknown function (ip: 0x7ec16c930a86)
+jl_apply at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+do_call at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/interpreter.c:126
+eval_value at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/interpreter.c:223
+eval_body at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/interpreter.c:562
+jl_interpret_toplevel_thunk at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/interpreter.c:824
+jl_toplevel_eval_flex at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/toplevel.c:943
+jl_toplevel_eval_flex at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/toplevel.c:886
+ijl_toplevel_eval_in at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/toplevel.c:994
+eval at ./boot.jl:430 [inlined]
+include_string at ./loading.jl:2734
+_include at ./loading.jl:2794
+include at ./Base.jl:557
+jfptr_include_46879.1 at /home/edmondsa/.julia/juliaup/julia-1.11.5+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+exec_options at ./client.jl:323
+_start at ./client.jl:531
+jfptr__start_73430.1 at /home/edmondsa/.julia/juliaup/julia-1.11.5+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+jl_apply at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+true_main at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/jlapi.c:900
+jl_repl_entrypoint at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/jlapi.c:1059
+main at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/cli/loader_exe.c:58
+unknown function (ip: 0x7ec183e2a1c9)
+__libc_start_main at /lib/x86_64-linux-gnu/libc.so.6 (unknown line)
+unknown function (ip: 0x4010b8)
+unknown function (ip: (nil))
+Allocations: 99937198097 (Pool: 99937197617; Big: 480); GC: 14263

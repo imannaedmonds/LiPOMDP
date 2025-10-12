@@ -51,15 +51,15 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
         estimate_val = (pomdp.alpha == 0.0) ? 0 : FORollout(DynamicProfitMaximizerPolicy(pomdp))
         
         solver = POMCPOWSolver(
-            tree_queries = 10000,
-            max_depth = 25,
-            criterion = MaxUCB(15.0),
+            tree_queries = 1000,
+            max_depth = 5,
+            criterion = MaxUCB(0.5),
             enable_action_pw = true, # ENABLED for large action space
             k_action = 5.0,          # Increased for more action exploration
             alpha_action = 0.5,     # Increased for more progressive widening
             k_observation = 3.0,    # Increased for more observation exploration
             alpha_observation = 0.3, # Increased for more observation progressive widening
-            estimate_value = FORollout(DynamicProfitMaximizerPolicy(pomdp))  # Use ExploreOnly for rollouts
+            estimate_value = FORollout(OneStepLookaheadPolicy(pomdp, n_rollouts=1))  # Use ExploreOnly for rollouts
             #estimate_value = 0
             )
         return solve(solver, pomdp), solver
@@ -68,7 +68,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
         solver = POMCPOWSolver(
             tree_queries = 1000,
             max_depth = 1,           # Only one step ahead
-            criterion = MaxUCB(15.0),
+            criterion = MaxUCB(0.5),
             enable_action_pw = true, # ENABLED for large action space
             k_action = 5.0,
             alpha_action = 0.5,
@@ -796,10 +796,10 @@ println("="^60)
 # Configuration
 policies = ["POMCPOW", "POMCPOW_Depth1", "OneStepLookahead", "DynamicProfitMaximizer", "ExploreOnly", "OneMineProfitMaximization", "OneMineEmissionMinimization", "DynamicEmissionMinimizer", "RandomHeuristicPolicy"]
 #policies = [ "OneStepLookahead"]
-planning_price_models = [2]  # Static, Linear, Exponential, Historical
+planning_price_models = [1]  # Static, Linear, Exponential, Historical
 evaluation_price_models = [6]  # Historical price model for evaluation
-#alphas = [0.0, 0.25, 0.5, 0.75, 1.0]
-alphas = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.5, 0.75, 1.0]
+alphas = [0.0, 0.25, 0.5, 0.75, 1.0]
+#alphas = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.5, 0.75, 1.0]
 time_horizon = 29  # Full time horizon
 n_train_sims = 25  # Training simulations
 n_test_sims = 50   # Testing simulations
@@ -810,12 +810,12 @@ println("Planning models: $planning_price_models")
 println("Evaluation models: $evaluation_price_models")
 println("Alpha values: $alphas")
 println("Train/Test split: $n_train_sims/$n_test_sims")
-println("High reward scale 45B, ucb 2")
+println("High reward scale 53B, ucb 0.5 1kTQ, 1 stepahead rollout, depth 5")
 
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/test_train_v5_results_new_params/train_test_results_p$(planning_str)_e$(evaluation_str).csv"
+output_file = "outputs/test_train_v6_results_new_params/train_test_results_p$(planning_str)_e$(evaluation_str)_0.5UCB_1kTQ_onesteprollout_depth5.csv"
 
 # Run the evaluation
 results = run_train_test_evaluation(

@@ -1,0 +1,92 @@
+The latest version of Julia in the `release` channel is 1.12.0+0.x64.linux.gnu. You currently have `1.11.5+0.x64.linux.gnu` installed. Run:
+
+  juliaup update
+
+in your terminal shell to install Julia 1.12.0+0.x64.linux.gnu and update the `release` channel to that version.
+  Activating project at `~/LiPOMDP`
+🔧 TESTING TUNED POMCPOW PARAMETERS
+====================================================================================================
+📊 TEST CONFIGURATION:
+  Planning model: Price Model 1 (Static)
+  Evaluation model: Price Model 2 (Linear)
+  Alphas: [0.0, 0.5, 1.0]
+  Simulations per policy: 10
+  Time horizon: 29 years
+
+
+====================================================================================================
+🎯 TESTING ALPHA = 0.0
+====================================================================================================
+
+📈 POLICY CONFIGURATIONS:
+
+1️⃣  Original POMCPOW:
+    - tree_queries: 10000
+    - max_depth: 25
+    - MaxUCB: 2.0
+    - enable_action_pw: true
+    - k_action: 5.0
+    - k_observation: 3.0
+
+2️⃣  Tuned POMCPOW:
+    - tree_queries: 30000 ✨ (3x increase, more than OneStepLookahead)
+    - max_depth: 20 ✨ (focus on breadth)
+    - MaxUCB: 0.5 ✨ (optimized for static pricing)
+    - enable_action_pw: FALSE ✨ (exhaustive like OneStepLookahead)
+    - k_action: 15.0 ✨
+    - k_observation: 5.0 ✨
+    - Always uses rollout (even for alpha=0)
+
+3️⃣  OneStepLookahead (Baseline):
+    - Evaluates ALL 256 actions exhaustively
+    - Only 1-step lookahead (no tree search)
+    - n_rollouts: 15 (reduced from default 30)
+
+----------------------------------------------------------------------------------------------------
+🎮 RUNNING SIMULATIONS...
+----------------------------------------------------------------------------------------------------
+
+▶️  Testing: Original POMCPOW
+  Run 1/10... Reward: 0.0, Time: 44.1s
+  Run 2/10...
+[2491613] signal 15: Terminated
+in expression starting at /home/edmondsa/LiPOMDP/scripts/test_tuned_pomcpow.jl:45
+jl_alloc_genericmemory at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/genericmemory.c:100
+GenericMemory at ./boot.jl:516 [inlined]
+Array at ./boot.jl:578 [inlined]
+vect at ./array.jl:161 [inlined]
+actions at /home/edmondsa/LiPOMDP/src/pomdp.jl:763
+actions at /home/edmondsa/LiPOMDP/src/pomdp.jl:794
+actions at /home/edmondsa/LiPOMDP/src/pomdp.jl:812 [inlined]
+next_action at /home/edmondsa/.julia/packages/MCTS/E5MOU/src/action_gen.jl:12 [inlined]
+simulate at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/solver2.jl:16
+search at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/planner2.jl:78
+#action_info#13 at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/planner2.jl:34
+action_info at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/planner2.jl:27 [inlined]
+action at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/planner2.jl:44
+unknown function (ip: 0x7dd171729856)
+jl_apply at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+do_call at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/interpreter.c:126
+eval_value at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/interpreter.c:223
+eval_body at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/interpreter.c:562
+jl_interpret_toplevel_thunk at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/interpreter.c:824
+jl_toplevel_eval_flex at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/toplevel.c:943
+jl_toplevel_eval_flex at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/toplevel.c:886
+ijl_toplevel_eval_in at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/toplevel.c:994
+eval at ./boot.jl:430 [inlined]
+include_string at ./loading.jl:2734
+_include at ./loading.jl:2794
+include at ./Base.jl:557
+jfptr_include_46879.1 at /home/edmondsa/.julia/juliaup/julia-1.11.5+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+exec_options at ./client.jl:323
+_start at ./client.jl:531
+jfptr__start_73430.1 at /home/edmondsa/.julia/juliaup/julia-1.11.5+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+jl_apply at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+true_main at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/jlapi.c:900
+jl_repl_entrypoint at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/jlapi.c:1059
+main at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/cli/loader_exe.c:58
+unknown function (ip: 0x7dd188c2a1c9)
+__libc_start_main at /lib/x86_64-linux-gnu/libc.so.6 (unknown line)
+unknown function (ip: 0x4010b8)
+unknown function (ip: (nil))
+Allocations: 1448287570 (Pool: 1448287151; Big: 419); GC: 111

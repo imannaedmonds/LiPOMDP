@@ -1,0 +1,175 @@
+The latest version of Julia in the `release` channel is 1.12.0+0.x64.linux.gnu. You currently have `1.11.5+0.x64.linux.gnu` installed. Run:
+
+  juliaup update
+
+in your terminal shell to install Julia 1.12.0+0.x64.linux.gnu and update the `release` channel to that version.
+  Activating project at `~/LiPOMDP`
+🎯 ALPHA 0.5 TARGETED OPTIMIZATION
+====================================================================================================
+📊 TEST CONFIGURATION:
+  Planning model: Price Model 1 (Static)
+  Evaluation model: Price Model 6
+  Alpha: 0.5 (50% profit, 50% emissions)
+  Simulations per policy: 15
+
+🔧 TESTING MULTIPLE CONFIGURATIONS:
+  Tree queries: [2500, 5000, 7500]
+  Max depth: [5, 20]
+  Uncertainty: [1000, 3000]
+  Total POMCPOW configs: 12
+
+====================================================================================================
+🎮 TESTING POMCPOW CONFIGURATIONS
+====================================================================================================
+
+▶️  Testing 1/12: 2.5k/d=5/σ=1k
+  Run 1/15... Reward: 0.0976, Time: 18.2s
+  Run 2/15... Reward: 0.2244, Time: 11.4s
+  Run 3/15... Reward: 0.2193, Time: 10.5s
+  ...  Run 15/15... Reward: 0.2296, Time: 10.4s
+  ✅ 2.5k/d=5/σ=1k - Mean: 0.1622 ± 0.0594, Time: 11.2s
+
+▶️  Testing 2/12: 2.5k/d=5/σ=3k
+  Run 1/15... Reward: 0.1068, Time: 10.3s
+  Run 2/15... Reward: 0.1464, Time: 10.8s
+  Run 3/15... Reward: 0.182, Time: 10.6s
+  ...  Run 15/15... Reward: 0.2349, Time: 10.6s
+  ✅ 2.5k/d=5/σ=3k - Mean: 0.1609 ± 0.0436, Time: 10.7s
+
+▶️  Testing 3/12: 2.5k/d=20/σ=1k
+  Run 1/15... Reward: 0.2104, Time: 22.1s
+  Run 2/15... Reward: 0.1354, Time: 19.8s
+  Run 3/15... Reward: 0.1121, Time: 20.4s
+  ...  Run 15/15... Reward: 0.1215, Time: 21.3s
+  ✅ 2.5k/d=20/σ=1k - Mean: 0.1474 ± 0.0344, Time: 21.5s
+
+▶️  Testing 4/12: 2.5k/d=20/σ=3k
+  Run 1/15... Reward: 0.1651, Time: 22.4s
+  Run 2/15... Reward: 0.1309, Time: 21.3s
+  Run 3/15... Reward: 0.1322, Time: 20.9s
+  ...  Run 15/15... Reward: 0.1211, Time: 21.8s
+  ✅ 2.5k/d=20/σ=3k - Mean: 0.1565 ± 0.0295, Time: 21.5s
+
+▶️  Testing 5/12: 5k/d=5/σ=1k
+  Run 1/15... Reward: 0.119, Time: 22.7s
+  Run 2/15... Reward: 0.1475, Time: 22.4s
+  Run 3/15... Reward: 0.1676, Time: 22.7s
+  ...  Run 15/15... Reward: 0.1871, Time: 22.6s
+  ✅ 5k/d=5/σ=1k - Mean: 0.1652 ± 0.0358, Time: 22.6s
+
+▶️  Testing 6/12: 5k/d=5/σ=3k
+  Run 1/15... Reward: 0.1951, Time: 22.2s
+  Run 2/15... Reward: 0.1217, Time: 22.3s
+  Run 3/15... Reward: 0.1746, Time: 22.6s
+  ...  Run 15/15... Reward: 0.2536, Time: 22.1s
+  ✅ 5k/d=5/σ=3k - Mean: 0.1662 ± 0.0655, Time: 22.5s
+
+▶️  Testing 7/12: 5k/d=20/σ=1k
+  Run 1/15... Reward: 0.1942, Time: 43.7s
+  Run 2/15... Reward: 0.1418, Time: 44.2s
+  Run 3/15... Reward: 0.1338, Time: 43.0s
+  ...  Run 15/15... Reward: 0.1388, Time: 41.9s
+  ✅ 5k/d=20/σ=1k - Mean: 0.1506 ± 0.0371, Time: 42.6s
+
+▶️  Testing 8/12: 5k/d=20/σ=3k
+  Run 1/15... Reward: 0.109, Time: 42.8s
+  Run 2/15... Reward: 0.1432, Time: 44.1s
+  Run 3/15... Reward: 0.1014, Time: 43.4s
+  ...  Run 15/15... Reward: 0.1457, Time: 44.7s
+  ✅ 5k/d=20/σ=3k - Mean: 0.1596 ± 0.0373, Time: 43.0s
+
+▶️  Testing 9/12: 7.5k/d=5/σ=1k
+  Run 1/15... Reward: 0.0765, Time: 34.1s
+  Run 2/15... Reward: 0.1193, Time: 34.0s
+  Run 3/15... Reward: 0.099, Time: 33.5s
+  ...  Run 15/15... Reward: 0.2009, Time: 32.4s
+  ✅ 7.5k/d=5/σ=1k - Mean: 0.1505 ± 0.0523, Time: 33.3s
+
+▶️  Testing 10/12: 7.5k/d=5/σ=3k
+  Run 1/15... Reward: 0.1682, Time: 33.2s
+  Run 2/15... Reward: 0.1954, Time: 32.9s
+  Run 3/15... Reward: 0.2205, Time: 33.0s
+  ...  Run 15/15... Reward: 0.1271, Time: 32.8s
+  ✅ 7.5k/d=5/σ=3k - Mean: 0.161 ± 0.0566, Time: 33.1s
+
+▶️  Testing 11/12: 7.5k/d=20/σ=1k
+  Run 1/15... Reward: 0.1413, Time: 59.9s
+  Run 2/15... Reward: 0.1341, Time: 63.0s
+  Run 3/15... Reward: 0.1391, Time: 60.9s
+  ...  Run 15/15... Reward: 0.1249, Time: 61.6s
+  ✅ 7.5k/d=20/σ=1k - Mean: 0.1371 ± 0.018, Time: 61.5s
+
+▶️  Testing 12/12: 7.5k/d=20/σ=3k
+  Run 1/15... Reward: 0.1442, Time: 59.7s
+  Run 2/15... Reward: 0.1862, Time: 64.4s
+  Run 3/15... Reward: 0.1463, Time: 61.1s
+  ...  Run 15/15... Reward: 0.1195, Time: 60.5s
+  ✅ 7.5k/d=20/σ=3k - Mean: 0.1546 ± 0.0442, Time: 62.0s
+
+====================================================================================================
+🎮 TESTING ONESTEPLOOKAHEAD BASELINE (BOTH UNCERTAINTIES)
+====================================================================================================
+
+▶️  Testing: OneStepLookahead (LOW σ=1k)
+  Run 1/15... Reward: 0.2105, Time: 4.0s
+  Run 2/15... Reward: 0.1621, Time: 2.5s
+  Run 3/15... Reward: 0.139, Time: 3.1s
+  ...  Run 15/15... Reward: 0.1154, Time: 2.4s
+  ✅ OneStepLookahead (LOW σ=1k) - Mean: 0.1561 ± 0.0357, Time: 2.9s
+
+▶️  Testing: OneStepLookahead (HIGH σ=3k)
+  Run 1/15... Reward: 0.2064, Time: 3.5s
+  Run 2/15... Reward: 0.1425, Time: 2.7s
+  Run 3/15... Reward: 0.1334, Time: 2.7s
+  ...  Run 15/15... Reward: 0.1956, Time: 2.9s
+  ✅ OneStepLookahead (HIGH σ=3k) - Mean: 0.1539 ± 0.0349, Time: 3.0s
+
+====================================================================================================
+📊 ALPHA 0.5 OPTIMIZATION RESULTS
+====================================================================================================
+
+Performance Comparison (sorted by mean reward):
+--------------------------------------------------------------------------------------------------------------
+Rank | Configuration      | Mean Reward | Std    | vs Best OneStep | Time
+--------------------------------------------------------------------------------------------------------------
+   1 | 5k/d=5/σ=3k        |      0.1662 | 0.0655 |          +6.47% |  22.5s 🏆
+   2 | 5k/d=5/σ=1k        |      0.1652 | 0.0358 |          +5.85% |  22.6s 🏆
+   3 | 2.5k/d=5/σ=1k      |      0.1622 | 0.0594 |          +3.91% |  11.2s 🏆
+   4 | 7.5k/d=5/σ=3k      |       0.161 | 0.0566 |          +3.17% |  33.1s 🏆
+   5 | 2.5k/d=5/σ=3k      |      0.1609 | 0.0436 |          +3.05% |  10.7s 🏆
+   6 | 5k/d=20/σ=3k       |      0.1596 | 0.0373 |          +2.27% |  43.0s 🏆
+   7 | 2.5k/d=20/σ=3k     |      0.1565 | 0.0295 |          +0.26% |  21.5s 🏆
+   8 | 7.5k/d=20/σ=3k     |      0.1546 | 0.0442 |          -0.97% |  62.0s 
+   9 | 5k/d=20/σ=1k       |      0.1506 | 0.0371 |          -3.52% |  42.6s 
+  10 | 7.5k/d=5/σ=1k      |      0.1505 | 0.0523 |          -3.56% |  33.3s 
+  11 | 2.5k/d=20/σ=1k     |      0.1474 | 0.0344 |          -5.58% |  21.5s 
+  12 | 7.5k/d=20/σ=1k     |      0.1371 |  0.018 |         -12.14% |  61.5s 
+--------------------------------------------------------------------------------------------------------------
+     | OneStep (LOW σ=1k) |      0.1561 | 0.0357 | baseline        |   2.9s
+     | OneStep (HIGH σ=3k)|      0.1539 | 0.0349 | baseline        |   3.0s
+
+🏆 BEST CONFIGURATION FOR ALPHA 0.5:
+----------------------------------------------------------------------------------------------------
+  Config: 5k/d=5/σ=3k
+  Mean: 0.1662 ± 0.0655
+  vs Best OneStep (LOW σ=1k): 6.47%
+  Time: 22.5s per simulation
+  ✅ POMCPOW WINS!
+
+💡 KEY INSIGHTS:
+----------------------------------------------------------------------------------------------------
+Best Shallow (d=5): 5k/d=5/σ=3k = 0.1662
+Best Deep (d=20):   5k/d=20/σ=3k = 0.1596
+Shallow vs Deep: 4.1%
+
+Best LOW σ (1k):  5k/d=5/σ=1k = 0.1652
+Best HIGH σ (3k): 5k/d=5/σ=3k = 0.1662
+LOW vs HIGH: -0.58%
+
+Best 2.5k: 2.5k/d=5/σ=1k = 0.1622
+Best 5k:   5k/d=5/σ=3k = 0.1662
+Best 7.5k: 7.5k/d=5/σ=3k = 0.161
+
+====================================================================================================
+✨ ALPHA 0.5 TARGETED TEST COMPLETE
+====================================================================================================

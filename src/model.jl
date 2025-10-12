@@ -70,7 +70,7 @@ end
 
     # FIXED: Add emission scaling factor to balance scales between emissions and profit
     emission_scale_factor::Float64 = 1 # Scale emissions up to balance with profit scale (increased from 3.0)
-    reward_scale::Float64 = 2_000_000_000.0  # Manual reward scaling parameter (divide by this to normalize rewards)
+    reward_scale::Float64 = 53_558_000_000.0  # Manual reward scaling parameter (divide by this to normalize rewards)
 
     # Add market parameters
     market_share_target::Float64 = 0.30  # Target 5% of global market

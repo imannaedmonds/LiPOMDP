@@ -1,0 +1,171 @@
+The latest version of Julia in the `release` channel is 1.12.0+0.x64.linux.gnu. You currently have `1.11.5+0.x64.linux.gnu` installed. Run:
+
+  juliaup update
+
+in your terminal shell to install Julia 1.12.0+0.x64.linux.gnu and update the `release` channel to that version.
+  Activating project at `~/LiPOMDP`
+🏆 FINAL OPTIMIZED POMCPOW CONFIGURATIONS
+====================================================================================================
+📊 TEST CONFIGURATION:
+  Planning model: Price Model 1 (Static)
+  Evaluation model: Price Model 6
+  Alphas: [0.25, 0.5, 0.75, 1.0]
+  Simulations per policy: 20
+  Strategy: Use BEST config found for each alpha
+
+🔧 OPTIMAL CONFIGURATIONS DISCOVERED:
+  Alpha 0.25: 5k queries, depth=5, σ=1k  → +38.7% vs OneStep
+  Alpha 0.5:  2.5k queries, depth=5, σ=1k → +2.9% vs OneStep
+  Alpha 0.75: 5k queries, depth=5, σ=1k  → +4.7% vs OneStep
+  Alpha 1.0:  2.5k queries, depth=20, σ=1k → +24.9% vs OneStep
+
+
+====================================================================================================
+🎯 TESTING ALPHA = 0.25
+====================================================================================================
+  Using: 5k queries, depth=5, σ=1k (best from robust_test)
+
+📈 POLICIES:
+  1️⃣  Optimized POMCPOW: 5000 queries, depth=5
+  2️⃣  OneStepLookahead: 15 rollouts
+
+----------------------------------------------------------------------------------------------------
+🎮 RUNNING SIMULATIONS...
+----------------------------------------------------------------------------------------------------
+
+▶️  Testing: Optimized POMCPOW
+  Run 1/20... Reward: 0.1003, Time: 29.5s
+  Run 2/20... Reward: 0.0835, Time: 21.8s
+  Run 3/20... Reward: 0.1132, Time: 21.8s
+  Run 4/20... ...
+  Run 5/20...  Run 6/20...  Run 7/20...  Run 8/20...  Run 9/20...  Run 10/20...  Run 11/20...  Run 12/20...  Run 13/20...  Run 14/20...  Run 15/20...  Run 16/20...  Run 17/20...  Run 18/20...  Run 19/20...  Run 20/20... Reward: 0.0305, Time: 22.2s
+  ✅ Optimized POMCPOW - Mean: 0.0773 ± 0.0275 (SE: 0.0061), Time: 22.1s
+
+▶️  Testing: OneStepLookahead
+  Run 1/20... Reward: 0.0662, Time: 3.1s
+  Run 2/20... Reward: 0.1049, Time: 2.9s
+  Run 3/20... Reward: 0.072, Time: 2.5s
+  Run 4/20... ...
+  Run 5/20...  Run 6/20...  Run 7/20...  Run 8/20...  Run 9/20...  Run 10/20...  Run 11/20...  Run 12/20...  Run 13/20...  Run 14/20...  Run 15/20...  Run 16/20...  Run 17/20...  Run 18/20...  Run 19/20...  Run 20/20... Reward: 0.0742, Time: 2.2s
+  ✅ OneStepLookahead - Mean: 0.0816 ± 0.0197 (SE: 0.0044), Time: 2.7s
+
+====================================================================================================
+🎯 TESTING ALPHA = 0.5
+====================================================================================================
+  Using: 2.5k queries, depth=5, σ=1k (best from shallow_depth)
+
+📈 POLICIES:
+  1️⃣  Optimized POMCPOW: 2500 queries, depth=5
+  2️⃣  OneStepLookahead: 15 rollouts
+
+----------------------------------------------------------------------------------------------------
+🎮 RUNNING SIMULATIONS...
+----------------------------------------------------------------------------------------------------
+
+▶️  Testing: Optimized POMCPOW
+  Run 1/20... Reward: 0.1216, Time: 10.0s
+  Run 2/20... Reward: 0.1717, Time: 10.4s
+  Run 3/20... Reward: 0.179, Time: 10.5s
+  Run 4/20... ...
+  Run 5/20...  Run 6/20...  Run 7/20...  Run 8/20...  Run 9/20...  Run 10/20...  Run 11/20...  Run 12/20...  Run 13/20...  Run 14/20...  Run 15/20...  Run 16/20...  Run 17/20...  Run 18/20...  Run 19/20...  Run 20/20... Reward: 0.1087, Time: 10.3s
+  ✅ Optimized POMCPOW - Mean: 0.1532 ± 0.0477 (SE: 0.0107), Time: 10.4s
+
+▶️  Testing: OneStepLookahead
+  Run 1/20... Reward: 0.147, Time: 1.9s
+  Run 2/20... Reward: 0.2131, Time: 2.8s
+  Run 3/20... Reward: 0.2111, Time: 3.0s
+  Run 4/20... ...
+  Run 5/20...  Run 6/20...  Run 7/20...  Run 8/20...  Run 9/20...  Run 10/20...  Run 11/20...  Run 12/20...  Run 13/20...  Run 14/20...  Run 15/20...  Run 16/20...  Run 17/20...  Run 18/20...  Run 19/20...  Run 20/20... Reward: 0.1117, Time: 2.8s
+  ✅ OneStepLookahead - Mean: 0.1575 ± 0.0418 (SE: 0.0093), Time: 2.7s
+
+====================================================================================================
+🎯 TESTING ALPHA = 0.75
+====================================================================================================
+  Using: 5k queries, depth=5, σ=1k (best from shallow_depth)
+
+📈 POLICIES:
+  1️⃣  Optimized POMCPOW: 5000 queries, depth=5
+  2️⃣  OneStepLookahead: 15 rollouts
+
+----------------------------------------------------------------------------------------------------
+🎮 RUNNING SIMULATIONS...
+----------------------------------------------------------------------------------------------------
+
+▶️  Testing: Optimized POMCPOW
+  Run 1/20... Reward: 0.2799, Time: 21.5s
+  Run 2/20... Reward: 0.2072, Time: 21.7s
+  Run 3/20... Reward: 0.1477, Time: 21.7s
+  Run 4/20... ...
+  Run 5/20...  Run 6/20...  Run 7/20...  Run 8/20...  Run 9/20...  Run 10/20...  Run 11/20...  Run 12/20...  Run 13/20...  Run 14/20...  Run 15/20...  Run 16/20...  Run 17/20...  Run 18/20...  Run 19/20...  Run 20/20... Reward: 0.3268, Time: 21.7s
+  ✅ Optimized POMCPOW - Mean: 0.2533 ± 0.0719 (SE: 0.0161), Time: 21.9s
+
+▶️  Testing: OneStepLookahead
+  Run 1/20... Reward: 0.2948, Time: 2.4s
+  Run 2/20... Reward: 0.1949, Time: 2.7s
+  Run 3/20... Reward: 0.1752, Time: 2.4s
+  Run 4/20... ...
+  Run 5/20...  Run 6/20...  Run 7/20...  Run 8/20...  Run 9/20...  Run 10/20...  Run 11/20...  Run 12/20...  Run 13/20...  Run 14/20...  Run 15/20...  Run 16/20...  Run 17/20...  Run 18/20...  Run 19/20...  Run 20/20... Reward: 0.1866, Time: 2.4s
+  ✅ OneStepLookahead - Mean: 0.2199 ± 0.0568 (SE: 0.0127), Time: 2.6s
+
+====================================================================================================
+🎯 TESTING ALPHA = 1.0
+====================================================================================================
+  Using: 2.5k queries, depth=20, σ=1k (best from pomcpow_2500_5000)
+
+📈 POLICIES:
+  1️⃣  Optimized POMCPOW: 2500 queries, depth=20
+  2️⃣  OneStepLookahead: 15 rollouts
+
+----------------------------------------------------------------------------------------------------
+🎮 RUNNING SIMULATIONS...
+----------------------------------------------------------------------------------------------------
+
+▶️  Testing: Optimized POMCPOW
+  Run 1/20... Reward: 0.4349, Time: 20.4s
+  Run 2/20... Reward: 0.2721, Time: 20.5s
+  Run 3/20... Reward: 0.2444, Time: 20.3s
+  Run 4/20... ...
+  Run 5/20...  Run 6/20...  Run 7/20...  Run 8/20...  Run 9/20...  Run 10/20...  Run 11/20...  Run 12/20...  Run 13/20...  Run 14/20...  Run 15/20...  Run 16/20...  Run 17/20...  Run 18/20...  Run 19/20...  Run 20/20... Reward: 0.2758, Time: 21.1s
+  ✅ Optimized POMCPOW - Mean: 0.3473 ± 0.0824 (SE: 0.0184), Time: 20.7s
+
+▶️  Testing: OneStepLookahead
+  Run 1/20... Reward: 0.281, Time: 2.9s
+  Run 2/20... Reward: 0.243, Time: 2.9s
+  Run 3/20... Reward: 0.2812, Time: 2.4s
+  Run 4/20... ...
+  Run 5/20...  Run 6/20...  Run 7/20...  Run 8/20...  Run 9/20...  Run 10/20...  Run 11/20...  Run 12/20...  Run 13/20...  Run 14/20...  Run 15/20...  Run 16/20...  Run 17/20...  Run 18/20...  Run 19/20...  Run 20/20... Reward: 0.1838, Time: 3.7s
+  ✅ OneStepLookahead - Mean: 0.3126 ± 0.087 (SE: 0.0195), Time: 2.9s
+
+====================================================================================================
+📊 FINAL OPTIMIZED RESULTS
+====================================================================================================
+
+Performance Comparison (Mean ± Std):
+----------------------------------------------------------------------------------------------------
+Alpha | Optimized POMCPOW | OneStepLookahead | Improvement | Statistical Sig | Winner
+----------------------------------------------------------------------------------------------------
+ 0.25 |       0.0773 ± 0.0275 | 0.081620928114 ± 0.0197 |     -5.25% | ❌ Not sig      | OneStep
+  0.5 |       0.1532 ± 0.0477 | 0.157487944619 ± 0.0418 |     -2.69% | ❌ Not sig      | OneStep
+ 0.75 |       0.2533 ± 0.0719 | 0.219917771392 ± 0.0568 |     15.19% | ⚠️ Likely        | 🏆 POMCPOW
+  1.0 |       0.3473 ± 0.0824 | 0.312626393244 ±  0.087 |     11.09% | ❌ Not sig      | 🏆 POMCPOW
+
+Computation Time (seconds per simulation):
+----------------------------------------------------------------------------------------------------
+Alpha | Optimized POMCPOW | OneStepLookahead | Speedup
+----------------------------------------------------------------------------------------------------
+ 0.25 |              22.1s |              2.7s |     8.1x slower
+  0.5 |              10.4s |              2.7s |     3.8x slower
+ 0.75 |              21.9s |              2.6s |     8.6x slower
+  1.0 |              20.7s |              2.9s |     7.2x slower
+
+🎯 SUMMARY:
+----------------------------------------------------------------------------------------------------
+┌ Warning: Assignment to `total_wins` in soft scope is ambiguous because a global variable by the same name exists: `total_wins` will be treated as a new local. Disambiguate by using `local total_wins` to suppress this warning or `global total_wins` to assign to the existing global variable.
+└ @ ~/LiPOMDP/scripts/test_final_optimized.jl:242
+Alpha 0.25: ❌ OneStep wins by 5.25%
+Alpha 0.5: ❌ OneStep wins by 2.69%
+ERROR: LoadError: UndefVarError: `total_wins` not defined in local scope
+Stacktrace:
+ [1] top-level scope
+   @ ~/LiPOMDP/scripts/test_final_optimized.jl:242
+in expression starting at /home/edmondsa/LiPOMDP/scripts/test_final_optimized.jl:237

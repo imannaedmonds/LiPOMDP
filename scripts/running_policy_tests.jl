@@ -81,7 +81,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
             #tree_queries = 2500, #give it time to plan
             tree_queries = 2500,
             max_depth = 25, #max time step you can get, planning over POMDP in the future
-            criterion = MaxUCB(30.0),#increased exploration constant for high uncertainty deposits
+            criterion = MaxUCB(32.0),#increased exploration constant for high uncertainty deposits
             # Progressive widening (actions) - ENABLED for large action space
             enable_action_pw = true,
             # k_action = 1.2,
@@ -105,7 +105,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
             # alpha_action = 0.1,      # Much less progressive widening
             # k_observation = 0.5,     # Even less observation exploration
             # alpha_observation = 0.1, # Much less observation progressive wideningng
-            
+            #estimate_value = FORollout(OneStepLookaheadPolicy(pomdp, n_rollouts=1, debug=false)),
             estimate_value = FORollout(DynamicProfitMaximizerPolicy(pomdp)),
             #estimate_value = 0,
             tree_in_info = true,
@@ -149,7 +149,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP; alpha::Float64=0.5)
         return DynamicEmissionMinimizerPolicy(pomdp, debug=false)
         
     elseif policy_type == "OneStepLookahead"
-        return OneStepLookaheadPolicy(pomdp, n_rollouts=30, debug=false)
+        return OneStepLookaheadPolicy(pomdp, n_rollouts=15, debug=false)
     else
         error("Unknown policy type: $policy_type")
     end
@@ -544,8 +544,8 @@ end
 
 # Configuration
 time_horizon = 29
-n_sims = 30
-planning_price_models = Int64[3]  # Exponential model for planning
+n_sims = 10
+planning_price_models = Int64[1]  # Exponential model for planning
 evaluation_price_models = Int64[6]  # Static model for evaluation
 policies = String[
     "POMCPOW",
@@ -567,7 +567,7 @@ alphas = Float64[0.25, 0.5, 0.75, 1.0]  # Range from pure profit (0) to pure emi
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/results v4/policy_test_results_p$(planning_str)_e$(evaluation_str)_2Brewards_2.5k_30UCB_25depth.txt"
+output_file = "outputs/results v/policy_test_results_p$(planning_str)_e$(evaluation_str)_2Brewards_2.5k_32UCB_dynamic_rollout_depth25_10sims.txt"
 
 
 results, pareto_data = run_simple_policy_test(
