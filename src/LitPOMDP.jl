@@ -24,7 +24,7 @@ export reward, transition, observation, update, gen, initialstate, isterminal, d
 initialobs, obs_weight, create_initial_belief, compute_costs, compute_emissions, evaluation_reward, calculate_total_production, expected_profit_site, expected_emission_site
 include("pomdp.jl")
 
-export ProfitMaximizerPolicy, EmissionMinimizerPolicy, ExploreOnlyPolicy, RandomHeuristicPolicy, DynamicProfitMaximizerPolicy, DynamicEmissionMinimizerPolicy, OneStepLookaheadPolicy, calculate_average_expected_price
+export ProfitMaximizerPolicy, EmissionMinimizerPolicy, ExploreOnlyPolicy, RandomHeuristicPolicy, DynamicProfitMaximizerPolicy, DynamicEmissionMinimizerPolicy, OneStepLookaheadPolicy, AlphaAwareRolloutPolicy, calculate_average_expected_price
 include("policies.jl")
 
 # Removed eval.jl include - file doesn't exist

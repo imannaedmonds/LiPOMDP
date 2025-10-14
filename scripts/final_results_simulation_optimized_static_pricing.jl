@@ -71,7 +71,7 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
         solver = POMCPOWSolver(
             tree_queries = config.tree_queries,
             max_depth = config.depth,
-            criterion = MaxUCB(0.5),
+            criterion = MaxUCB(1.0),
             enable_action_pw = false,
             k_action = 5.0,
             alpha_action = 0.5,
@@ -94,13 +94,13 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
         solver = POMCPOWSolver(
             tree_queries = 1000,
             max_depth = 1,           # Only one step ahead
-            criterion = MaxUCB(0.5),
+            criterion = MaxUCB(1.0),
             enable_action_pw = true, # ENABLED for large action space
             k_action = 5.0,
             alpha_action = 0.5,
             k_observation = 3.0,
             alpha_observation = 0.3,
-            estimate_value = FORollout(DynamicProfitMaximizerPolicy(pomdp))  # Use rollout for leaf evaluation
+            estimate_value = FORollout(AlphaAwareRolloutPolicy(pomdp))  # Use rollout for leaf evaluation
         )
         return solve(solver, pomdp), solver
         
@@ -582,15 +582,13 @@ function run_train_test_evaluation(
                     planning_pomdp = LiPOMDP(
                         price_model_type = planning_model,
                         time_horizon = time_horizon,
-                        alpha = alpha,
-                        reward_scale = 53_558_000_000.0
+                        alpha = alpha
                     )
                     
                     evaluation_pomdp = LiPOMDP(
                         price_model_type = eval_model,
                         time_horizon = time_horizon,
-                        alpha = alpha,
-                        reward_scale = 53_558_000_000.0
+                        alpha = alpha
                     )
                     
                     # Create belief updater
@@ -841,7 +839,7 @@ println()
 # Create dynamic output filename
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/test_train_v6_results_new_params/optimized_pomcpow_p$(planning_str)_e$(evaluation_str).csv"
+output_file = "outputs/test_train_v8_results_new_params/optimized_pomcpow_p$(planning_str)_e$(evaluation_str)_emission_1k_reward_10B.csv"
 
 # Run the evaluation
 results = run_train_test_evaluation(

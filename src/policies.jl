@@ -819,6 +819,162 @@ function POMDPs.action(policy::DynamicEmissionMinimizerPolicy, b::LiBelief)
 end
 
 # =============================================================================
+# Alpha-Aware Rollout Policy for OneStepLookahead
+# =============================================================================
+
+"""
+AlphaAwareRolloutPolicy - A policy that balances profit and emissions using alpha.
+This is similar to DynamicProfitMaximizerPolicy but uses the POMDP's alpha parameter
+to trade off between profit maximization and emission minimization.
+
+When alpha = 1.0: Maximizes profit (like DynamicProfitMaximizerPolicy)
+When alpha = 0.0: Minimizes emissions (like DynamicEmissionMinimizerPolicy)
+When alpha = 0.5: Balances both equally
+"""
+struct AlphaAwareRolloutPolicy <: Policy
+    pomdp::LiPOMDP
+    debug::Bool
+end
+
+AlphaAwareRolloutPolicy(pomdp::LiPOMDP; debug=false) = AlphaAwareRolloutPolicy(pomdp, debug)
+
+function POMDPs.action(policy::AlphaAwareRolloutPolicy, s::State)
+    if policy.debug
+        println("\n[DEBUG] AlphaAwareRolloutPolicy evaluating state (α=$(policy.pomdp.alpha)):")
+        println("  Time: $(s.time)")
+        println("  Price: $(round(s.price, digits=2))")
+        println("  Deposits: $(round.(s.deposit, digits=1))")
+        println("  Have opened: $(s.have_opened)")
+    end
+    
+    n_sites = policy.pomdp.n_deposits
+    site_actions = zeros(Int, n_sites)
+    site_types = zeros(Int, n_sites)
+    
+    remaining_time = policy.pomdp.time_horizon - s.time
+    
+    # Calculate current production capacity
+    current_capacity = 0.0
+    for site in 1:n_sites
+        if s.have_opened[site] && s.deposit[site] > 0
+            mine_capacity = policy.pomdp.output * policy.pomdp.recovery[site] * policy.pomdp.LCE_per_lithium
+            current_capacity += mine_capacity
+        end
+    end
+    
+    remaining_demand = max(0.0, s.company_demand - current_capacity)
+    
+    # Evaluate all unopened sites
+    site_evaluations = []
+    
+    for site in 1:n_sites
+        if !s.have_opened[site]
+            max_possible_production = min(s.deposit[site], policy.pomdp.output * remaining_time)
+            expected_recovery = max_possible_production * policy.pomdp.recovery[site]
+            
+            if expected_recovery > 0
+                years_to_depletion = s.deposit[site] / policy.pomdp.output
+                
+                realistic_sellable = min(
+                    expected_recovery,
+                    policy.pomdp.output * policy.pomdp.recovery[site] * policy.pomdp.LCE_per_lithium * years_to_depletion,
+                    remaining_demand * remaining_time
+                )
+                
+                # Calculate profit
+                lifetime_years = Int(remaining_time)
+                avg_lifetime_price = calculate_lifetime_average_price(policy.pomdp, s.time, lifetime_years)
+                expected_revenue = realistic_sellable * avg_lifetime_price
+                
+                capex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_capex : policy.pomdp.mining_capex
+                opex = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_opex : policy.pomdp.mining_opex
+                lifetime_opex = opex * realistic_sellable
+                
+                raw_profit = expected_revenue - lifetime_opex - capex
+                
+                # Calculate emissions (as negative cost in reward units)
+                variable_emissions_per_tonne = policy.pomdp.deposit_types[site] ? policy.pomdp.dle_CO2_emissions : policy.pomdp.mining_CO2_emissions
+                lifetime_variable_emissions = realistic_sellable * variable_emissions_per_tonne
+                total_emissions_cost = (lifetime_variable_emissions / 1000.0) * policy.pomdp.CO2_cost
+                
+                # Use ALPHA to balance profit vs emissions (matching reward function)
+                # Note: emissions are negative in the reward function, so we apply emission_scale_factor
+                alpha_weighted_value = policy.pomdp.alpha * raw_profit + (1 - policy.pomdp.alpha) * (-total_emissions_cost * policy.pomdp.emission_scale_factor)
+                
+                push!(site_evaluations, (site, alpha_weighted_value, expected_recovery, expected_revenue))
+                
+                if policy.debug
+                    println("  [DEBUG] Site $site: profit=$(round(raw_profit/1e6, digits=2))M, emissions_cost=$(round(total_emissions_cost/1e6, digits=2))M")
+                    println("    Alpha-weighted value: $(round(alpha_weighted_value/1e6, digits=2))M")
+                end
+            end
+        end
+    end
+    
+    # Handle restoration
+    for site in 1:policy.pomdp.n_deposits
+        if s.have_opened[site] && s.is_depleted[site] && !s.restored_mines[site] && s.deposit[site] <= 0.1
+            site_actions[site] = site
+            site_types[site] = 3  # Restore action
+            
+            if policy.debug
+                println("  [DEBUG] Restoring site $site")
+            end
+        end
+    end
+    
+    # Make decisions based on alpha-weighted values
+    if !isempty(site_evaluations)
+        # Sort by alpha-weighted value (highest first)
+        sort!(site_evaluations, by=x->x[2], rev=true)
+        
+        # Open the best site
+        best_site, best_value, best_recovery, best_revenue = site_evaluations[1]
+        
+        site_actions[best_site] = best_site
+        site_types[best_site] = 2  # Open mine
+        
+        if policy.debug
+            println("  [DEBUG] Opening site $best_site: Alpha-weighted value = $(round(best_value/1e6, digits=2))M")
+        end
+        
+        # Explore other promising sites (within 70% of best)
+        for i in 2:length(site_evaluations)
+            site, value, recovery, revenue = site_evaluations[i]
+            if value > best_value * 0.7 && recovery > 0
+                site_actions[site] = site
+                site_types[site] = 1  # Explore
+                if policy.debug
+                    println("  [DEBUG] Exploring site $site: Alpha-weighted value = $(round(value/1e6, digits=2))M")
+                end
+            end
+        end
+    end
+    
+    return Action(site=site_actions, type=site_types)
+end
+
+function POMDPs.action(policy::AlphaAwareRolloutPolicy, b::LiBelief)
+    # Sample from belief distributions
+    sampled_deposits = [rand(d) for d in b.deposits_distribution]
+    sampled_price = rand(b.price_distribution)
+    sampled_demand = rand(b.demand_distribution)
+    
+    s = State(
+        deposit = sampled_deposits,
+        time = b.time,
+        price = sampled_price,
+        company_demand = sampled_demand,
+        total_mined = b.total_mined,
+        have_opened = copy(b.have_opened),
+        is_depleted = copy(b.is_depleted),
+        restored_mines = copy(b.restored_mines)
+    )
+    
+    return POMDPs.action(policy, s)
+end
+
+# =============================================================================
 # One-Step Lookahead Policy with Rollouts
 # =============================================================================
 
@@ -827,21 +983,22 @@ One-step lookahead heuristic policy.
 
 At each time step:
 1. Consider all possible actions
-2. For each action, simulate forward using DynamicProfitMaximizer
+2. For each action, simulate forward using AlphaAwareRolloutPolicy
 3. Run multiple simulations (default 30) to get average reward
 4. Choose the action with highest expected reward
 
-This is essentially a rollout-based policy using DynamicProfitMaximizer as the rollout policy.
+This is essentially a rollout-based policy using AlphaAwareRolloutPolicy as the rollout policy,
+which respects the POMDP's alpha parameter for balancing profit vs emissions.
 """
 struct OneStepLookaheadPolicy <: Policy
     pomdp::LiPOMDP
-    rollout_policy::DynamicProfitMaximizerPolicy
+    rollout_policy::AlphaAwareRolloutPolicy
     n_rollouts::Int
     debug::Bool
 end
 
 function OneStepLookaheadPolicy(pomdp::LiPOMDP; n_rollouts=30, debug=false)
-    rollout_policy = DynamicProfitMaximizerPolicy(pomdp, debug=false)
+    rollout_policy = AlphaAwareRolloutPolicy(pomdp, debug=false)
     return OneStepLookaheadPolicy(pomdp, rollout_policy, n_rollouts, debug)
 end
 
