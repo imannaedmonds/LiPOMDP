@@ -1,0 +1,60 @@
+The latest version of Julia in the `release` channel is 1.12.0+0.x64.linux.gnu. You currently have `1.11.5+0.x64.linux.gnu` installed. Run:
+
+  juliaup update
+
+in your terminal shell to install Julia 1.12.0+0.x64.linux.gnu and update the `release` channel to that version.
+🎯 ALPHA 0.5 ULTRA-SHALLOW TUNING
+================================================================================
+Testing VERY shallow depths (5-8) to avoid bad long-term planning
+Planning=1, Eval=6, emission=1000, reward=10B
+================================================================================
+
+[1/13] Testing OneStepLookahead...
+  Reward: 0.32761
+
+[2/13] POMCPOW: current_3k10 (q=3000, d=10)
+  Reward: 0.30779, Gap: -0.01982 ❌
+
+[3/13] POMCPOW: ultra_shallow_2k5 (q=2000, d=5)
+  Reward: 0.27416, Gap: -0.05345 ❌
+
+[4/13] POMCPOW: ultra_shallow_3k5 (q=3000, d=5)
+  Reward: 0.28156, Gap: -0.04605 ❌
+
+[5/13] POMCPOW: very_shallow_3k6 (q=3000, d=6)
+  Reward: 0.22311, Gap: -0.10449 ❌
+
+[6/13] POMCPOW: very_shallow_3k7 (q=3000, d=7)
+  Reward: 0.2626, Gap: -0.065 ❌
+
+[7/13] POMCPOW: shallow_3k8 (q=3000, d=8)
+  Reward: 0.27789, Gap: -0.04971 ❌
+
+[8/13] POMCPOW: more_ultra_4k5 (q=4000, d=5)
+  Reward: 0.28527, Gap: -0.04233 ❌
+
+[9/13] POMCPOW: high_ultra_5k5 (q=5000, d=5)
+  Reward: 0.30003, Gap: -0.02757 ❌
+
+[10/13] POMCPOW: balanced_4k7 (q=4000, d=7)
+  Reward: 0.25774, Gap: -0.06987 ❌
+
+[11/13] POMCPOW: balanced_5k8 (q=5000, d=8)
+  Reward: 0.26452, Gap: -0.06309 ❌
+
+[12/13] POMCPOW: explore_3k5 (q=3000, d=5)
+  Reward: 0.2959, Gap: -0.03171 ❌
+
+[13/13] POMCPOW: explore_3k7 (q=3000, d=7)
+  Reward: 0.2683, Gap: -0.05931 ❌
+
+================================================================================
+🏆 TOP 3 CONFIGS:
+  1. current_3k10: q=3000, d=10
+     Gap: -0.01982 ❌
+  2. high_ultra_5k5: q=5000, d=5
+     Gap: -0.02757 ❌
+  3. explore_3k5: q=3000, d=5
+     Gap: -0.03171 ❌
+
+📁 Results: outputs/test_train_v11_robust/alpha_05_ultra_shallow.csv

@@ -3,3 +3,352 @@ The latest version of Julia in the `release` channel is 1.12.0+0.x64.linux.gnu. 
   juliaup update
 
 in your terminal shell to install Julia 1.12.0+0.x64.linux.gnu and update the `release` channel to that version.
+Precompiling LitPOMDP...
+   5185.4 ms  ✓ LitPOMDP
+  1 dependency successfully precompiled in 7 seconds. 488 already precompiled.
+🚀 Starting POMCPOW Parameter Tuning
+================================================================================
+🔧 POMCPOW PARAMETER TUNING - STATIC PRICING
+================================================================================
+Fixed Parameters:
+  • emission_scale_factor: 1000.0
+  • reward_scale: $10.0B
+  • pricing_model: 1 (static)
+  • time_horizon: 29
+  • evaluation_sims: 15
+================================================================================
+
+📊 BASELINE POLICIES
+--------------------------------------------------------------------------------
+
+[1/50] OneStepLookahead | α=0.0
+  Disc. Reward: -0.003
+  Profit: $0.14B
+  Emissions: $-0.06M
+
+[2/50] OneStepLookahead | α=0.25
+  Disc. Reward: 0.008
+  Profit: $3.44B
+  Emissions: $-0.84M
+
+[3/50] OneStepLookahead | α=0.5
+  Disc. Reward: 0.076
+  Profit: $4.17B
+  Emissions: $-0.94M
+
+[4/50] OneStepLookahead | α=0.75
+  Disc. Reward: 0.14
+  Profit: $4.21B
+  Emissions: $-0.95M
+
+[5/50] OneStepLookahead | α=1.0
+  Disc. Reward: 0.205
+  Profit: $4.27B
+  Emissions: $-0.96M
+
+[6/50] DynamicProfitMaximizer | α=0.0
+  Disc. Reward: -0.049
+  Profit: $4.17B
+  Emissions: $-0.92M
+
+[7/50] DynamicProfitMaximizer | α=0.25
+  Disc. Reward: -0.03
+  Profit: $4.17B
+  Emissions: $-0.92M
+
+[8/50] DynamicProfitMaximizer | α=0.5
+  Disc. Reward: -0.01
+  Profit: $4.17B
+  Emissions: $-0.92M
+
+[9/50] DynamicProfitMaximizer | α=0.75
+  Disc. Reward: 0.009
+  Profit: $4.17B
+  Emissions: $-0.92M
+
+[10/50] DynamicProfitMaximizer | α=1.0
+  Disc. Reward: 0.029
+  Profit: $4.17B
+  Emissions: $-0.92M
+
+🤖 POMCPOW CONFIGURATIONS
+--------------------------------------------------------------------------------
+
+[11/50] POMCPOW-Baseline | α=0.0
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.0
+  Profit: $-2.22B
+  Emissions: $0.0M
+
+[12/50] POMCPOW-Baseline | α=0.25
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.016
+  Profit: $4.35B
+  Emissions: $-0.92M
+
+[13/50] POMCPOW-Baseline | α=0.5
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.079
+  Profit: $4.3B
+  Emissions: $-0.96M
+
+[14/50] POMCPOW-Baseline | α=0.75
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.142
+  Profit: $4.28B
+  Emissions: $-0.96M
+
+[15/50] POMCPOW-Baseline | α=1.0
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.21
+  Profit: $4.35B
+  Emissions: $-0.96M
+
+[16/50] POMCPOW-HighQueries | α=0.0
+  Params: queries=15000, depth=25, ucb=1.0
+  Disc. Reward: 0.0
+  Profit: $-1.95B
+  Emissions: $0.0M
+
+[17/50] POMCPOW-HighQueries | α=0.25
+  Params: queries=15000, depth=25, ucb=1.0
+  Disc. Reward: 0.014
+  Profit: $4.0B
+  Emissions: $-0.9M
+
+[18/50] POMCPOW-HighQueries | α=0.5
+  Params: queries=15000, depth=25, ucb=1.0
+  Disc. Reward: 0.079
+  Profit: $4.36B
+  Emissions: $-0.96M
+
+[19/50] POMCPOW-HighQueries | α=0.75
+  Params: queries=15000, depth=25, ucb=1.0
+  Disc. Reward: 0.147
+  Profit: $4.44B
+  Emissions: $-0.96M
+
+[20/50] POMCPOW-HighQueries | α=1.0
+  Params: queries=15000, depth=25, ucb=1.0
+  Disc. Reward: 0.209
+  Profit: $4.33B
+  Emissions: $-0.96M
+
+[21/50] POMCPOW-VeryDeep | α=0.0
+  Params: queries=10000, depth=35, ucb=1.0
+  Disc. Reward: 0.0
+  Profit: $-2.22B
+  Emissions: $0.0M
+
+[22/50] POMCPOW-VeryDeep | α=0.25
+  Params: queries=10000, depth=35, ucb=1.0
+  Disc. Reward: 0.017
+  Profit: $4.4B
+  Emissions: $-0.9M
+
+[23/50] POMCPOW-VeryDeep | α=0.5
+  Params: queries=10000, depth=35, ucb=1.0
+  Disc. Reward: 0.078
+  Profit: $4.32B
+  Emissions: $-0.95M
+
+[24/50] POMCPOW-VeryDeep | α=0.75
+  Params: queries=10000, depth=35, ucb=1.0
+  Disc. Reward: 0.143
+  Profit: $4.33B
+  Emissions: $-0.96M
+
+[25/50] POMCPOW-VeryDeep | α=1.0
+  Params: queries=10000, depth=35, ucb=1.0
+  Disc. Reward: 0.221
+  Profit: $4.69B
+  Emissions: $-1.0M
+
+[26/50] POMCPOW-MoreActions | α=0.0
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.0
+  Profit: $-1.73B
+  Emissions: $0.0M
+
+[27/50] POMCPOW-MoreActions | α=0.25
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.016
+  Profit: $4.35B
+  Emissions: $-0.92M
+
+[28/50] POMCPOW-MoreActions | α=0.5
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.077
+  Profit: $4.24B
+  Emissions: $-0.95M
+
+[29/50] POMCPOW-MoreActions | α=0.75
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.15
+  Profit: $4.56B
+  Emissions: $-0.96M
+
+[30/50] POMCPOW-MoreActions | α=1.0
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.211
+  Profit: $4.44B
+  Emissions: $-0.99M
+
+[31/50] POMCPOW-MoreObs | α=0.0
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.0
+  Profit: $-1.56B
+  Emissions: $0.0M
+
+[32/50] POMCPOW-MoreObs | α=0.25
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.012
+  Profit: $4.04B
+  Emissions: $-0.92M
+
+[33/50] POMCPOW-MoreObs | α=0.5
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.08
+  Profit: $4.34B
+  Emissions: $-0.96M
+
+[34/50] POMCPOW-MoreObs | α=0.75
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.151
+  Profit: $4.53B
+  Emissions: $-0.97M
+
+[35/50] POMCPOW-MoreObs | α=1.0
+  Params: queries=10000, depth=25, ucb=1.0
+  Disc. Reward: 0.221
+  Profit: $4.66B
+  Emissions: $-0.99M
+
+[36/50] POMCPOW-HighUCB | α=0.0
+  Params: queries=10000, depth=25, ucb=2.0
+  Disc. Reward: 0.0
+  Profit: $-1.92B
+  Emissions: $0.0M
+
+[37/50] POMCPOW-HighUCB | α=0.25
+  Params: queries=10000, depth=25, ucb=2.0
+  Disc. Reward: 0.015
+  Profit: $4.27B
+  Emissions: $-0.93M
+
+[38/50] POMCPOW-HighUCB | α=0.5
+  Params: queries=10000, depth=25, ucb=2.0
+  Disc. Reward: 0.08
+  Profit: $4.32B
+  Emissions: $-0.93M
+
+[39/50] POMCPOW-HighUCB | α=0.75
+  Params: queries=10000, depth=25, ucb=2.0
+  Disc. Reward: 0.153
+  Profit: $4.61B
+  Emissions: $-0.97M
+
+[40/50] POMCPOW-HighUCB | α=1.0
+  Params: queries=10000, depth=25, ucb=2.0
+  Disc. Reward: 0.212
+  Profit: $4.35B
+  Emissions: $-0.95M
+
+[41/50] POMCPOW-Aggressive | α=0.0
+  Params: queries=15000, depth=30, ucb=1.5
+  Disc. Reward: 0.0
+  Profit: $-1.86B
+  Emissions: $0.0M
+
+[42/50] POMCPOW-Aggressive | α=0.25
+  Params: queries=15000, depth=30, ucb=1.5
+  Disc. Reward: 0.014
+  Profit: $4.33B
+  Emissions: $-0.96M
+
+[43/50] POMCPOW-Aggressive | α=0.5
+  Params: queries=15000, depth=30, ucb=1.5
+  Disc. Reward: 0.082
+  Profit: $4.36B
+  Emissions: $-0.93M
+
+[44/50] POMCPOW-Aggressive | α=0.75
+  Params: queries=15000, depth=30, ucb=1.5
+  Disc. Reward: 0.148
+  Profit: $4.39B
+  Emissions: $-0.92M
+
+[45/50] POMCPOW-Aggressive | α=1.0
+  Params: queries=15000, depth=30, ucb=1.5
+  Disc. Reward: 0.212
+  Profit: $4.46B
+  Emissions: $-0.97M
+
+[46/50] POMCPOW-Conservative | α=0.0
+  Params: queries=5000, depth=15, ucb=1.0
+  Disc. Reward: 0.0
+  Profit: $-1.52B
+  Emissions: $0.0M
+
+[47/50] POMCPOW-Conservative | α=0.25
+  Params: queries=5000, depth=15, ucb=1.0
+  Disc. Reward: 0.018
+  Profit: $4.45B
+  Emissions: $-0.92M
+
+[48/50] POMCPOW-Conservative | α=0.5
+  Params: queries=5000, depth=15, ucb=1.0
+  Disc. Reward: 0.086
+  Profit: $4.68B
+  Emissions: $-0.98M
+
+[49/50] POMCPOW-Conservative | α=0.75
+  Params: queries=5000, depth=15, ucb=1.0
+  Disc. Reward: 0.147
+  Profit: $4.35B
+  Emissions: $-0.91M
+
+[50/50] POMCPOW-Conservative | α=1.0
+  Params: queries=5000, depth=15, ucb=1.0
+  Disc. Reward: 0.222
+  Profit: $4.67B
+  Emissions: $-0.97M
+
+================================================================================
+✅ TUNING COMPLETE!
+📁 Results saved to: outputs/pomcpow_tuning/tuning_results_emission_1000_reward_10B.csv
+================================================================================
+
+🏆 BEST CONFIGURATIONS PER ALPHA:
+
+α=0.0:
+  Best Config: Baseline
+  Reward: 0.0
+  Profit: $-2.22B
+  Emissions: $0.0M
+
+α=0.25:
+  Best Config: Conservative
+  Reward: 0.018
+  Profit: $4.45B
+  Emissions: $-0.92M
+
+α=0.5:
+  Best Config: Conservative
+  Reward: 0.086
+  Profit: $4.68B
+  Emissions: $-0.98M
+
+α=0.75:
+  Best Config: HighUCB
+  Reward: 0.153
+  Profit: $4.61B
+  Emissions: $-0.97M
+
+α=1.0:
+  Best Config: Conservative
+  Reward: 0.222
+  Profit: $4.67B
+  Emissions: $-0.97M
+
+✅ Tuning complete! Check results in: outputs/pomcpow_tuning/tuning_results_emission_1000_reward_10B.csv
