@@ -48,11 +48,11 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
     if policy_type == "POMCPOW"
         # Use estimate_value = 0 for alpha = 0 (emission minimization)
         # Use DynamicProfitMaximizer rollout for all other alphas
-        estimate_val = (pomdp.alpha == 0.0) ? 0 : FORollout(OneStepLookaheadPolicy(pomdp, n_rollouts=5))
+        estimate_val = (pomdp.alpha == 0.0) ? 0 : FORollout(OneStepLookaheadPolicy(pomdp, n_rollouts=3))
         
         solver = POMCPOWSolver(
-            tree_queries = 500,
-            max_depth = 10,
+            tree_queries = 1000,
+            max_depth = 25,
             criterion = MaxUCB(1.0),
             enable_action_pw = true, # ENABLED for large action space
             k_action = 5.0,          # Increased for more action exploration
@@ -798,7 +798,7 @@ policies = ["POMCPOW", "POMCPOW_Depth1", "OneStepLookahead", "DynamicProfitMaxim
 #policies = [ "POMCPOW_Depth1", "OneStepLookahead", "POMCPOW"]
 planning_price_models =[1]  # Static, Linear, Exponential, Historical
 evaluation_price_models = [6]  # Historical price model for evaluation
-alphas = [0.25]
+alphas = [0.0]
 #alphas = [0.05, 0.10, 0.15, 0.20]
 time_horizon = 29  # Full time horizon
 n_train_sims = 25  # Training simulations
@@ -815,7 +815,7 @@ println("")
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/test_train_v12_results_new_params/results_p$(planning_str)_e$(evaluation_str)_alpha_0.25_emissions_1k_10Brewards_1LA5_500TQ.csv"
+output_file = "outputs/test_train_v13_results_new_params/results_p$(planning_str)_e$(evaluation_str)_alpha_0_emissions1k_10Brewards_1LA10_1kTQ_depth25.csv"
 
 # Run the evaluation
 results = run_train_test_evaluation(
