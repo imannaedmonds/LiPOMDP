@@ -169,7 +169,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
     # 1. Static Pricing
     if P.price_model_type == 1
         # Use proportional noise for static pricing
-        noise = rand(Normal(0, p₀ * 0.05))  # 5% noise relative to base price
+        noise = rand(Normal(0, p₀ * 0.1))  # 5% noise relative to base price
         new_price = p₀ + noise
         return max(new_price, 1000.0)  # Ensure minimum price
     end
@@ -234,7 +234,7 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
             years_beyond = historical_year - last_year
             growth_factor = 1.05^years_beyond  # 5% annual growth
             extrapolated_price = last_price * growth_factor
-            noise = rand(Normal(0, extrapolated_price * 0.15))  # 15% noise for extrapolation
+            noise = rand(Normal(0, extrapolated_price * 0.1))  # 15% noise for extrapolation
             new_price = extrapolated_price + noise
             return max(new_price, 1000.0)
         end

@@ -48,10 +48,10 @@ function create_policy(policy_type::String, pomdp::LiPOMDP)
     if policy_type == "POMCPOW"
         # Use estimate_value = 0 for alpha = 0 (emission minimization)
         # Use DynamicProfitMaximizer rollout for all other alphas
-        estimate_val = (pomdp.alpha == 0.0) ? 0 : FORollout(OneStepLookaheadPolicy(pomdp, n_rollouts=3))
+        estimate_val = (pomdp.alpha == 0.0) ? 0 : FORollout(DynamicProfitMaximizerPolicy(pomdp))
         
         solver = POMCPOWSolver(
-            tree_queries = 1000,
+            tree_queries = 10000,
             max_depth = 25,
             criterion = MaxUCB(1.0),
             enable_action_pw = true, # ENABLED for large action space
@@ -507,8 +507,8 @@ function run_train_test_evaluation(
     evaluation_price_models::Vector{Int64}, 
     alphas::Vector{Float64};
     time_horizon::Int64 = 29,
-    n_train_sims::Int64 = 20,  # Training simulations
-    n_test_sims::Int64 = 10,   # Testing simulations
+    n_train_sims::Int64 = 25,  # Training simulations
+    n_test_sims::Int64 = 50,   # Testing simulations
     output_file::String = "train_test_evaluation_results.txt"
 )
     """Run policy evaluation with proper train/test split to avoid overfitting."""
@@ -798,7 +798,8 @@ policies = ["POMCPOW", "POMCPOW_Depth1", "OneStepLookahead", "DynamicProfitMaxim
 #policies = [ "POMCPOW_Depth1", "OneStepLookahead", "POMCPOW"]
 planning_price_models =[1]  # Static, Linear, Exponential, Historical
 evaluation_price_models = [6]  # Historical price model for evaluation
-alphas = [0.0]
+#alphas = [0.0]
+alphas = [0.0, 0.25, 0.5, 0.75, 1.0]
 #alphas = [0.05, 0.10, 0.15, 0.20]
 time_horizon = 29  # Full time horizon
 n_train_sims = 25  # Training simulations
@@ -815,7 +816,7 @@ println("")
 # Create dynamic output filename based on planning and evaluation models
 planning_str = join(planning_price_models, "_")
 evaluation_str = join(evaluation_price_models, "_")
-output_file = "outputs/test_train_v13_results_new_params/results_p$(planning_str)_e$(evaluation_str)_alpha_0_emissions1k_10Brewards_1LA10_1kTQ_depth25.csv"
+output_file = "outputs/test_train_v14_results_new_params/results_p$(planning_str)_e$(evaluation_str).csv"
 
 # Run the evaluation
 results = run_train_test_evaluation(
