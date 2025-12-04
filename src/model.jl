@@ -73,7 +73,7 @@ end
     reward_scale::Float64 = 10_000_000_000.0  # Manual reward scaling parameter (divide by this to normalize rewards)
 
     # Add market parameters
-    market_share_target::Float64 = 0.30  # Target 5% of global market
+    market_share_target::Float64 = 0.30  # Target 30% of global market
     demand_uncertainty::Float64 = 0.05    # 5% std dev in demand forecasts (reduced for lower error)
     
     # Production parameters (deposits are in-situ Li metal tonnes)
