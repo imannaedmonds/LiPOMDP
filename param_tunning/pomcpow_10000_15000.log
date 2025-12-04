@@ -1,0 +1,128 @@
+The latest version of Julia in the `release` channel is 1.12.0+0.x64.linux.gnu. You currently have `1.11.5+0.x64.linux.gnu` installed. Run:
+
+  juliaup update
+
+in your terminal shell to install Julia 1.12.0+0.x64.linux.gnu and update the `release` channel to that version.
+  Activating project at `~/LiPOMDP`
+🔧 TESTING TUNED POMCPOW PARAMETERS
+====================================================================================================
+📊 TEST CONFIGURATION:
+  Planning model: Price Model 1 (Static)
+  Evaluation model: Price Model 6
+  Alphas: [0.25, 0.5, 0.75, 1.0]
+  Simulations per policy: 10
+  Time horizon: 29 years
+
+
+====================================================================================================
+🎯 TESTING ALPHA = 0.25
+====================================================================================================
+
+📈 POLICY CONFIGURATIONS:
+
+1️⃣  Fast POMCPOW:
+    - tree_queries: 10000 ⚡
+    - max_depth: 20
+    - MaxUCB: 0.5
+    - enable_action_pw: FALSE (exhaustive)
+    - k_observation: 5.0
+
+2️⃣  Medium POMCPOW:
+    - tree_queries: 15000 ✨✨ (50% more than Fast)
+    - max_depth: 20
+    - MaxUCB: 0.5
+    - enable_action_pw: FALSE (exhaustive)
+    - k_observation: 5.0
+
+3️⃣  OneStepLookahead (Baseline):
+    - Evaluates ALL 256 actions exhaustively
+    - Only 1-step lookahead (no tree search)
+    - n_rollouts: 15 (reduced from default 30)
+
+----------------------------------------------------------------------------------------------------
+🎮 RUNNING SIMULATIONS...
+----------------------------------------------------------------------------------------------------
+
+▶️  Testing: Fast POMCPOW (10k)
+  Run 1/10... Reward: 0.0619, Time: 85.3s
+  Run 2/10... Reward: 0.0915, Time: 85.1s
+  Run 3/10... Reward: 0.0994, Time: 82.8s
+  Run 4/10... Reward: 0.0569, Time: 81.4s
+  Run 5/10... Reward: 0.0645, Time: 82.2s
+  Run 6/10... Reward: 0.0646, Time: 81.7s
+  Run 7/10... Reward: 0.0721, Time: 79.9s
+  Run 8/10... Reward: 0.021, Time: 85.3s
+  Run 9/10... Reward: 0.1064, Time: 82.4s
+  Run 10/10... Reward: 0.0666, Time: 81.7s
+  ✅ Fast POMCPOW (10k) - Mean: 0.0705 ± 0.0244, Avg Time: 82.8s
+
+▶️  Testing: Medium POMCPOW (15k)
+  Run 1/10... Reward: 0.064, Time: 120.0s
+  Run 2/10... Reward: 0.0674, Time: 114.1s
+  Run 3/10... Reward: 0.0686, Time: 128.5s
+  Run 4/10... Reward: 0.0627, Time: 130.3s
+  Run 5/10... Reward: 0.0592, Time: 125.5s
+  Run 6/10... Reward: 0.0729, Time: 124.2s
+  Run 7/10... Reward: 0.0641, Time: 122.2s
+  Run 8/10... Reward: 0.0923, Time: 129.1s
+  Run 9/10... Reward: 0.0614, Time: 126.1s
+  Run 10/10... Reward: 0.0725, Time: 123.3s
+  ✅ Medium POMCPOW (15k) - Mean: 0.0685 ± 0.0095, Avg Time: 124.3s
+
+▶️  Testing: OneStepLookahead
+  Run 1/10... Reward: 0.0594, Time: 4.5s
+  Run 2/10... Reward: 0.0645, Time: 3.0s
+  Run 3/10... Reward: 0.0748, Time: 3.0s
+  Run 4/10... Reward: 0.0681, Time: 2.8s
+  Run 5/10... Reward: 0.0862, Time: 3.1s
+  Run 6/10... Reward: 0.0692, Time: 2.5s
+  Run 7/10... Reward: 0.0158, Time: 3.0s
+  Run 8/10... Reward: 0.0611, Time: 2.9s
+  Run 9/10... Reward: 0.1059, Time: 2.8s
+  Run 10/10... Reward: 0.0944, Time: 2.9s
+  ✅ OneStepLookahead - Mean: 0.0699 ± 0.0243, Avg Time: 3.0s
+
+====================================================================================================
+🎯 TESTING ALPHA = 0.5
+====================================================================================================
+
+📈 POLICY CONFIGURATIONS:
+
+1️⃣  Fast POMCPOW:
+    - tree_queries: 10000 ⚡
+    - max_depth: 20
+    - MaxUCB: 0.5
+    - enable_action_pw: FALSE (exhaustive)
+    - k_observation: 5.0
+
+2️⃣  Medium POMCPOW:
+    - tree_queries: 15000 ✨✨ (50% more than Fast)
+    - max_depth: 20
+    - MaxUCB: 0.5
+    - enable_action_pw: FALSE (exhaustive)
+    - k_observation: 5.0
+
+3️⃣  OneStepLookahead (Baseline):
+    - Evaluates ALL 256 actions exhaustively
+    - Only 1-step lookahead (no tree search)
+    - n_rollouts: 15 (reduced from default 30)
+
+----------------------------------------------------------------------------------------------------
+🎮 RUNNING SIMULATIONS...
+----------------------------------------------------------------------------------------------------
+
+▶️  Testing: Fast POMCPOW (10k)
+  Run 1/10... Reward: 0.173, Time: 88.2s
+  Run 2/10... Reward: 0.1426, Time: 83.4s
+  Run 3/10... Reward: 0.14, Time: 86.7s
+  Run 4/10... Reward: 0.159, Time: 83.2s
+  Run 5/10... Reward: 0.1108, Time: 82.5s
+  Run 6/10... Reward: 0.105, Time: 86.5s
+  Run 7/10... Reward: 0.1306, Time: 82.6s
+  Run 8/10... Reward: 0.1201, Time: 80.3s
+  Run 9/10... Reward: 0.1152, Time: 80.9s
+  Run 10/10... Reward: 0.189, Time: 84.3s
+  ✅ Fast POMCPOW (10k) - Mean: 0.1385 ± 0.0279, Avg Time: 83.9s
+
+▶️  Testing: Medium POMCPOW (15k)
+  Run 1/10...

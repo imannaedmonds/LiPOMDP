@@ -1,0 +1,89 @@
+The latest version of Julia in the `release` channel is 1.12.0+0.x64.linux.gnu. You currently have `1.11.5+0.x64.linux.gnu` installed. Run:
+
+  juliaup update
+
+in your terminal shell to install Julia 1.12.0+0.x64.linux.gnu and update the `release` channel to that version.
+🎯 UCB TUNING FOR PLANNING=1, EVAL=6
+================================================================================
+Testing if higher UCB helps with price model mismatch
+All v10 tests used UCB=1.0 - now testing 1.5, 2.0, 2.5
+================================================================================
+
+================================================================================
+α = 0.25 | emission=1000.0, reward=$10.0B
+================================================================================
+[1/39] OneStepLookahead... Reward: 0.1337
+[2/39] POMCPOW q5000_d15_ucb1.0... Reward: 0.1257, Gap: -0.008 ❌
+[3/39] POMCPOW q6000_d15_ucb1.0... Reward: 0.1266, Gap: -0.007 ❌
+[4/39] POMCPOW q7000_d15_ucb1.0... Reward: 0.1064, Gap: -0.0273 ❌
+[5/39] POMCPOW q5000_d15_ucb1.5... Reward: 0.1207, Gap: -0.013 ❌
+[6/39] POMCPOW q6000_d15_ucb1.5... Reward: 0.0963, Gap: -0.0373 ❌
+[7/39] POMCPOW q7000_d15_ucb1.5... Reward: 0.1086, Gap: -0.025 ❌
+[8/39] POMCPOW q5000_d15_ucb2.0... Reward: 0.1136, Gap: -0.02 ❌
+[9/39] POMCPOW q6000_d15_ucb2.0... Reward: 0.1189, Gap: -0.0147 ❌
+[10/39] POMCPOW q7000_d15_ucb2.0... Reward: 0.1122, Gap: -0.0215 ❌
+[11/39] POMCPOW q5000_d15_ucb2.5... Reward: 0.1179, Gap: -0.0157 ❌
+[12/39] POMCPOW q6000_d15_ucb2.5... Reward: 0.1158, Gap: -0.0179 ❌
+[13/39] POMCPOW q7000_d15_ucb2.5... Reward: 0.1168, Gap: -0.0169 ❌
+
+  🏆 Best for α=0.25:
+     q=6000, d=15, UCB=1.0
+     Gap: -0.007
+
+================================================================================
+α = 0.5 | emission=1000.0, reward=$10.0B
+================================================================================
+[14/39] OneStepLookahead... Reward: 0.3276
+[15/39] POMCPOW q3000_d10_ucb1.0... Reward: 0.3078, Gap: -0.0198 ❌
+[16/39] POMCPOW q4000_d10_ucb1.0... Reward: 0.2796, Gap: -0.048 ❌
+[17/39] POMCPOW q5000_d10_ucb1.0... Reward: 0.2924, Gap: -0.0352 ❌
+[18/39] POMCPOW q3000_d10_ucb1.5... Reward: 0.2792, Gap: -0.0484 ❌
+[19/39] POMCPOW q4000_d10_ucb1.5... Reward: 0.3218, Gap: -0.0058 ❌
+[20/39] POMCPOW q5000_d10_ucb1.5... Reward: 0.3062, Gap: -0.0214 ❌
+[21/39] POMCPOW q3000_d10_ucb2.0... Reward: 0.2862, Gap: -0.0414 ❌
+[22/39] POMCPOW q4000_d10_ucb2.0... Reward: 0.2922, Gap: -0.0354 ❌
+[23/39] POMCPOW q5000_d10_ucb2.0... Reward: 0.2825, Gap: -0.0451 ❌
+[24/39] POMCPOW q3000_d10_ucb2.5... Reward: 0.2698, Gap: -0.0578 ❌
+[25/39] POMCPOW q4000_d10_ucb2.5... Reward: 0.2666, Gap: -0.061 ❌
+[26/39] POMCPOW q5000_d10_ucb2.5... Reward: 0.263, Gap: -0.0646 ❌
+
+  🏆 Best for α=0.5:
+     q=4000, d=10, UCB=1.5
+     Gap: -0.0058
+
+================================================================================
+α = 0.75 | emission=1000.0, reward=$10.0B
+================================================================================
+[27/39] OneStepLookahead... Reward: 0.5412
+[28/39] POMCPOW q7000_d20_ucb1.0... Reward: 0.4307, Gap: -0.1105 ❌
+[29/39] POMCPOW q8000_d20_ucb1.0... Reward: 0.4636, Gap: -0.0776 ❌
+[30/39] POMCPOW q10000_d20_ucb1.0... Reward: 0.4815, Gap: -0.0597 ❌
+[31/39] POMCPOW q7000_d20_ucb1.5... Reward: 0.4907, Gap: -0.0505 ❌
+[32/39] POMCPOW q8000_d20_ucb1.5... Reward: 0.4437, Gap: -0.0975 ❌
+[33/39] POMCPOW q10000_d20_ucb1.5... Reward: 0.4099, Gap: -0.1314 ❌
+[34/39] POMCPOW q7000_d20_ucb2.0... Reward: 0.4726, Gap: -0.0686 ❌
+[35/39] POMCPOW q8000_d20_ucb2.0... Reward: 0.4766, Gap: -0.0646 ❌
+[36/39] POMCPOW q10000_d20_ucb2.0... Reward: 0.4673, Gap: -0.0739 ❌
+[37/39] POMCPOW q7000_d20_ucb2.5... Reward: 0.5012, Gap: -0.04 ❌
+[38/39] POMCPOW q8000_d20_ucb2.5... Reward: 0.447, Gap: -0.0943 ❌
+[39/39] POMCPOW q10000_d20_ucb2.5... Reward: 0.4618, Gap: -0.0794 ❌
+
+  🏆 Best for α=0.75:
+     q=7000, d=20, UCB=2.5
+     Gap: -0.04
+
+================================================================================
+✅ UCB TUNING COMPLETE!
+📁 Results: outputs/test_train_v11_robust/ucb_tuning_p1_e6.csv
+================================================================================
+
+🏆 BEST UCB FOR EACH ALPHA:
+
+α=0.25: UCB=1.0, q=6000, d=15
+  Gap: -0.007 ❌
+
+α=0.5: UCB=1.5, q=4000, d=10
+  Gap: -0.0058 ❌
+
+α=0.75: UCB=2.5, q=7000, d=20
+  Gap: -0.04 ❌

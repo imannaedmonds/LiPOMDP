@@ -1,0 +1,82 @@
+The latest version of Julia in the `release` channel is 1.12.0+0.x64.linux.gnu. You currently have `1.11.5+0.x64.linux.gnu` installed. Run:
+
+  juliaup update
+
+in your terminal shell to install Julia 1.12.0+0.x64.linux.gnu and update the `release` channel to that version.
+  Activating project at `~/LiPOMDP`
+🛡️  TESTING ROBUST POMCPOW (Lower max_depth + Higher Uncertainty)
+====================================================================================================
+📊 TEST CONFIGURATION:
+  Planning model: Price Model 1 (Static)
+  Evaluation model: Price Model 6
+  Alphas: [0.25, 0.5, 0.75, 1.0]
+  Simulations per policy: 10
+  Strategy: Reduce max_depth and increase price uncertainty
+
+
+====================================================================================================
+🎯 TESTING ALPHA = 0.25
+====================================================================================================
+
+📈 POLICY CONFIGURATIONS:
+
+1️⃣  Standard POMCPOW (baseline):
+    - tree_queries: 5000
+    - max_depth: 20 ❌ (deep, sensitive to model errors)
+    - price_init_std: 1000.0 (default)
+
+2️⃣  Shallow POMCPOW:
+    - tree_queries: 5000
+    - max_depth: 5 ✅ (shallow, less model exposure)
+    - price_init_std: 1000.0 (default)
+
+3️⃣  Uncertain POMCPOW:
+    - tree_queries: 5000
+    - max_depth: 20
+    - price_init_std: 3000.0 ✅ (3× higher uncertainty)
+
+4️⃣  Combined POMCPOW:
+    - tree_queries: 5000
+    - max_depth: 5 ✅ (shallow)
+    - price_init_std: 3000.0 ✅ (3× uncertainty)
+
+5️⃣  OneStepLookahead (Baseline):
+    - n_rollouts: 15
+    - price_init_std: 1000.0 (default)
+
+----------------------------------------------------------------------------------------------------
+🎮 RUNNING SIMULATIONS...
+----------------------------------------------------------------------------------------------------
+
+▶️  Testing: Standard POMCPOW (d=20)
+  Run 1/10... Reward: 0.0184, Time: 54.3s
+  Run 2/10... Reward: 0.0579, Time: 46.6s
+  Run 3/10... Reward: 0.0612, Time: 46.4s
+  Run 4/10... Reward: 0.0695, Time: 45.7s
+  Run 5/10... Reward: 0.0975, Time: 47.8s
+  Run 6/10... Reward: 0.0583, Time: 45.0s
+  Run 7/10... Reward: 0.0636, Time: 45.1s
+  Run 8/10... Reward: 0.088, Time: 47.0s
+  Run 9/10... Reward: 0.1133, Time: 47.5s
+  Run 10/10... Reward: 0.0974, Time: 47.2s
+  ✅ Standard POMCPOW (d=20) - Mean: 0.0725 ± 0.0273, Time: 47.3s
+
+▶️  Testing: Shallow POMCPOW (d=5)
+  Run 1/10... Reward: 0.0831, Time: 23.5s
+  Run 2/10... Reward: 0.1071, Time: 23.4s
+  Run 3/10... Reward: 0.1112, Time: 23.5s
+  Run 4/10... Reward: 0.1174, Time: 23.4s
+  Run 5/10... Reward: 0.0897, Time: 23.4s
+  Run 6/10... Reward: 0.1005, Time: 23.4s
+  Run 7/10... Reward: 0.1028, Time: 23.7s
+  Run 8/10... Reward: 0.0563, Time: 23.3s
+  Run 9/10... Reward: 0.0832, Time: 23.3s
+  Run 10/10... Reward: 0.1101, Time: 23.7s
+  ✅ Shallow POMCPOW (d=5) - Mean: 0.0961 ± 0.0183, Time: 23.5s
+
+▶️  Testing: Uncertain POMCPOW (σ=3k)
+  Run 1/10... Reward: 0.1117, Time: 46.6s
+  Run 2/10... Reward: 0.0743, Time: 46.5s
+  Run 3/10... Reward: 0.079, Time: 44.5s
+  Run 4/10... Reward: 0.0805, Time: 47.5s
+  Run 5/10...

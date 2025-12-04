@@ -1,0 +1,90 @@
+The latest version of Julia in the `release` channel is 1.12.0+0.x64.linux.gnu. You currently have `1.11.5+0.x64.linux.gnu` installed. Run:
+
+  juliaup update
+
+in your terminal shell to install Julia 1.12.0+0.x64.linux.gnu and update the `release` channel to that version.
+🚀 Starting Robust POMCPOW Quick Test
+================================================================================
+🎯 ROBUST POMCPOW QUICK TEST
+================================================================================
+Planning: Price Model 1 (Static)
+Evaluation: Price Model 6 (Historical)
+Rollout: DynamicProfitMaximizerPolicy
+================================================================================
+
+================================================================================
+α = 0.25 | emission=1000.0, reward=$10.0B
+================================================================================
+[1/19] OneStepLookahead... Reward: 0.1349
+[2/19] POMCPOW q=5000 d=15 (baseline_5k15)... Reward: 0.1348, Gap: -0.0001 ❌ loses
+[3/19] POMCPOW q=7000 d=15 (more_queries_7k15)... Reward: 0.1007, Gap: -0.0342 ❌ loses
+[4/19] POMCPOW q=8000 d=15 (aggressive_8k15)... Reward: 0.1079, Gap: -0.0269 ❌ loses
+[5/19] POMCPOW q=5000 d=20 (deeper_5k20)... Reward: 0.1034, Gap: -0.0315 ❌ loses
+
+  🏆 Best for α=0.25: baseline_5k15
+     Gap: -0.0001
+     📊 At 99.93% of OneStep performance
+
+================================================================================
+α = 0.5 | emission=1000.0, reward=$10.0B
+================================================================================
+[6/19] OneStepLookahead... Reward: 0.338
+[7/19] POMCPOW q=3000 d=10 (baseline_3k10)... Reward: 0.3024, Gap: -0.0355 ❌ loses
+[8/19] POMCPOW q=5000 d=10 (more_queries_5k10)... Reward: 0.2843, Gap: -0.0537 ❌ loses
+[9/19] POMCPOW q=7000 d=10 (aggressive_7k10)... Reward: 0.2509, Gap: -0.0871 ❌ loses
+[10/19] POMCPOW q=5000 d=15 (balanced_5k15)... Reward: 0.2916, Gap: -0.0464 ❌ loses
+[11/19] POMCPOW q=7000 d=15 (aggressive_7k15)... Reward: 0.2806, Gap: -0.0574 ❌ loses
+
+  🏆 Best for α=0.5: baseline_3k10
+     Gap: -0.0355
+     📊 At 89.48% of OneStep performance
+
+================================================================================
+α = 0.75 | emission=1000.0, reward=$10.0B
+================================================================================
+[12/19] OneStepLookahead... Reward: 0.5692
+[13/19] POMCPOW q=7000 d=20 (baseline_7k20)... Reward: 0.4125, Gap: -0.1567 ❌ loses
+[14/19] POMCPOW q=8000 d=20 (more_queries_8k20)... Reward: 0.4528, Gap: -0.1164 ❌ loses
+[15/19] POMCPOW q=10000 d=20 (aggressive_10k20)... Reward: 0.4575, Gap: -0.1117 ❌ loses
+[16/19] POMCPOW q=10000 d=25 (very_aggressive_10k25)... Reward: 0.4386, Gap: -0.1306 ❌ loses
+
+  🏆 Best for α=0.75: aggressive_10k20
+     Gap: -0.1117
+     📊 At 80.38% of OneStep performance
+
+================================================================================
+α = 1.0 | emission=1000.0, reward=$10.0B
+================================================================================
+[17/19] OneStepLookahead... Reward: 0.7766
+[18/19] POMCPOW q=7000 d=20 (baseline_7k20)... Reward: 0.7025, Gap: -0.0741 ❌ loses
+[19/19] POMCPOW q=10000 d=25 (aggressive_10k25)... Reward: 0.619, Gap: -0.1575 ❌ loses
+
+  🏆 Best for α=1.0: baseline_7k20
+     Gap: -0.0741
+     📊 At 90.46% of OneStep performance
+
+================================================================================
+✅ QUICK TEST COMPLETE!
+📁 Results: outputs/test_train_v11_robust/robust_pomcpow_quick_p1_e6.csv
+================================================================================
+
+🏆 BEST CONFIGS BY ALPHA:
+
+α=0.25: baseline_5k15
+  q=5000, d=15
+  Gap: -0.0001 ❌ Behind
+
+α=0.5: baseline_3k10
+  q=3000, d=10
+  Gap: -0.0355 ❌ Behind
+
+α=0.75: aggressive_10k20
+  q=10000, d=20
+  Gap: -0.1117 ❌ Behind
+
+α=1.0: baseline_7k20
+  q=7000, d=20
+  Gap: -0.0741 ❌ Behind
+
+✅ Quick test complete!
+This tests POMCPOW robustness to price model mismatch.

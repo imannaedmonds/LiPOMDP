@@ -20,14 +20,6 @@ production = [9485.481, 14783.803, 15591.14, 14192.644, 12875.787,
           29543.085, 38217.278, 50850.212, 95134.285, 86881.62,
           83695.14, 107879.66, 157809.71, 198012.6, 240012.6,]
 
-# Estimate demand based on production trends (demand typically exceeds production)
-demand = [12000.0, 15000.0, 18000.0, 20000.0, 22000.0,
-          25000.0, 30000.0, 35000.0, 40000.0, 45000.0,
-          50000.0, 60000.0, 70000.0, 80000.0, 90000.0,
-          100000.0, 95000.0, 90000.0, 85000.0, 80000.0,
-          75000.0, 85000.0, 95000.0, 110000.0, 125000.0,
-          140000.0, 160000.0, 180000.0, 210000.0, 240000.0]
-
 price = [3200.0, 3400.0, 3800.0, 4000.0, 4200.0,
          4400.0, 4600.0, 4800.0, 5000.0, 5200.0,
          5400.0, 5600.0, 6000.0, 6400.0, 5800.0,
@@ -35,11 +27,11 @@ price = [3200.0, 3400.0, 3800.0, 4000.0, 4200.0,
          6500.0, 8650.0, 15000.0, 16000.0, 12100.0,
          10100.0, 14200.0, 71100.0, 41300.0, 14000.0]  # Assumes price data starts from 1995
 
-# Update the dictionary to include production data
+# Create dictionary with production and price data
+# Note: We use production as the basis for company demand calculation
 lithium_data = Dict(
     years[i] => (
-        demand[i],      # demand
-        price[i],       # price
-        production[i]   # production
+        production[i],  # global production (tonnes Li)
+        price[i]        # price ($/t LCE)
     ) for i in 1:length(years)
 )

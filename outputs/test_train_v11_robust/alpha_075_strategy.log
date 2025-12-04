@@ -1,0 +1,65 @@
+The latest version of Julia in the `release` channel is 1.12.0+0.x64.linux.gnu. You currently have `1.11.5+0.x64.linux.gnu` installed. Run:
+
+  juliaup update
+
+in your terminal shell to install Julia 1.12.0+0.x64.linux.gnu and update the `release` channel to that version.
+🎯 ALPHA 0.75 STRATEGY SEARCH
+================================================================================
+Testing different emission/reward scales + depths
+V10 showed emission=500/reward=5B worked better at α=0.75
+================================================================================
+
+================================================================================
+STRATEGY: high_scale (emission=1000.0, reward=$10.0B)
+================================================================================
+
+[1/21] Testing OneStepLookahead...
+  Reward: 0.54122
+
+[2/21] POMCPOW: shallow_5k12 (q=5000, d=12)
+  Reward: 0.45059, Gap: -0.09063 ❌
+
+[3/21] POMCPOW: balanced_7k15 (q=7000, d=15)
+  Reward: 0.46287, Gap: -0.07835 ❌
+
+[4/21] POMCPOW: deeper_10k18 (q=10000, d=18)
+  Reward: 0.46488, Gap: -0.07635 ❌
+
+  🏆 Best for high_scale: deeper_10k18
+     Gap: -0.07635
+
+================================================================================
+STRATEGY: low_scale (emission=500.0, reward=$5.0B)
+================================================================================
+
+[5/21] Testing OneStepLookahead...
+  Reward: 1.09538
+
+[6/21] POMCPOW: baseline_7k15 (q=7000, d=15)
+  Reward: 0.9164, Gap: -0.17898 ❌
+
+[7/21] POMCPOW: deeper_7k18 (q=7000, d=18)
+  Reward: 0.99832, Gap: -0.09706 ❌
+
+[8/21] POMCPOW: more_10k18 (q=10000, d=18)
+  Reward: 0.91423, Gap: -0.18115 ❌
+
+[9/21] POMCPOW: v10_best_10k20 (q=10000, d=20)
+  Reward: 0.95619, Gap: -0.13919 ❌
+
+[10/21] POMCPOW: aggressive_12k20 (q=12000, d=20)
+  Reward: 0.93981, Gap: -0.15557 ❌
+
+[11/21] POMCPOW: very_aggressive_15k22 (q=15000, d=22)
+  Reward: 0.99821, Gap: -0.09717 ❌
+
+  🏆 Best for low_scale: deeper_7k18
+     Gap: -0.09706
+
+================================================================================
+🏆 OVERALL BEST:
+  high_scale: deeper_10k18
+  q=10000, d=18
+  Gap: -0.07635
+
+📁 Results: outputs/test_train_v11_robust/alpha_075_strategy_search.csv

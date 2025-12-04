@@ -1,20 +1,20 @@
 DETAILED BELIEF COMPARISON RESULTS
 ==================================================
-Generated on: 2025-08-21T13:27:41.281
+Generated on: 2025-09-24T18:33:30.421
 Number of simulations per policy: 25
 Time horizon: 15
 
 POMCPOW RESULTS:
 ------------------------------
-Final uncertainty: 1459.182 ± 2118.532
-Total reward: 1.575198024e7 ± 7.22370616e6
+Final uncertainty: 5449.361 ± 1799.228
+Total reward: 2.42 ± 0.14
 
 ProfitMaximizer RESULTS:
 ------------------------------
-Final uncertainty: 12509.448 ± 1031.166
-Total reward: -1.400330084e7 ± 1.03113437e6
+Final uncertainty: 11880.797 ± 1075.095
+Total reward: 1.39 ± 0.51
 
 ExploreOnly RESULTS:
 ------------------------------
-Final uncertainty: 207.165 ± 13.331
-Total reward: -37500.0 ± 0.0
+Final uncertainty: 2012.74 ± 178.913
+Total reward: -0.0 ± 0.0

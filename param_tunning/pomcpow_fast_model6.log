@@ -1,0 +1,104 @@
+The latest version of Julia in the `release` channel is 1.12.0+0.x64.linux.gnu. You currently have `1.11.5+0.x64.linux.gnu` installed. Run:
+
+  juliaup update
+
+in your terminal shell to install Julia 1.12.0+0.x64.linux.gnu and update the `release` channel to that version.
+  Activating project at `~/LiPOMDP`
+🚀 TESTING FASTER POMCPOW (Lower tree_queries)
+====================================================================================================
+📊 TEST CONFIGURATION:
+  Planning model: Price Model 1 (Static)
+  Evaluation model: Price Model 6
+  Alphas: [0.25, 0.5, 0.75, 1.0]
+  Simulations per policy: 10
+  Time horizon: 29 years
+
+
+====================================================================================================
+🎯 TESTING ALPHA = 0.25
+====================================================================================================
+
+📈 POLICY CONFIGURATIONS:
+
+1️⃣  Fast POMCPOW:
+    - tree_queries: 10000 ⚡ (faster, same as OneStepLookahead budget)
+    - max_depth: 20
+    - MaxUCB: 0.5
+    - enable_action_pw: FALSE (exhaustive)
+    - k_observation: 5.0
+
+2️⃣  Medium POMCPOW:
+    - tree_queries: 15000 ⚡⚡ (balanced)
+    - max_depth: 20
+    - MaxUCB: 0.5
+    - enable_action_pw: FALSE (exhaustive)
+    - k_observation: 5.0
+
+3️⃣  OneStepLookahead (Baseline):
+    - Evaluates ALL 256 actions exhaustively
+    - Only 1-step lookahead (no tree search)
+    - n_rollouts: 15
+    - Total sims: 256 × 15 = 3,840 per decision
+
+----------------------------------------------------------------------------------------------------
+🎮 RUNNING SIMULATIONS...
+----------------------------------------------------------------------------------------------------
+
+▶️  Testing: Fast POMCPOW (10k)
+  Run 1/10... Reward: 0.0586, Time: 93.7s
+  Run 2/10...
+[2521202] signal 15: Terminated
+in expression starting at /home/edmondsa/LiPOMDP/scripts/test_pomcpow_fast.jl:38
+gc_mark_outrefs at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/gc.c:2642 [inlined]
+gc_mark_loop_serial_ at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/gc.c:2938
+gc_mark_loop_serial at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/gc.c:2961
+gc_mark_loop at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/gc.c:3143 [inlined]
+_jl_gc_collect at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/gc.c:3532
+ijl_gc_collect at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/gc.c:3893
+maybe_collect at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/gc.c:926 [inlined]
+jl_gc_pool_alloc_inner at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/gc.c:1319
+jl_gc_alloc_ at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/julia_internal.h:523 [inlined]
+ijl_box_int64 at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/datatype.c:1478
+compute_costs at /home/edmondsa/LiPOMDP/src/pomdp.jl:105
+reward at /home/edmondsa/LiPOMDP/src/pomdp.jl:147
+gen at /home/edmondsa/LiPOMDP/src/pomdp.jl:736
+gen at /home/edmondsa/.julia/packages/POMDPTools/4nD6N/src/ModelTools/underlying_mdp.jl:37 [inlined]
+macro expansion at /home/edmondsa/.julia/packages/POMDPs/iRiVb/src/gen_impl.jl:23 [inlined]
+genout at /home/edmondsa/.julia/packages/POMDPs/iRiVb/src/gen_impl.jl:19 [inlined]
+#354#f at /home/edmondsa/.julia/packages/POMDPs/iRiVb/src/generative.jl:67 [inlined]
+simulate at /home/edmondsa/.julia/packages/POMDPTools/4nD6N/src/Simulators/rollout.jl:143
+simulate at /home/edmondsa/.julia/packages/POMDPTools/4nD6N/src/Simulators/rollout.jl:157 [inlined]
+rollout at /home/edmondsa/.julia/packages/BasicPOMCP/yUpIz/src/rollout.jl:96 [inlined]
+estimate_value at /home/edmondsa/.julia/packages/BasicPOMCP/yUpIz/src/rollout.jl:41 [inlined]
+simulate at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/solver2.jl:82
+simulate at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/solver2.jl:90
+search at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/planner2.jl:78
+#action_info#13 at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/planner2.jl:34
+action_info at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/planner2.jl:27 [inlined]
+action at /home/edmondsa/.julia/packages/POMCPOW/6Cfo0/src/planner2.jl:44
+unknown function (ip: 0x7d7c49530aa6)
+jl_apply at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+do_call at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/interpreter.c:126
+eval_value at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/interpreter.c:223
+eval_body at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/interpreter.c:562
+jl_interpret_toplevel_thunk at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/interpreter.c:824
+jl_toplevel_eval_flex at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/toplevel.c:943
+jl_toplevel_eval_flex at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/toplevel.c:886
+ijl_toplevel_eval_in at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/toplevel.c:994
+eval at ./boot.jl:430 [inlined]
+include_string at ./loading.jl:2734
+_include at ./loading.jl:2794
+include at ./Base.jl:557
+jfptr_include_46879.1 at /home/edmondsa/.julia/juliaup/julia-1.11.5+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+exec_options at ./client.jl:323
+_start at ./client.jl:531
+jfptr__start_73430.1 at /home/edmondsa/.julia/juliaup/julia-1.11.5+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+jl_apply at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+true_main at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/jlapi.c:900
+jl_repl_entrypoint at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/src/jlapi.c:1059
+main at /cache/build/tester-amdci5-12/julialang/julia-release-1-dot-11/cli/loader_exe.c:58
+unknown function (ip: 0x7d7c60a2a1c9)
+__libc_start_main at /lib/x86_64-linux-gnu/libc.so.6 (unknown line)
+unknown function (ip: 0x4010b8)
+unknown function (ip: (nil))
+Allocations: 1506451297 (Pool: 1506450846; Big: 451); GC: 234
