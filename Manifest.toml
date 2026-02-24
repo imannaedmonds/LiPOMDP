@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.12.0"
+julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "dd18e9411d0cbe3f3c7e9fa29d594c9e410bc2e9"
+project_hash = "99085180594dd73766caf37d8e4fc07182744514"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -457,6 +457,12 @@ deps = ["Artifacts", "Expat_jll", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "473e9afc9cf30814eb67ffa5f2db7df82c3ad9fd"
 uuid = "ee1fde0b-3d02-5ea6-8484-8dfef6360eab"
 version = "1.16.2+0"
+
+[[deps.DefaultApplication]]
+deps = ["InteractiveUtils"]
+git-tree-sha1 = "c0dfa5a35710a193d83f03124356eef3386688fc"
+uuid = "3f0dd361-4fe0-5fc6-8523-80b14ec94d85"
+version = "1.1.0"
 
 [[deps.DefineSingletons]]
 git-tree-sha1 = "0fba8b706d0178b4dc7fd44a96a92382c9065c2c"
@@ -1603,6 +1609,24 @@ git-tree-sha1 = "5dbc6e27694edf02db5141fa5b06b3a64d5b07c0"
 uuid = "3b7a836e-365b-5785-a47d-02c71176b4aa"
 version = "3.4.6"
 
+[[deps.PGFPlotsX]]
+deps = ["ArgCheck", "Dates", "DefaultApplication", "DocStringExtensions", "MacroTools", "OrderedCollections", "Parameters", "Requires", "Tables"]
+git-tree-sha1 = "e5df51ffc01f8771d94c8db2d164be1f6927849c"
+uuid = "8314cec4-20b6-5062-9cdb-752b83310925"
+version = "1.6.2"
+
+    [deps.PGFPlotsX.extensions]
+    ColorsExt = "Colors"
+    ContourExt = "Contour"
+    MeasurementsExt = "Measurements"
+    StatsBaseExt = "StatsBase"
+
+    [deps.PGFPlotsX.weakdeps]
+    Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
+    Contour = "d38c429a-6771-53c6-b99e-75d170b6e991"
+    Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
+    StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+
 [[deps.PNGFiles]]
 deps = ["Base64", "CEnum", "ImageCore", "IndirectArrays", "OffsetArrays", "libpng_jll"]
 git-tree-sha1 = "cf181f0b1e6a18dfeb0ee8acc4a9d1672499626c"
@@ -2601,7 +2625,7 @@ version = "0.17.4+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.13.1+1"
+version = "5.15.0+0"
 
 [[deps.libdecor_jll]]
 deps = ["Artifacts", "Dbus_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pango_jll", "Wayland_jll", "xkbcommon_jll"]

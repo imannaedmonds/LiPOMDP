@@ -1,7 +1,7 @@
 name = "LitPOMDP"
 uuid = "7f6a6a00-1867-4ca9-b7ef-d8d729bd72f7"
-authors = ["Mansur Arief, Anna Edmonds"]
 version = "1.0.0-DEV"
+authors = ["Mansur Arief, Anna Edmonds"]
 
 [deps]
 BasicPOMCP = "d721219e-3fc6-5570-a8ef-e5402f47c49e"
@@ -12,6 +12,7 @@ Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 PGFPlots = "3b7a836e-365b-5785-a47d-02c71176b4aa"
+PGFPlotsX = "8314cec4-20b6-5062-9cdb-752b83310925"
 POMCPOW = "4c53ee00-974c-466f-8fa5-8dd73959bbab"
 POMDPTools = "7588e00f-9cae-40de-98dc-e0c70c48cdd7"
 POMDPs = "a93abf59-7444-517b-a68a-c42f96afdd7d"
@@ -26,5 +27,6 @@ CSV = "0.10.15"
 D3Trees = "0.3.5"
 DataFrames = "1.8.0"
 PGFPlots = "3.4.6"
+PGFPlotsX = "1.6.2"
 Plots = "1.40.19"
 Revise = "3.9.0"
