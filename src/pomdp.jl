@@ -240,33 +240,6 @@ function update_price(P::LiPOMDP, s::State, a::Action, price_model_type=1)
         end
     end
     
-    # # 9. Dynamic (Market Maker, action-dependent)
-    # if P.price_model_type == 9
-    #     β = P.β_action
-    #     if a === nothing
-    #         a_val = 0.0
-    #     else
-    #         # Sum all action types to get total action intensity
-    #         a_val = sum(a.type)
-    #     end
-    #     # For exponential models, noise should be in the exponent for log-normal behavior
-    #     noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
-    #     new_price = p₀ * exp(P.μ_drift * Δt + β * a_val + noise)
-    #     return max(new_price, 1000.0)  # Ensure minimum price
-    # end
-
-    # # 10. Dynamic Pricing (Market Maker) -- State-Dependent
-    # if P.price_model_type == 10
-    #     γ = P.γ_state
-    #     # Calculate scarcity as inverse of total remaining deposits (normalized)
-    #     total_deposits = sum(s.deposit)
-    #     scarcity = total_deposits > 0 ? 1.0 / total_deposits : 0.0
-    #     # For exponential models, noise should be in the exponent
-    #     noise = rand(Normal(0, 0.1))  # Smaller noise in exponent
-    #     new_price = p₀ * exp(P.μ_drift * Δt + γ * scarcity + noise)
-    #     return max(new_price, 1000.0)  # Ensure minimum price
-    # end
-    
     # Fallback case
     return max(p₀, 1000.0)
 end
